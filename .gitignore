@@ -1,7 +1,10 @@
 .DS_Store
 .env
+.mcp.json
 /node_modules/
 
 # React Router
 /.react-router/
 /build/
+
+.vercel
