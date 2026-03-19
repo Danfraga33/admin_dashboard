@@ -4,8 +4,8 @@ import { createSupabaseServerClient } from './supabase.server'
 export async function getSession(request: Request) {
   const responseHeaders = new Headers()
   const supabase = createSupabaseServerClient(request, responseHeaders)
-  const { data: { session } } = await supabase.auth.getSession()
-  return { session, supabase, responseHeaders }
+  const { data: { user } } = await supabase.auth.getUser()
+  return { session: user ? { user } : null, supabase, responseHeaders }
 }
 
 export async function requireSession(request: Request) {
