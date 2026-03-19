@@ -74,7 +74,7 @@ function EntityCard({ entity }: { entity: Entity }) {
     <div className="bg-card border border-border rounded-lg p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h2 className="font-serif text-xl text-foreground">{entity.name}</h2>
+          <h2 className="font-display text-xl text-foreground">{entity.name}</h2>
           <p className="text-xs text-muted-foreground uppercase tracking-wide">{entity.jurisdiction}</p>
         </div>
       </div>
@@ -135,7 +135,7 @@ export default function Entities() {
 
   return (
     <div>
-      <h1 className="font-serif text-3xl text-foreground mb-1">Entity Health</h1>
+      <h1 className="font-display text-3xl text-foreground mb-1">Entity Health</h1>
       <p className="text-muted-foreground text-sm mb-8">Compliance and advisor status for both entities.</p>
       <div className="grid grid-cols-2 gap-6">
         {(entities as Entity[]).map((entity) => (

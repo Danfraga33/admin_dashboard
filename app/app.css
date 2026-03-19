@@ -35,7 +35,7 @@
 
 @theme inline {
   --font-sans: 'Source Serif 4', Georgia, serif;
-  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-display: 'Playfair Display', Georgia, serif;
   --font-mono: 'Geist Mono', monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -76,6 +76,7 @@
   }
   html {
     scroll-behavior: smooth;
+    font-size: 17px;
   }
   body {
     @apply bg-background text-foreground font-sans;

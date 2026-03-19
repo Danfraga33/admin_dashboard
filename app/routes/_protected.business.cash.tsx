@@ -43,7 +43,7 @@ export default function Cash() {
 
   return (
     <div>
-      <h1 className="font-serif text-3xl text-foreground mb-1">Cash Position</h1>
+      <h1 className="font-display text-3xl text-foreground mb-1">Cash Position</h1>
       <p className="text-muted-foreground text-sm mb-8">Manual balances. Basiq API integration coming later.</p>
 
       <div className="grid grid-cols-2 gap-4 mb-8">

@@ -48,7 +48,7 @@ export default function Todos() {
 
   return (
     <div>
-      <h1 className="font-serif text-3xl text-foreground mb-1">To-Dos</h1>
+      <h1 className="font-display text-3xl text-foreground mb-1">To-Dos</h1>
       <p className="text-muted-foreground text-sm mb-8">Tasks with priority and due date.</p>
 
       <div className="bg-card border border-border rounded-lg p-6 mb-8">

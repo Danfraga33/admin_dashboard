@@ -35,7 +35,7 @@ export default function XMetrics() {
 
   return (
     <div>
-      <h1 className="font-serif text-3xl text-foreground mb-1">X / Twitter Metrics</h1>
+      <h1 className="font-display text-3xl text-foreground mb-1">X / Twitter Metrics</h1>
       <p className="text-muted-foreground text-sm mb-8">Manual snapshots. API integration coming later.</p>
 
       <div className="grid grid-cols-3 gap-4 mb-8">

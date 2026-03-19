@@ -41,7 +41,7 @@ export default function ContentSchedule() {
 
   return (
     <div>
-      <h1 className="font-serif text-3xl text-foreground mb-1">Content Schedule</h1>
+      <h1 className="font-display text-3xl text-foreground mb-1">Content Schedule</h1>
       <p className="text-muted-foreground text-sm mb-8">Planned posts across platforms.</p>
 
       <div className="bg-card border border-border rounded-lg p-6 mb-8">
