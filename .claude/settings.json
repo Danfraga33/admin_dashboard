@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__vercel__deploy_to_vercel",
+      "Bash(xargs sed:*)"
+    ]
+  }
+}
