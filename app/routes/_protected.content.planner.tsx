@@ -22,31 +22,35 @@ export async function action({ request }: ActionFunctionArgs) {
   const intent = formData.get('intent')
 
   if (intent === 'create-post') {
-    await supabase.from('content_schedule').insert({
+    const { error } = await supabase.from('content_schedule').insert({
       user_id: session.user.id,
       post_date: String(formData.get('post_date')),
       platform: String(formData.get('platform') || ''),
       topic: String(formData.get('topic') || ''),
       status: String(formData.get('status') || 'draft'),
     })
+    if (error) console.error('create-post error:', error)
   }
 
   if (intent === 'create-idea') {
-    await supabase.from('content_ideas').insert({
+    const { error } = await supabase.from('content_ideas').insert({
       user_id: session.user.id,
       title: String(formData.get('title')),
       format: String(formData.get('format') || ''),
       status: String(formData.get('status') || 'idea'),
       notes: String(formData.get('notes') || ''),
     })
+    if (error) console.error('create-idea error:', error)
   }
 
   if (intent === 'delete-post') {
-    await supabase.from('content_schedule').delete().eq('id', String(formData.get('id')))
+    const { error } = await supabase.from('content_schedule').delete().eq('id', String(formData.get('id')))
+    if (error) console.error('delete-post error:', error)
   }
 
   if (intent === 'delete-idea') {
-    await supabase.from('content_ideas').delete().eq('id', String(formData.get('id')))
+    const { error } = await supabase.from('content_ideas').delete().eq('id', String(formData.get('id')))
+    if (error) console.error('delete-idea error:', error)
   }
 
   return Response.json({}, { headers: responseHeaders })
@@ -383,7 +387,7 @@ export default function ContentPlanner() {
                           <input type="hidden" name="id" value={entry.id} />
                           <button
                             type="submit"
-                            className="text-[10px] text-muted-foreground hover:text-destructive-foreground transition-colors"
+                            className="text-base text-muted-foreground hover:text-destructive-foreground transition-colors cursor-pointer"
                           >
                             ×
                           </button>
@@ -425,7 +429,7 @@ export default function ContentPlanner() {
                           <input type="hidden" name="id" value={idea.id} />
                           <button
                             type="submit"
-                            className="text-[10px] text-muted-foreground hover:text-destructive-foreground transition-colors"
+                            className="text-base text-muted-foreground hover:text-destructive-foreground transition-colors cursor-pointer"
                           >
                             ×
                           </button>

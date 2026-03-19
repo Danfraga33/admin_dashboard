@@ -18,22 +18,25 @@ export async function action({ request }: ActionFunctionArgs) {
   const intent = formData.get('intent')
 
   if (intent === 'create') {
-    await supabase.from('todos').insert({
+    const { error } = await supabase.from('todos').insert({
       user_id: session.user.id,
       task: String(formData.get('task')),
       priority: String(formData.get('priority') || 'medium'),
       due_date: String(formData.get('due_date') || '') || null,
     })
+    if (error) console.error('create-todo error:', error)
   }
 
   if (intent === 'toggle') {
     const id = String(formData.get('id'))
     const completed = formData.get('completed') === 'true'
-    await supabase.from('todos').update({ completed: !completed }).eq('id', id)
+    const { error } = await supabase.from('todos').update({ completed: !completed }).eq('id', id)
+    if (error) console.error('toggle-todo error:', error)
   }
 
   if (intent === 'delete') {
-    await supabase.from('todos').delete().eq('id', String(formData.get('id')))
+    const { error } = await supabase.from('todos').delete().eq('id', String(formData.get('id')))
+    if (error) console.error('delete-todo error:', error)
   }
 
   return Response.json({}, { headers: responseHeaders })
