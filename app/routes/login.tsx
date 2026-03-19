@@ -17,9 +17,15 @@ export async function action({ request }: ActionFunctionArgs) {
   const email = String(formData.get('email'))
   const password = String(formData.get('password'))
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  let signInError: string | null = null
+  try {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) signInError = error.message
+  } catch {
+    signInError = 'Unable to reach the authentication service. Please try again.'
+  }
 
-  if (error) return { error: error.message }
+  if (signInError) return { error: signInError }
 
   throw redirect('/', { headers: responseHeaders })
 }
