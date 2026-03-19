@@ -72,10 +72,10 @@ export async function action({ request }: ActionFunctionArgs) {
 function EntityCard({ entity }: { entity: Entity }) {
   return (
     <div className="bg-card border border-border rounded-lg p-6">
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-start justify-between mb-5">
         <div>
-          <h2 className="font-display text-xl text-foreground">{entity.name}</h2>
-          <p className="text-xs text-muted-foreground uppercase tracking-wide">{entity.jurisdiction}</p>
+          <h2 className="font-display text-xl text-foreground tracking-wide">{entity.name}</h2>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-widest mt-1">{entity.jurisdiction}</p>
         </div>
       </div>
 
@@ -83,22 +83,22 @@ function EntityCard({ entity }: { entity: Entity }) {
         <input type="hidden" name="intent" value="update_meta" />
         <input type="hidden" name="entity_id" value={entity.id} />
         <div>
-          <label className="block text-xs text-muted-foreground mb-1">Advisor Status</label>
-          <input name="advisor_status" defaultValue={entity.advisor_status ?? ''} placeholder="e.g. Active — Jane Smith" className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+          <label className="block text-[11px] text-muted-foreground uppercase tracking-wide mb-1.5">Advisor Status</label>
+          <input name="advisor_status" defaultValue={entity.advisor_status ?? ''} placeholder="e.g. Active — Jane Smith" className="w-full bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
         </div>
         <div>
-          <label className="block text-xs text-muted-foreground mb-1">Next Filing Date</label>
-          <input name="next_filing_date" type="date" defaultValue={entity.next_filing_date ?? ''} className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+          <label className="block text-[11px] text-muted-foreground uppercase tracking-wide mb-1.5">Next Filing Date</label>
+          <input name="next_filing_date" type="date" defaultValue={entity.next_filing_date ?? ''} className="w-full bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
         </div>
-        <button type="submit" className="col-span-2 text-xs text-muted-foreground hover:text-primary transition-colors text-left">Save meta →</button>
+        <button type="submit" className="col-span-2 text-xs text-muted-foreground hover:text-primary transition-colors text-left cursor-pointer">Save meta</button>
       </Form>
 
-      <div className="mb-4">
-        <h3 className="text-xs text-muted-foreground uppercase tracking-wide mb-3">Compliance Tasks</h3>
+      <div className="mb-5">
+        <h3 className="text-[11px] text-muted-foreground uppercase tracking-widest mb-3">Compliance Tasks</h3>
         {entity.compliance_tasks.length === 0 && (
           <p className="text-sm text-muted-foreground">No tasks yet.</p>
         )}
-        <ul className="space-y-2">
+        <ul className="space-y-2.5">
           {entity.compliance_tasks.map((t) => (
             <li key={t.id} className="flex items-start gap-3">
               <Form method="post">
@@ -107,12 +107,13 @@ function EntityCard({ entity }: { entity: Entity }) {
                 <input type="hidden" name="task_id" value={t.id} />
                 <button
                   type="submit"
-                  className={`mt-0.5 w-4 h-4 rounded border transition-colors flex-shrink-0 ${t.done ? 'bg-primary/20 border-primary' : 'bg-input border-border hover:border-primary'}`}
+                  className={`mt-0.5 w-4 h-4 rounded border transition-colors flex-shrink-0 cursor-pointer ${t.done ? 'bg-primary/20 border-primary' : 'bg-input border-border hover:border-primary'}`}
+                  aria-label={`Toggle ${t.task}`}
                 />
               </Form>
               <div>
-                <p className={`text-sm ${t.done ? 'line-through text-muted-foreground' : 'text-foreground'}`}>{t.task}</p>
-                {t.due_date && <p className="font-mono text-xs text-muted-foreground">{t.due_date}</p>}
+                <p className={`text-sm leading-relaxed ${t.done ? 'line-through text-muted-foreground' : 'text-foreground'}`}>{t.task}</p>
+                {t.due_date && <p className="font-mono text-xs text-muted-foreground mt-0.5">{t.due_date}</p>}
               </div>
             </li>
           ))}
@@ -122,9 +123,9 @@ function EntityCard({ entity }: { entity: Entity }) {
       <Form method="post" className="flex gap-2">
         <input type="hidden" name="intent" value="add_task" />
         <input type="hidden" name="entity_id" value={entity.id} />
-        <input name="task" placeholder="New compliance task" required className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
-        <input name="due_date" type="date" className="bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
-        <button type="submit" className="bg-primary text-primary-foreground rounded-md px-3 py-2 text-sm font-medium hover:opacity-90 transition-opacity">Add</button>
+        <input name="task" placeholder="New compliance task" required className="flex-1 bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+        <input name="due_date" type="date" className="bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+        <button type="submit" className="bg-primary text-primary-foreground rounded-md px-3 py-2.5 text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">Add</button>
       </Form>
     </div>
   )
@@ -135,8 +136,8 @@ export default function Entities() {
 
   return (
     <div>
-      <h1 className="font-display text-3xl text-foreground mb-1">Entity Health</h1>
-      <p className="text-muted-foreground text-sm mb-8">Compliance and advisor status for both entities.</p>
+      <h1 className="font-display text-4xl text-foreground mb-1 tracking-wide">Entity Health</h1>
+      <p className="text-muted-foreground text-sm mb-10 leading-relaxed">Compliance and advisor status for both entities.</p>
       <div className="grid grid-cols-2 gap-6">
         {(entities as Entity[]).map((entity) => (
           <EntityCard key={entity.id} entity={entity} />

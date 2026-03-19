@@ -12,7 +12,7 @@ export default function ProtectedLayout() {
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
-      <main className="ml-[220px] flex-1 p-8">
+      <main className="ml-[220px] flex-1 px-10 py-8">
         <Outlet />
       </main>
     </div>

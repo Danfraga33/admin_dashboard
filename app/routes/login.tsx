@@ -37,8 +37,8 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-sm">
         <div className="bg-card border border-border rounded-lg p-8">
-          <h1 className="font-display text-2xl text-foreground mb-2">Fraga Ventures</h1>
-          <p className="text-muted-foreground text-sm mb-8">Ops Dashboard</p>
+          <h1 className="font-display text-3xl text-foreground mb-1 tracking-wide">Fraga Ventures</h1>
+          <p className="text-[11px] text-muted-foreground tracking-widest uppercase mb-8">Ops Dashboard</p>
 
           <Form method="post" className="space-y-4">
             <div>
