@@ -7,6 +7,7 @@ const NAV = [
       { to: '/content/planner', label: 'Planner' },
       { to: '/content/metrics', label: 'X Metrics' },
       { to: '/content/todos', label: 'To-Dos' },
+      { to: '/content/routine', label: 'Routine' },
     ],
   },
   {
