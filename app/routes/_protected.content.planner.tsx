@@ -248,13 +248,13 @@ export default function ContentPlanner() {
           {/* Calendar Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-border">
             <div className="flex items-center gap-3">
-              <button onClick={prevMonth} className="text-muted-foreground hover:text-foreground transition-colors text-lg">
+              <button onClick={prevMonth} className="cursor-pointer text-muted-foreground hover:text-foreground transition-colors text-lg">
                 &lsaquo;
               </button>
               <h2 className="font-display text-lg text-foreground">
                 {MONTHS[currentMonth]} {currentYear}
               </h2>
-              <button onClick={nextMonth} className="text-muted-foreground hover:text-foreground transition-colors text-lg">
+              <button onClick={nextMonth} className="cursor-pointer text-muted-foreground hover:text-foreground transition-colors text-lg">
                 &rsaquo;
               </button>
             </div>
