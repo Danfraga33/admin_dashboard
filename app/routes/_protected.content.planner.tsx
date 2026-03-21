@@ -429,6 +429,7 @@ export default function ContentPlanner() {
                           <input type="hidden" name="id" value={idea.id} />
                           <button
                             type="submit"
+                            onClick={(e) => { if (!confirm('Delete this idea?')) e.preventDefault() }}
                             className="text-base text-muted-foreground hover:text-destructive-foreground transition-colors cursor-pointer"
                           >
                             ×
