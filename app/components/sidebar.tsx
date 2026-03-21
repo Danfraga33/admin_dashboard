@@ -7,15 +7,11 @@ const NAV = [
       { to: '/content/planner', label: 'Planner' },
       { to: '/content/metrics', label: 'X Metrics' },
       { to: '/content/todos', label: 'To-Dos' },
-      { to: '/content/routine', label: 'Routine' },
     ],
   },
   {
     group: 'Business',
     links: [
-      { to: '/business/pipeline', label: 'Deal Pipeline' },
-      { to: '/business/entities', label: 'Entity Health' },
-      { to: '/business/cash', label: 'Cash Position' },
       { to: '/business/saas', label: 'SaaS Health' },
     ],
   },
