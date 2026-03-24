@@ -43,6 +43,26 @@ export async function action({ request }: ActionFunctionArgs) {
     if (error) console.error('create-idea error:', error)
   }
 
+  if (intent === 'update-post') {
+    const { error } = await supabase.from('content_schedule').update({
+      post_date: String(formData.get('post_date')),
+      platform: String(formData.get('platform') || ''),
+      topic: String(formData.get('topic') || ''),
+      status: String(formData.get('status') || 'draft'),
+    }).eq('id', String(formData.get('id')))
+    if (error) console.error('update-post error:', error)
+  }
+
+  if (intent === 'update-idea') {
+    const { error } = await supabase.from('content_ideas').update({
+      title: String(formData.get('title')),
+      format: String(formData.get('format') || ''),
+      status: String(formData.get('status') || 'idea'),
+      notes: String(formData.get('notes') || ''),
+    }).eq('id', String(formData.get('id')))
+    if (error) console.error('update-idea error:', error)
+  }
+
   if (intent === 'delete-post') {
     const { error } = await supabase.from('content_schedule').delete().eq('id', String(formData.get('id')))
     if (error) console.error('delete-post error:', error)
@@ -95,6 +115,83 @@ function formatDateKey(year: number, month: number, day: number) {
   return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
 
+function EditPostModal({ post, onClose }: { post: any; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-card border border-border rounded-lg p-8 w-full max-w-md shadow-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-display text-xl text-foreground">Edit Post</h2>
+          <button onClick={onClose} className="text-xl text-muted-foreground hover:text-foreground transition-colors cursor-pointer">×</button>
+        </div>
+        <Form method="post" className="grid grid-cols-2 gap-4" onSubmit={onClose}>
+          <input type="hidden" name="intent" value="update-post" />
+          <input type="hidden" name="id" value={post.id} />
+          <input name="post_date" type="date" required defaultValue={post.post_date} style={{ colorScheme: 'dark' }} className="bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+          <input name="platform" placeholder="Platform" defaultValue={post.platform || ''} className="bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+          <input name="topic" placeholder="Topic" defaultValue={post.topic || ''} className="col-span-2 bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+          <select name="status" defaultValue={post.status} className="bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+            <option value="draft">Draft</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="published">Published</option>
+          </select>
+          <button type="submit" className="bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">Save</button>
+        </Form>
+        <div className="mt-4 pt-4 border-t border-border">
+          <Form method="post" onSubmit={onClose}>
+            <input type="hidden" name="intent" value="delete-post" />
+            <input type="hidden" name="id" value={post.id} />
+            <button type="submit" onClick={(e) => { if (!confirm('Delete this post?')) e.preventDefault() }} className="text-sm text-muted-foreground hover:text-destructive-foreground transition-colors cursor-pointer">Delete post</button>
+          </Form>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function EditIdeaModal({ idea, onClose }: { idea: any; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-card border border-border rounded-lg p-8 w-full max-w-md shadow-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-display text-xl text-foreground">Edit Idea</h2>
+          <button onClick={onClose} className="text-xl text-muted-foreground hover:text-foreground transition-colors cursor-pointer">×</button>
+        </div>
+        <Form method="post" className="grid grid-cols-2 gap-4" onSubmit={onClose}>
+          <input type="hidden" name="intent" value="update-idea" />
+          <input type="hidden" name="id" value={idea.id} />
+          <input name="title" placeholder="Title" required defaultValue={idea.title} className="col-span-2 bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+          <input name="format" placeholder="Format" defaultValue={idea.format || ''} className="bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+          <select name="status" defaultValue={idea.status} className="bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+            <option value="idea">Idea</option>
+            <option value="in-progress">In Progress</option>
+            <option value="ready">Ready</option>
+          </select>
+          <textarea name="notes" placeholder="Notes" rows={2} defaultValue={idea.notes || ''} className="col-span-2 bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+          <button type="submit" className="col-span-2 bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">Save</button>
+        </Form>
+        <div className="mt-4 pt-4 border-t border-border">
+          <p className="text-[11px] text-muted-foreground uppercase tracking-widest mb-3">Add to Calendar</p>
+          <Form method="post" className="flex gap-2" onSubmit={onClose}>
+            <input type="hidden" name="intent" value="create-post" />
+            <input type="hidden" name="topic" value={idea.title} />
+            <input type="hidden" name="platform" value={idea.format || ''} />
+            <input type="hidden" name="status" value="scheduled" />
+            <input name="post_date" type="date" required style={{ colorScheme: 'dark' }} className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+            <button type="submit" className="bg-muted text-foreground rounded-md px-3 py-2 text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">Schedule</button>
+          </Form>
+        </div>
+        <div className="mt-3">
+          <Form method="post" onSubmit={onClose}>
+            <input type="hidden" name="intent" value="delete-idea" />
+            <input type="hidden" name="id" value={idea.id} />
+            <button type="submit" onClick={(e) => { if (!confirm('Delete this idea?')) e.preventDefault() }} className="text-sm text-muted-foreground hover:text-destructive-foreground transition-colors cursor-pointer">Delete idea</button>
+          </Form>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ContentPlanner() {
   const { schedule, ideas } = useLoaderData<typeof loader>()
   const navigation = useNavigation()
@@ -107,6 +204,8 @@ export default function ContentPlanner() {
   const [showNewPost, setShowNewPost] = useState(false)
   const [showNewIdea, setShowNewIdea] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [editingPost, setEditingPost] = useState<any | null>(null)
+  const [editingIdea, setEditingIdea] = useState<any | null>(null)
 
   const calendarDays = getCalendarDays(currentYear, currentMonth)
 
@@ -140,9 +239,9 @@ export default function ContentPlanner() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-display text-4xl text-foreground mb-1 tracking-wide">Content Planner</h1>
+          <h1 className="font-display text-3xl sm:text-4xl text-foreground mb-1 tracking-wide">Content Planner</h1>
           <p className="text-muted-foreground text-sm leading-relaxed">
             Plan, schedule, and track your content across platforms.
           </p>
@@ -152,7 +251,7 @@ export default function ContentPlanner() {
             if (activeTab === 'schedule') setShowNewPost(!showNewPost)
             else setShowNewIdea(!showNewIdea)
           }}
-          className="bg-primary text-primary-foreground rounded-md px-4 py-2.5 text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer"
+          className="bg-primary text-primary-foreground rounded-md px-4 py-2.5 text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer self-start sm:self-auto shrink-0"
         >
           + New {activeTab === 'schedule' ? 'Post' : 'Idea'}
         </button>
@@ -162,13 +261,14 @@ export default function ContentPlanner() {
       {showNewPost && activeTab === 'schedule' && (
         <div className="bg-card border border-border rounded-lg p-6 mb-6">
           <h2 className="text-sm font-medium text-foreground mb-4">New Post</h2>
-          <Form method="post" className="grid grid-cols-2 gap-4" onSubmit={() => setShowNewPost(false)}>
+          <Form method="post" className="grid grid-cols-1 gap-4 sm:grid-cols-2" onSubmit={() => setShowNewPost(false)}>
             <input type="hidden" name="intent" value="create-post" />
             <input
               name="post_date"
               type="date"
               required
               defaultValue={selectedDate || ''}
+              style={{ colorScheme: 'dark' }}
               className="bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <input
@@ -179,7 +279,7 @@ export default function ContentPlanner() {
             <input
               name="topic"
               placeholder="Topic"
-              className="col-span-2 bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              className="sm:col-span-2 bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <select
               name="status"
@@ -204,13 +304,13 @@ export default function ContentPlanner() {
       {showNewIdea && activeTab === 'ideas' && (
         <div className="bg-card border border-border rounded-lg p-6 mb-6">
           <h2 className="text-sm font-medium text-foreground mb-4">New Idea</h2>
-          <Form method="post" className="grid grid-cols-2 gap-4" onSubmit={() => setShowNewIdea(false)}>
+          <Form method="post" className="grid grid-cols-1 gap-4 sm:grid-cols-2" onSubmit={() => setShowNewIdea(false)}>
             <input type="hidden" name="intent" value="create-idea" />
             <input
               name="title"
               placeholder="Title"
               required
-              className="col-span-2 bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              className="sm:col-span-2 bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <input
               name="format"
@@ -229,12 +329,12 @@ export default function ContentPlanner() {
               name="notes"
               placeholder="Notes"
               rows={2}
-              className="col-span-2 bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              className="sm:col-span-2 bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
             <button
               type="submit"
               disabled={isSubmitting}
-              className="col-span-2 bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="sm:col-span-2 bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
             >
               Add Idea
             </button>
@@ -242,9 +342,10 @@ export default function ContentPlanner() {
         </div>
       )}
 
-      <div className="flex gap-6">
+      <div className="flex flex-col gap-6 md:flex-row">
         {/* Calendar */}
-        <div className="flex-1 bg-card border border-border rounded-lg overflow-hidden">
+        <div className="flex-1 bg-card border border-border rounded-lg overflow-hidden min-w-0">
+          <div className="overflow-x-auto">
           {/* Calendar Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-border">
             <div className="flex items-center gap-3">
@@ -288,7 +389,7 @@ export default function ContentPlanner() {
                     }
                   }}
                   className={`
-                    min-h-[100px] border-b border-r border-border p-2 cursor-pointer
+                    min-h-[60px] sm:min-h-[100px] border-b border-r border-border p-1 sm:p-2 cursor-pointer
                     hover:bg-muted/10 transition-colors
                     ${!day ? 'bg-muted/5' : ''}
                   `}
@@ -330,10 +431,11 @@ export default function ContentPlanner() {
               )
             })}
           </div>
+          </div>{/* end overflow-x-auto */}
         </div>
 
         {/* Right Panel: Drafts & Ideas */}
-        <div className="w-[280px] shrink-0 bg-card border border-border rounded-lg overflow-hidden flex flex-col">
+        <div className="w-full md:w-[280px] md:shrink-0 bg-card border border-border rounded-lg overflow-hidden flex flex-col">
           <div className="px-4 py-3 border-b border-border">
             <h3 className="text-sm font-medium text-foreground mb-3">Drafts & Ideas</h3>
             <div className="flex gap-1 bg-muted/20 rounded-md p-0.5">
@@ -369,7 +471,7 @@ export default function ContentPlanner() {
                   </p>
                 )}
                 {(schedule as any[]).map((entry: any) => (
-                  <div key={entry.id} className="px-4 py-3 hover:bg-muted/10 transition-colors">
+                  <div key={entry.id} onClick={() => setEditingPost(entry)} className="px-4 py-3 hover:bg-muted/10 transition-colors cursor-pointer">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <p className="text-sm text-foreground truncate">{entry.topic || 'Untitled'}</p>
@@ -382,16 +484,6 @@ export default function ContentPlanner() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <StatusBadge status={entry.status} />
-                        <Form method="post">
-                          <input type="hidden" name="intent" value="delete-post" />
-                          <input type="hidden" name="id" value={entry.id} />
-                          <button
-                            type="submit"
-                            className="text-base text-muted-foreground hover:text-destructive-foreground transition-colors cursor-pointer"
-                          >
-                            ×
-                          </button>
-                        </Form>
                       </div>
                     </div>
                   </div>
@@ -407,7 +499,7 @@ export default function ContentPlanner() {
                   </p>
                 )}
                 {(ideas as any[]).map((idea: any) => (
-                  <div key={idea.id} className="px-4 py-3 hover:bg-muted/10 transition-colors">
+                  <div key={idea.id} onClick={() => setEditingIdea(idea)} className="px-4 py-3 hover:bg-muted/10 transition-colors cursor-pointer">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <p className="text-sm text-foreground truncate">{idea.title}</p>
@@ -424,17 +516,6 @@ export default function ContentPlanner() {
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <StatusBadge status={idea.status} />
-                        <Form method="post">
-                          <input type="hidden" name="intent" value="delete-idea" />
-                          <input type="hidden" name="id" value={idea.id} />
-                          <button
-                            type="submit"
-                            onClick={(e) => { if (!confirm('Delete this idea?')) e.preventDefault() }}
-                            className="text-base text-muted-foreground hover:text-destructive-foreground transition-colors cursor-pointer"
-                          >
-                            ×
-                          </button>
-                        </Form>
                       </div>
                     </div>
                   </div>
@@ -445,6 +526,9 @@ export default function ContentPlanner() {
         </div>
       </div>
 
+      {editingPost && <EditPostModal post={editingPost} onClose={() => setEditingPost(null)} />}
+      {editingIdea && <EditIdeaModal idea={editingIdea} onClose={() => setEditingIdea(null)} />}
+
       {/* Content Routine */}
       <div className="mt-10">
         <h2 className="font-display text-xl text-foreground mb-1">Content Routine</h2>
@@ -453,45 +537,101 @@ export default function ContentPlanner() {
         {(() => {
           const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
           type Day = (typeof DAYS)[number]
-          interface RoutineItem { label: string; accent: string; bg: string }
+          interface RoutineItem { label: string; accent: string; bg: string; dot: string }
           const routine: Record<Day, RoutineItem[]> = {
-            Mon: [{ label: 'Deal Journal', accent: 'text-blue-400', bg: 'bg-blue-400/10 border-blue-400/20' }],
+            Mon: [{ label: 'Deal Journal', accent: 'text-blue-400', bg: 'bg-blue-400/10 border-blue-400/20', dot: 'bg-blue-400' }],
             Tue: [],
-            Wed: [{ label: 'Framework', accent: 'text-violet-400', bg: 'bg-violet-400/10 border-violet-400/20' }],
+            Wed: [{ label: 'Framework', accent: 'text-violet-400', bg: 'bg-violet-400/10 border-violet-400/20', dot: 'bg-violet-400' }],
             Thu: [],
-            Fri: [{ label: 'Learning / Lens', accent: 'text-amber-400', bg: 'bg-amber-400/10 border-amber-400/20' }],
+            Fri: [{ label: 'Learning / Lens', accent: 'text-amber-400', bg: 'bg-amber-400/10 border-amber-400/20', dot: 'bg-amber-400' }],
             Sat: [],
             Sun: [],
           }
-          const monthly = { label: 'Structure / Deal Mechanics', accent: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/20' }
-          const daily = { label: 'Replies / DMs', accent: 'text-rose-400', bg: 'bg-rose-400/10 border-rose-400/20' }
+          const monthly = { label: 'Structure / Deal Mechanics', accent: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/20', dot: 'bg-emerald-400' }
+          const daily = { label: 'Replies / DMs', accent: 'text-rose-400', bg: 'bg-rose-400/10 border-rose-400/20', dot: 'bg-rose-400' }
+
+          // All unique task types for the legend
+          const allTasks = [
+            ...Object.values(routine).flat(),
+            { ...daily, label: 'Replies / DMs (daily, 10 min max)' },
+            { ...monthly, label: 'Structure / Deal Mechanics (1× / month)' },
+          ]
+
           return (
             <>
-              <div className="grid grid-cols-7 gap-3 mb-6">
+              {/* Desktop: 7-col timetable */}
+              <div className="hidden lg:grid grid-cols-7 gap-3 mb-6">
                 {DAYS.map((day) => {
                   const items = routine[day]
                   const isActive = items.length > 0
                   return (
-                    <div key={day} className={`rounded-lg border p-4 min-h-[180px] flex flex-col ${isActive ? 'border-border bg-card' : 'border-border/50 bg-card/40'}`}>
-                      <span className={`text-xs font-medium uppercase tracking-widest mb-3 ${isActive ? 'text-foreground' : 'text-muted-foreground/60'}`}>{day}</span>
+                    <div key={day} className={`rounded-lg border p-3 min-h-[160px] flex flex-col ${isActive ? 'border-border bg-card' : 'border-border/50 bg-card/40'}`}>
+                      <span className={`text-[10px] font-medium uppercase tracking-widest mb-3 ${isActive ? 'text-foreground' : 'text-muted-foreground/60'}`}>{day}</span>
                       <div className="flex-1 flex flex-col gap-2">
                         {items.map((item) => (
-                          <div key={item.label} className={`rounded-md border px-3 py-2.5 ${item.bg}`}>
-                            <span className={`text-sm font-medium ${item.accent}`}>{item.label}</span>
+                          <div key={item.label} className={`rounded-md border px-2 py-2 ${item.bg}`}>
+                            <span className={`text-xs font-medium leading-snug ${item.accent}`}>{item.label}</span>
                           </div>
                         ))}
-                        <div className={`rounded-md border px-3 py-2.5 ${daily.bg} mt-auto`}>
-                          <span className={`text-xs font-medium ${daily.accent}`}>{daily.label}</span>
-                          <span className="block text-[11px] text-muted-foreground mt-0.5">10 min max</span>
+                        <div className={`rounded-md border px-2 py-2 ${daily.bg} mt-auto`}>
+                          <span className={`text-xs font-medium leading-snug ${daily.accent}`}>{daily.label}</span>
+                          <span className="block text-[10px] text-muted-foreground mt-0.5">10 min max</span>
                         </div>
                       </div>
                     </div>
                   )
                 })}
               </div>
-              <div className={`rounded-lg border px-5 py-4 ${monthly.bg} inline-flex items-center gap-3`}>
+              <div className={`hidden lg:inline-flex rounded-lg border px-5 py-4 ${monthly.bg} items-center gap-3`}>
                 <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">1x / month</span>
                 <span className={`text-sm font-medium ${monthly.accent}`}>{monthly.label}</span>
+              </div>
+
+              {/* Mobile / Tablet: legend + key box */}
+              <div className="lg:hidden space-y-4">
+                {/* Schedule rows */}
+                <div className="bg-card border border-border rounded-lg divide-y divide-border">
+                  {DAYS.map((day) => {
+                    const items = routine[day]
+                    return (
+                      <div key={day} className="flex items-center gap-4 px-4 py-3">
+                        <span className={`w-10 shrink-0 text-xs font-medium uppercase tracking-widest ${items.length > 0 ? 'text-foreground' : 'text-muted-foreground/50'}`}>{day}</span>
+                        <div className="flex flex-wrap gap-2 flex-1">
+                          {items.length > 0 ? items.map((item) => (
+                            <span key={item.label} className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${item.bg} ${item.accent}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${item.dot}`} />
+                              {item.label}
+                            </span>
+                          )) : (
+                            <span className="text-xs text-muted-foreground/40">—</span>
+                          )}
+                          <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${daily.bg} ${daily.accent}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${daily.dot}`} />
+                            Replies / DMs
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Key / Legend box */}
+                <div className="bg-card border border-border rounded-lg p-4">
+                  <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground mb-3">Key</p>
+                  <div className="space-y-2.5">
+                    {allTasks.slice(0, -1).map((task) => (
+                      <div key={task.label} className="flex items-center gap-3">
+                        <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${task.dot}`} />
+                        <span className={`text-sm font-medium ${task.accent}`}>{task.label}</span>
+                      </div>
+                    ))}
+                    <div className="flex items-center gap-3 pt-2 border-t border-border">
+                      <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${monthly.dot}`} />
+                      <span className={`text-sm font-medium ${monthly.accent}`}>{monthly.label}</span>
+                      <span className="text-xs text-muted-foreground ml-auto">1× / month</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </>
           )
