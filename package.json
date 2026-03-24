@@ -15,6 +15,7 @@
     "@supabase/supabase-js": "^2.99.2",
     "@vercel/react-router": "^1.2.6",
     "isbot": "^5.1.31",
+    "lucide-react": "^1.0.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router": "7.12.0"
