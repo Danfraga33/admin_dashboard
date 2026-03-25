@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Form, useLoaderData, useNavigation } from 'react-router'
+import { Form, useLoaderData, useNavigation, useFetcher } from 'react-router'
 import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router'
 import { requireSession } from '~/lib/session.server'
 import { StatusBadge } from '~/components/status-badge'
@@ -197,6 +197,9 @@ export default function ContentPlanner() {
   const navigation = useNavigation()
   const isSubmitting = navigation.state === 'submitting'
 
+  const postFetcher = useFetcher()
+  const ideaFetcher = useFetcher()
+
   const today = new Date()
   const [currentYear, setCurrentYear] = useState(today.getFullYear())
   const [currentMonth, setCurrentMonth] = useState(today.getMonth())
@@ -207,11 +210,40 @@ export default function ContentPlanner() {
   const [editingPost, setEditingPost] = useState<any | null>(null)
   const [editingIdea, setEditingIdea] = useState<any | null>(null)
 
+  // Optimistic entries while fetchers are submitting
+  const optimisticPost = postFetcher.state !== 'idle' && postFetcher.formData
+    ? {
+        id: '__optimistic_post__',
+        post_date: postFetcher.formData.get('post_date') as string,
+        platform: postFetcher.formData.get('platform') as string || '',
+        topic: postFetcher.formData.get('topic') as string || '',
+        status: postFetcher.formData.get('status') as string || 'draft',
+      }
+    : null
+
+  const optimisticIdea = ideaFetcher.state !== 'idle' && ideaFetcher.formData
+    ? {
+        id: '__optimistic_idea__',
+        title: ideaFetcher.formData.get('title') as string,
+        format: ideaFetcher.formData.get('format') as string || '',
+        status: ideaFetcher.formData.get('status') as string || 'idea',
+        notes: ideaFetcher.formData.get('notes') as string || '',
+      }
+    : null
+
+  const displaySchedule = optimisticPost
+    ? [optimisticPost, ...(schedule as any[])]
+    : (schedule as any[])
+
+  const displayIdeas = optimisticIdea
+    ? [optimisticIdea, ...(ideas as any[])]
+    : (ideas as any[])
+
   const calendarDays = getCalendarDays(currentYear, currentMonth)
 
   // Index scheduled posts by date
   const postsByDate: Record<string, any[]> = {}
-  for (const entry of schedule as any[]) {
+  for (const entry of displaySchedule) {
     const date = entry.post_date
     if (!postsByDate[date]) postsByDate[date] = []
     postsByDate[date].push(entry)
@@ -261,7 +293,7 @@ export default function ContentPlanner() {
       {showNewPost && activeTab === 'schedule' && (
         <div className="bg-card border border-border rounded-lg p-6 mb-6">
           <h2 className="text-sm font-medium text-foreground mb-4">New Post</h2>
-          <Form method="post" className="grid grid-cols-1 gap-4 sm:grid-cols-2" onSubmit={() => setShowNewPost(false)}>
+          <postFetcher.Form method="post" className="grid grid-cols-1 gap-4 sm:grid-cols-2" onSubmit={() => setShowNewPost(false)}>
             <input type="hidden" name="intent" value="create-post" />
             <input
               name="post_date"
@@ -296,7 +328,7 @@ export default function ContentPlanner() {
             >
               Add Post
             </button>
-          </Form>
+          </postFetcher.Form>
         </div>
       )}
 
@@ -304,7 +336,7 @@ export default function ContentPlanner() {
       {showNewIdea && activeTab === 'ideas' && (
         <div className="bg-card border border-border rounded-lg p-6 mb-6">
           <h2 className="text-sm font-medium text-foreground mb-4">New Idea</h2>
-          <Form method="post" className="grid grid-cols-1 gap-4 sm:grid-cols-2" onSubmit={() => setShowNewIdea(false)}>
+          <ideaFetcher.Form method="post" className="grid grid-cols-1 gap-4 sm:grid-cols-2" onSubmit={() => setShowNewIdea(false)}>
             <input type="hidden" name="intent" value="create-idea" />
             <input
               name="title"
@@ -338,7 +370,7 @@ export default function ContentPlanner() {
             >
               Add Idea
             </button>
-          </Form>
+          </ideaFetcher.Form>
         </div>
       )}
 
@@ -447,7 +479,7 @@ export default function ContentPlanner() {
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                Posts ({(schedule as any[]).length})
+                Posts ({displaySchedule.length})
               </button>
               <button
                 onClick={() => setActiveTab('ideas')}
@@ -457,7 +489,7 @@ export default function ContentPlanner() {
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                Ideas ({(ideas as any[]).length})
+                Ideas ({displayIdeas.length})
               </button>
             </div>
           </div>
@@ -465,13 +497,13 @@ export default function ContentPlanner() {
           <div className="flex-1 overflow-y-auto">
             {activeTab === 'schedule' && (
               <div className="divide-y divide-border">
-                {(schedule as any[]).length === 0 && (
+                {displaySchedule.length === 0 && (
                   <p className="px-4 py-8 text-center text-xs text-muted-foreground">
                     No posts yet.
                   </p>
                 )}
-                {(schedule as any[]).map((entry: any) => (
-                  <div key={entry.id} onClick={() => setEditingPost(entry)} className="px-4 py-3 hover:bg-muted/10 transition-colors cursor-pointer">
+                {displaySchedule.map((entry: any) => (
+                  <div key={entry.id} onClick={() => entry.id !== '__optimistic_post__' && setEditingPost(entry)} className={`px-4 py-3 transition-colors ${entry.id === '__optimistic_post__' ? 'opacity-50' : 'hover:bg-muted/10 cursor-pointer'}`}>
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <p className="text-sm text-foreground truncate">{entry.topic || 'Untitled'}</p>
@@ -493,13 +525,13 @@ export default function ContentPlanner() {
 
             {activeTab === 'ideas' && (
               <div className="divide-y divide-border">
-                {(ideas as any[]).length === 0 && (
+                {displayIdeas.length === 0 && (
                   <p className="px-4 py-8 text-center text-xs text-muted-foreground">
                     No ideas yet.
                   </p>
                 )}
-                {(ideas as any[]).map((idea: any) => (
-                  <div key={idea.id} onClick={() => setEditingIdea(idea)} className="px-4 py-3 hover:bg-muted/10 transition-colors cursor-pointer">
+                {displayIdeas.map((idea: any) => (
+                  <div key={idea.id} onClick={() => idea.id !== '__optimistic_idea__' && setEditingIdea(idea)} className={`px-4 py-3 transition-colors ${idea.id === '__optimistic_idea__' ? 'opacity-50' : 'hover:bg-muted/10 cursor-pointer'}`}>
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <p className="text-sm text-foreground truncate">{idea.title}</p>
