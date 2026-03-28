@@ -2,7 +2,7 @@ import { Outlet, NavLink } from 'react-router'
 import type { LoaderFunctionArgs } from 'react-router'
 import { requireSession } from '~/lib/session.server'
 import { Sidebar, useSidebarState } from '~/components/sidebar'
-import { CalendarDays, BarChart2, CheckSquare, Activity } from 'lucide-react'
+import { CalendarDays, BarChart2, CheckSquare, Activity, Target, Landmark } from 'lucide-react'
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await requireSession(request)
@@ -12,8 +12,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 const MOBILE_NAV = [
   { to: '/content/planner', label: 'Planner', icon: CalendarDays },
   { to: '/content/metrics', label: 'Metrics', icon: BarChart2 },
-  { to: '/content/todos', label: 'To-Dos', icon: CheckSquare },
-  { to: '/business/saas', label: 'SaaS', icon: Activity },
+  { to: '/deals/buy-box', label: 'Buy Box', icon: Target },
+  { to: '/finance/private-wealth', label: 'Wealth', icon: Landmark },
 ]
 
 export default function ProtectedLayout() {

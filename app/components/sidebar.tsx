@@ -6,6 +6,9 @@ import {
   CheckSquare,
   Activity,
   LogOut,
+  Target,
+  Landmark,
+  GitMerge,
 } from 'lucide-react'
 
 const NAV = [
@@ -21,6 +24,19 @@ const NAV = [
     group: 'Business',
     links: [
       { to: '/business/saas', label: 'SaaS Health', icon: Activity },
+    ],
+  },
+  {
+    group: 'Deal Flow',
+    links: [
+      { to: '/deals/buy-box', label: 'Buy Box', icon: Target },
+      { to: '/deals/pipeline', label: 'Pipeline', icon: GitMerge },
+    ],
+  },
+  {
+    group: 'Finance',
+    links: [
+      { to: '/finance/private-wealth', label: 'Private Wealth', icon: Landmark },
     ],
   },
 ]

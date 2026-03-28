@@ -9,5 +9,8 @@ export default [
     route('content/metrics', 'routes/_protected.content.metrics.tsx'),
     route('content/todos', 'routes/_protected.content.todos.tsx'),
     route('business/saas', 'routes/_protected.business.saas.tsx'),
+    route('deals/buy-box', 'routes/_protected.deals.buy-box.tsx'),
+    route('deals/pipeline', 'routes/_protected.deals.pipeline.tsx'),
+    route('finance/private-wealth', 'routes/_protected.finance.private-wealth.tsx'),
   ]),
 ] satisfies RouteConfig
