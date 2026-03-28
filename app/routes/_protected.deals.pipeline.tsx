@@ -22,9 +22,10 @@ const STATUS_COLORS: Record<string, string> = {
   Contacted: 'badge-info',
   'In Diligence': 'badge-warning',
   Passed: 'badge-ghost',
+  Rejected: 'badge-error',
 }
 
-const STATUSES = ['Watching', 'Contacted', 'In Diligence', 'Passed']
+const STATUSES = ['Watching', 'Contacted', 'In Diligence', 'Passed', 'Rejected']
 
 const EMPTY_DEAL = {
   name: '',
