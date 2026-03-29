@@ -344,11 +344,14 @@ export default function ContentPlanner() {
               required
               className="sm:col-span-2 bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
-            <input
+            <select
               name="format"
-              placeholder="Format (thread, article, video…)"
+              defaultValue="Twitter Post"
               className="bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
+            >
+              <option value="Twitter Post">Twitter Post</option>
+              <option value="Blog Post">Blog Post</option>
+            </select>
             <select
               name="status"
               className="bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
