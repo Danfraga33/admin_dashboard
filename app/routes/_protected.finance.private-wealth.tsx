@@ -13,6 +13,7 @@ interface Lender {
   terms: string
   min_withdraw: string
   restrictions: string
+  notes: string
 }
 
 const EMPTY_LENDER = {
@@ -23,6 +24,7 @@ const EMPTY_LENDER = {
   terms: '',
   min_withdraw: '',
   restrictions: '',
+  notes: '',
 }
 
 type ModalMode = 'view' | 'edit' | 'add' | 'confirm-delete'
@@ -89,6 +91,7 @@ export async function action({ request }: ActionFunctionArgs) {
       terms: String(formData.get('terms') || ''),
       min_withdraw: String(formData.get('min_withdraw') || ''),
       restrictions: String(formData.get('restrictions') || ''),
+      notes: String(formData.get('notes') || ''),
     })
   }
 
@@ -101,6 +104,7 @@ export async function action({ request }: ActionFunctionArgs) {
       terms: String(formData.get('terms') || ''),
       min_withdraw: String(formData.get('min_withdraw') || ''),
       restrictions: String(formData.get('restrictions') || ''),
+      notes: String(formData.get('notes') || ''),
     }).eq('id', String(formData.get('id')))
   }
 
@@ -143,6 +147,7 @@ export default function PrivateWealth() {
             terms: String(pending.get('terms') || l.terms),
             min_withdraw: String(pending.get('min_withdraw') || l.min_withdraw),
             restrictions: String(pending.get('restrictions') || l.restrictions),
+            notes: String(pending.get('notes') || l.notes),
           }
         : l
     )
@@ -158,6 +163,7 @@ export default function PrivateWealth() {
       terms: String(pending.get('terms') || ''),
       min_withdraw: String(pending.get('min_withdraw') || ''),
       restrictions: String(pending.get('restrictions') || ''),
+      notes: String(pending.get('notes') || ''),
     }
     liveLenders = [...liveLenders, optimistic]
   }
@@ -177,6 +183,7 @@ export default function PrivateWealth() {
       terms: lender.terms,
       min_withdraw: stripToDigits(lender.min_withdraw),
       restrictions: lender.restrictions,
+      notes: lender.notes,
     })
     setMode('edit')
   }
@@ -201,6 +208,7 @@ export default function PrivateWealth() {
       terms: draft.terms,
       min_withdraw: formatCurrency(draft.min_withdraw),
       restrictions: draft.restrictions,
+      notes: draft.notes,
     }
 
     const fd = new FormData()
@@ -217,6 +225,7 @@ export default function PrivateWealth() {
     fd.set('terms', formatted.terms)
     fd.set('min_withdraw', formatted.min_withdraw)
     fd.set('restrictions', formatted.restrictions)
+    fd.set('notes', formatted.notes)
     fetcher.submit(fd, { method: 'post' })
     closeModal()
   }
@@ -300,6 +309,7 @@ export default function PrivateWealth() {
                 <div className="divider my-0 before:bg-border after:bg-border" />
                 <DetailRow label="Min Withdraw Amount" value={selected.min_withdraw} />
                 <DetailRow label="Restrictions" value={selected.restrictions} long />
+                {selected.notes && (<><div className="divider my-0 before:bg-border after:bg-border" /><DetailRow label="Notes" value={selected.notes} long /></>)}
               </div>
               <div className="modal-action">
                 <button type="button" onClick={() => setMode('confirm-delete')} className="btn btn-sm btn-ghost text-error hover:bg-error/10 mr-auto"><Trash2 size={14} />Delete</button>
@@ -325,6 +335,7 @@ export default function PrivateWealth() {
                 <div className="divider my-0 before:bg-border after:bg-border" />
                 <Field label="Min Withdraw Amount" value={draft.min_withdraw} onChange={(v) => setDraft((d) => ({ ...d, min_withdraw: v }))} placeholder="e.g. 500000" prefix="$" />
                 <Field label="Restrictions" value={draft.restrictions} onChange={(v) => setDraft((d) => ({ ...d, restrictions: v }))} multiline />
+                <Field label="Notes" value={draft.notes} onChange={(v) => setDraft((d) => ({ ...d, notes: v }))} multiline />
               </div>
               <div className="modal-action">
                 <button type="button" onClick={closeModal} className="btn btn-sm bg-secondary text-secondary-foreground border-border hover:bg-secondary/80">Cancel</button>
