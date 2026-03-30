@@ -12,5 +12,6 @@ export default [
     route('deals/buy-box', 'routes/_protected.deals.buy-box.tsx'),
     route('deals/pipeline', 'routes/_protected.deals.pipeline.tsx'),
     route('finance/private-wealth', 'routes/_protected.finance.private-wealth.tsx'),
+    route('finance/flowchart', 'routes/_protected.finance.flowchart.tsx'),
   ]),
 ] satisfies RouteConfig

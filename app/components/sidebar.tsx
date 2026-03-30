@@ -9,6 +9,7 @@ import {
   Target,
   Landmark,
   GitMerge,
+  Network,
 } from 'lucide-react'
 
 const NAV = [
@@ -37,6 +38,7 @@ const NAV = [
     group: 'Finance',
     links: [
       { to: '/finance/private-wealth', label: 'Private Wealth', icon: Landmark },
+      { to: '/finance/flowchart', label: 'Flowchart', icon: Network },
     ],
   },
 ]

@@ -85,3 +85,23 @@
     @apply bg-background text-foreground font-sans;
   }
 }
+
+/* Make 'wide' nodes physically wider after Mermaid renders */
+[id^="mermaid-"] .node.wide rect.label-container {
+  width: 360px !important; /* or 400px if you want */
+}
+
+/* Optional: center the text better */
+[id^="mermaid-"] .node.wide foreignObject {
+  width: 360px !important;
+}
+
+#mermaid-optimal .nodeLabel div,
+#mermaid-optimal .nodeLabel {
+  max-width: 320px !important;  
+  white-space: normal !important;
+}
+
+#mermaid-optimal foreignObject {
+  width: 340px !important;
+}
