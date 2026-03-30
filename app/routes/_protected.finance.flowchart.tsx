@@ -64,16 +64,14 @@ const CURRENT_BENEFITS = [
   'No corporate trustee or trust admin overhead',
 ]
 
-const OPTIMAL_BENEFITS = [
-  'Income splitting — distribute to lowest-taxed beneficiaries',
-  'Corporate tax cap at 25% via bucket company',
-  'Asset protection — trust assets separated from personal liability',
-  '50% CGT discount preserved for individuals on long-hold gains',
-  'Retained earnings compound inside company tax-free until distributed',
-  'Flexible year-to-year allocation before 30 June',
-  'Div 7A loan pathway for CGT-sensitive investments',
-  'Scalable — handles future acquisitions and revenue growth',
-]
+const OPTIMAL_BENEFITS = ['Asset protection: investments held in the trust are separated from personal creditors and relationship risk',
+  'Future income splitting: trustee can distribute income and gains to future spouse, children or related companies on lower tax rates',
+  'CGT flexibility: capital gains can be streamed to individuals so they can use the 50% CGT discount on assets held more than 12 months',
+  'Business risk isolation: an operating Pty runs the business while the trust owns the shares and investment portfolio behind a corporate veil',
+  'Year-by-year tuning: each 30 June the trustee can adjust who receives income based on that year’s tax positions',
+  'Bucket company option: later, overflow income the family cannot absorb personally can be capped at the 25% company tax rate via a corporate beneficiary',
+  'Succession and estate planning: control of trust wealth can pass via appointor/trustee changes without moving assets or going through probate',
+  'Scalable platform: the structure can add new businesses, investments and beneficiaries over time without needing to be rebuilt',]
 
 function MermaidDiagram({ chart, id }: { chart: string; id: string }) {
   const ref = useRef<HTMLDivElement>(null)
