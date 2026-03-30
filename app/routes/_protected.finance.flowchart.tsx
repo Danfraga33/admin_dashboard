@@ -28,18 +28,18 @@ const CURRENT_CHART = `flowchart TD
     ME -->|owns| PTY["FragaVentures PTY LTD\n(Australian Entity)"]
     ME -->|owns| LLC["FragaVentures LLC\n(US Entity)"]`
 const OPTIMAL_CHART = `flowchart TD
-BIZ["SaaS Business Revenue
+BIZ["Fragaventures Pty Ltd (Operating Entity)
 Will earn operating profit
 Will pay tax in operating entity"]
 
 subgraph TRUST_LAYER["DISCRETIONARY TRUST STRUCTURE"]
 direction TB
-CT["Corporate Trustee Pty Ltd
+CT["Fraga Corporate Pty Ltd (Trustee)
 Will act as legal face of trust
 Will sign contracts and open accounts
 Holds no assets itself"]
 
-DT["Discretionary Trust
+DT["Fraga Investment Trust (Investment Entity)
 Will own Operating Pty shares
 Will own investment accounts
 Will receive all profits and income
