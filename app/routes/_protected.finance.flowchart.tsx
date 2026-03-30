@@ -15,9 +15,9 @@ mermaid.initialize({
     fontSize: '13px',
   },
   flowchart: {
-    useMaxWidth: false,   // allow SVG to be wider than container
-    nodeSpacing: 120,     // more horizontal gap between nodes
-    rankSpacing: 140,     // more vertical gap between rows
+    useMaxWidth: false,   
+    nodeSpacing: 120,     
+    rankSpacing: 140,     
   },
 })
 
@@ -30,7 +30,9 @@ const CURRENT_CHART = `flowchart TD
 const OPTIMAL_CHART = `flowchart TD
 BIZ["Fragaventures Pty Ltd (Operating Entity)
 Will earn operating profit
-Will pay tax in operating entity"]
+Will pay tax in operating entity
+Can pay dividends to trust
+Can retain earnings"]
 
 subgraph TRUST_LAYER["DISCRETIONARY TRUST STRUCTURE"]
 direction TB
