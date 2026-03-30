@@ -86,6 +86,12 @@ const CARDS: BuyBoxCard[] = [
     details: 'This is the primary post-acquisition operational lever.\n\nIf the product is priced at ceiling, then operational efficiency is the only upside \u2014 that\u2019s a grind. If it\u2019s priced at $200/mo but delivers $500/mo in value, that\u2019s a straightforward price increase.\n\nLook for: founder pricing (too low because they never tested higher), legacy plans with no increases, free tiers doing heavy lifting. These are all signals that revenue is sitting on the table.',
   },
   {
+    slug: 'async-first-ops',
+    title: 'Async-First Operations',
+    subtitle: 'Support and customer communication is ticket or email-based — no live phone or real-time response expected.',
+    details: 'Support and customer communication is ticket or email-based with no expectation of live phone or real-time response. The business operates without requiring same-timezone presence.\n\nThis is the baseline for managing a non-AU business from Australia, and keeps the operator model viable without a costly live support layer.',
+  },
+  {
     slug: 'founder-negligence',
     title: 'Founder Negligence',
     subtitle: 'If the improvements are obvious, why hasn\u2019t the founder done them?',
