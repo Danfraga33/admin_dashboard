@@ -59,6 +59,17 @@ Will buy long-hold stocks personally
 Assets here are not protected"]
 `;
 
+const ACTION_PLAN = [
+  "Keep FragaVentures Pty Ltd active and compliant (ASIC review + simple tax return each year).",
+  "Stop investing personally in stocks and ETFs, and instead invest via FragaVentures Pty Ltd to build up its cash balance for the acquisition.",
+  "Wait to set up the family trust and corporate trustee company until a specific acquisition is close or confirmed.",
+  "Once a deal is close, set up the corporate trustee Pty Ltd and the family discretionary trust with a broad beneficiary class.",
+  "After the trust exists, continue investing from your personal shares in FragaVentures Pty Ltd to the corporate trustee as trustee for the trust.",
+  "Use FragaVentures Pty Ltd (now owned by the trust) to buy and run the business.",
+  "Each year, work with your accountant on how much profit to retain in FragaVentures and how much to pay as dividends to the trust.",
+  "Each year before 30 June, have the trust resolve distributions of its income to you and family members as appropriate."
+]
+
 const CURRENT_BENEFITS = [
   'Simple to set up and maintain',
   'Low compliance costs',
@@ -153,9 +164,24 @@ export default function Flowchart() {
                 </li>
               ))}
             </ul>
+            </div>
+ <div className="rounded-xl border border-border bg-card p-6">
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-4">
+              Action Plan
+            </h3>
+<ol className="space-y-2 list-decimal list-inside">
+  {ACTION_PLAN.map((i, b) => (
+    <li
+      key={b}
+      className="text-sm text-foreground"
+    >
+      {i}
+    </li>
+  ))}
+</ol>
           </div>
+              </div>
         </div>
-      </div>
     </div>
   )
 }
