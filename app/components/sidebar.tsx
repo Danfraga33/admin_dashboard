@@ -10,6 +10,7 @@ import {
   Landmark,
   GitMerge,
   Network,
+  Receipt,
 } from 'lucide-react'
 
 const NAV = [
@@ -38,7 +39,9 @@ const NAV = [
     group: 'Finance',
     links: [
       { to: '/finance/private-wealth', label: 'Private Wealth', icon: Landmark },
-      { to: '/finance/flowchart', label: 'Flowchart', icon: Network },
+      { to: '/finance/flowchart', label: 'Structure Flowchart', icon: Network },
+      { to: '/finance/investment-flowchart', label: 'Investment Flowchart', icon: GitMerge },
+      { to: '/finance/accounting', label: 'Accounting', icon: Receipt },
     ],
   },
 ]

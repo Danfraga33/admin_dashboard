@@ -13,5 +13,7 @@ export default [
     route('deals/pipeline', 'routes/_protected.deals.pipeline.tsx'),
     route('finance/private-wealth', 'routes/_protected.finance.private-wealth.tsx'),
     route('finance/flowchart', 'routes/_protected.finance.flowchart.tsx'),
+    route('finance/investment-flowchart', 'routes/_protected.finance.investment-flowchart.tsx'),
+    route('finance/accounting', 'routes/_protected.finance.accounting.tsx'),
   ]),
 ] satisfies RouteConfig
