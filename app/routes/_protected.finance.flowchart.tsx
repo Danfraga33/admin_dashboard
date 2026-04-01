@@ -113,7 +113,7 @@ export default function Flowchart() {
   return (
     <div className="space-y-8">
       <h1 className="font-display text-4xl text-foreground">
-        Corporate Structure
+        Structure Flowchart
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
