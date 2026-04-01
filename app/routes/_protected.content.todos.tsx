@@ -4,6 +4,7 @@ import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router'
 import { requireSession } from '~/lib/session.server'
 import { StatusBadge } from '~/components/status-badge'
 
+
 export async function loader({ request }: LoaderFunctionArgs) {
   const { supabase, responseHeaders } = await requireSession(request)
   const { data: todos } = await supabase
@@ -36,6 +37,17 @@ export async function action({ request }: ActionFunctionArgs) {
     if (error) console.error('toggle-todo error:', error)
   }
 
+  if (intent === 'update') {
+    const id = String(formData.get('id'))
+    const { error } = await supabase.from('todos').update({
+      task: String(formData.get('task')),
+      description: String(formData.get('description') || '') || null,
+      priority: String(formData.get('priority') || 'medium'),
+      due_date: String(formData.get('due_date') || '') || null,
+    }).eq('id', id)
+    if (error) console.error('update-todo error:', error)
+  }
+
   if (intent === 'delete') {
     const { error } = await supabase.from('todos').delete().eq('id', String(formData.get('id')))
     if (error) console.error('delete-todo error:', error)
@@ -45,6 +57,69 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 function TodoModal({ todo, onClose }: { todo: any; onClose: () => void }) {
+  const [editing, setEditing] = useState(false)
+
+  if (editing) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+        onClick={onClose}
+      >
+        <div
+          className="bg-card border border-border rounded-lg p-8 w-full max-w-lg shadow-lg"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-display text-2xl text-foreground tracking-wide">Edit Task</h2>
+            <button
+              onClick={onClose}
+              className="text-xl text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+            >
+              ×
+            </button>
+          </div>
+          <Form method="post" className="grid grid-cols-3 gap-4" onSubmit={onClose}>
+            <input type="hidden" name="intent" value="update" />
+            <input type="hidden" name="id" value={todo.id} />
+            <input
+              name="task"
+              defaultValue={todo.task}
+              required
+              className="col-span-3 bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            <textarea
+              name="description"
+              defaultValue={todo.description ?? ''}
+              rows={3}
+              className="col-span-3 bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+            />
+            <select
+              name="priority"
+              defaultValue={todo.priority}
+              className="bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+            <input
+              name="due_date"
+              type="date"
+              defaultValue={todo.due_date ?? ''}
+              className="bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            <button
+              type="submit"
+              className="bg-primary text-primary-foreground rounded-md px-4 py-2.5 text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer"
+            >
+              Save
+            </button>
+          </Form>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
@@ -97,6 +172,12 @@ function TodoModal({ todo, onClose }: { todo: any; onClose: () => void }) {
               {todo.completed ? 'Mark Open' : 'Mark Complete'}
             </button>
           </Form>
+          <button
+            onClick={() => setEditing(true)}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          >
+            Edit
+          </button>
           <Form method="post">
             <input type="hidden" name="intent" value="delete" />
             <input type="hidden" name="id" value={todo.id} />
