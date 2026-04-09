@@ -30,3 +30,6 @@ SUPABASE_ANON_KEY=
 ```bash
 npm run build
 ```
+
+## Idea
+- AI Scraping Business for sale etc, therefore providing faster deal research.
