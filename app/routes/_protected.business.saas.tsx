@@ -20,10 +20,10 @@ export default function SaasHealth() {
   if (businesses.length === 0) {
     return (
       <div>
-        <h1 className="font-display text-4xl text-foreground mb-1 tracking-wide">SaaS Health</h1>
+        <h1 className="text-3xl sm:text-4xl font-semibold text-foreground mb-1">SaaS Health</h1>
         <p className="text-muted-foreground text-sm mb-10 leading-relaxed">Portfolio metrics per business.</p>
         <div className="bg-card border border-border rounded-lg p-14 text-center">
-          <p className="font-display text-xl text-foreground mb-2 tracking-wide">No businesses yet.</p>
+          <p className="text-xl font-semibold text-foreground mb-2">No businesses yet.</p>
           <p className="text-muted-foreground text-sm leading-relaxed">First acquisition will appear here once the deal closes.</p>
         </div>
       </div>
@@ -32,7 +32,7 @@ export default function SaasHealth() {
 
   return (
     <div>
-      <h1 className="font-display text-4xl text-foreground mb-1 tracking-wide">SaaS Health</h1>
+      <h1 className="text-3xl sm:text-4xl font-semibold text-foreground mb-1">SaaS Health</h1>
       <p className="text-muted-foreground text-sm mb-10 leading-relaxed">Portfolio metrics per business.</p>
 
       <div className="space-y-8">
@@ -45,7 +45,7 @@ export default function SaasHealth() {
           return (
             <div key={biz.id} className="bg-card border border-border rounded-lg p-6">
               <div className="mb-6">
-                <h2 className="font-display text-2xl text-foreground tracking-wide">{biz.name}</h2>
+                <h2 className="text-2xl font-semibold text-foreground">{biz.name}</h2>
                 {biz.acquired_at && (
                   <p className="text-[11px] text-muted-foreground uppercase tracking-widest mt-1">
                     Acquired {new Date(biz.acquired_at).toLocaleDateString()}
