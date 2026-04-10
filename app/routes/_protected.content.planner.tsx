@@ -120,13 +120,13 @@ function EditPostModal({ post, onClose }: { post: any; onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-card border border-border rounded-lg p-8 w-full max-w-md shadow-lg" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="font-display text-xl text-foreground">Edit Post</h2>
+          <h2 className="font-semibold text-xl text-foreground">Edit Post</h2>
           <button onClick={onClose} className="text-xl text-muted-foreground hover:text-foreground transition-colors cursor-pointer">×</button>
         </div>
         <Form method="post" className="grid grid-cols-2 gap-4" onSubmit={onClose}>
           <input type="hidden" name="intent" value="update-post" />
           <input type="hidden" name="id" value={post.id} />
-          <input name="post_date" type="date" required defaultValue={post.post_date} style={{ colorScheme: 'dark' }} className="bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+          <input name="post_date" type="date" required defaultValue={post.post_date} className="bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
           <input name="platform" placeholder="Platform" defaultValue={post.platform || ''} className="bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
           <input name="topic" placeholder="Topic" defaultValue={post.topic || ''} className="col-span-2 bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
           <select name="status" defaultValue={post.status} className="bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
@@ -153,7 +153,7 @@ function EditIdeaModal({ idea, onClose }: { idea: any; onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm" onClick={onClose}>
       <div className="bg-card border border-border rounded-lg p-8 w-full max-w-md shadow-lg" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="font-display text-xl text-foreground">Edit Idea</h2>
+          <h2 className="font-semibold text-xl text-foreground">Edit Idea</h2>
           <button onClick={onClose} className="text-xl text-muted-foreground hover:text-foreground transition-colors cursor-pointer">×</button>
         </div>
         <Form method="post" className="grid grid-cols-2 gap-4" onSubmit={onClose}>
@@ -176,7 +176,7 @@ function EditIdeaModal({ idea, onClose }: { idea: any; onClose: () => void }) {
             <input type="hidden" name="topic" value={idea.title} />
             <input type="hidden" name="platform" value={idea.format || ''} />
             <input type="hidden" name="status" value="scheduled" />
-            <input name="post_date" type="date" required style={{ colorScheme: 'dark' }} className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
+            <input name="post_date" type="date" required className="flex-1 bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring" />
             <button type="submit" className="bg-muted text-foreground rounded-md px-3 py-2 text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer">Schedule</button>
           </Form>
         </div>
@@ -271,19 +271,13 @@ export default function ContentPlanner() {
 
   return (
     <div>
-      <div className="flex flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-3xl sm:text-4xl text-foreground mb-1 tracking-wide">Content Planner</h1>
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            Plan, schedule, and track your content across platforms.
-          </p>
-        </div>
+      <div className="flex justify-end mb-4">
         <button
           onClick={() => {
             if (activeTab === 'schedule') setShowNewPost(!showNewPost)
             else setShowNewIdea(!showNewIdea)
           }}
-          className="bg-primary text-primary-foreground rounded-md px-4 py-2.5 text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer self-start sm:self-auto shrink-0"
+          className="bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer"
         >
           + New {activeTab === 'schedule' ? 'Post' : 'Idea'}
         </button>
@@ -300,7 +294,6 @@ export default function ContentPlanner() {
               type="date"
               required
               defaultValue={selectedDate || ''}
-              style={{ colorScheme: 'dark' }}
               className="bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <input
@@ -387,7 +380,7 @@ export default function ContentPlanner() {
               <button onClick={prevMonth} className="cursor-pointer text-muted-foreground hover:text-foreground transition-colors text-lg">
                 &lsaquo;
               </button>
-              <h2 className="font-display text-lg text-foreground">
+              <h2 className="font-semibold text-lg text-foreground">
                 {MONTHS[currentMonth]} {currentYear}
               </h2>
               <button onClick={nextMonth} className="cursor-pointer text-muted-foreground hover:text-foreground transition-colors text-lg">
@@ -566,7 +559,7 @@ export default function ContentPlanner() {
 
       {/* Content Routine */}
       <div className="mt-10">
-        <h2 className="font-display text-xl text-foreground mb-1">Content Routine</h2>
+        <h2 className="font-semibold text-xl text-foreground mb-1">Content Routine</h2>
         <p className="text-sm text-muted-foreground mb-6">Weekly posting cadence &amp; recurring tasks</p>
 
         {(() => {

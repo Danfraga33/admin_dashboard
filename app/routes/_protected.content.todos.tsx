@@ -70,7 +70,7 @@ function TodoModal({ todo, onClose }: { todo: any; onClose: () => void }) {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="font-display text-2xl text-foreground tracking-wide">Edit Task</h2>
+            <h2 className="font-semibold text-2xl text-foreground tracking-wide">Edit Task</h2>
             <button
               onClick={onClose}
               className="text-xl text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
@@ -131,7 +131,7 @@ function TodoModal({ todo, onClose }: { todo: any; onClose: () => void }) {
       >
         <div className="flex items-start justify-between mb-6">
           <div className="flex-1 min-w-0">
-            <h2 className="font-display text-2xl text-foreground tracking-wide">{todo.task}</h2>
+            <h2 className="font-semibold text-2xl text-foreground tracking-wide">{todo.task}</h2>
             <div className="flex items-center gap-3 mt-2">
               <StatusBadge status={todo.priority} />
               {todo.due_date && (
@@ -205,9 +205,6 @@ export default function Todos() {
 
   return (
     <div>
-      <h1 className="font-display text-4xl text-foreground mb-1 tracking-wide">To-Dos</h1>
-      <p className="text-muted-foreground text-sm mb-10 leading-relaxed">Tasks with priority and due date.</p>
-
       <div className="bg-card border border-border rounded-lg p-6 mb-10">
         <h2 className="text-sm font-medium text-foreground mb-5">New Task</h2>
         <Form method="post" className="grid grid-cols-3 gap-4">
