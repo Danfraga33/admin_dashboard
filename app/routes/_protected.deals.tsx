@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '~/components/ui/table'
-import { Target, Building2, Layers, MapPin, ArrowRight, Plus, Pencil, Trash2, X } from 'lucide-react'
+import { Target, Building2, Layers, MapPin, ArrowRight, Plus, Pencil, Trash2, X, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
 import { cn } from '~/lib/utils'
 
 /* ── Types ───────────────────────────────────────────────────────── */
@@ -165,6 +165,24 @@ export default function DealsLanding() {
   const [modalMode, setModalMode] = useState<ModalMode>('view')
   const [selected, setSelected] = useState<Vertical | null>(null)
   const [draft, setDraft] = useState<Omit<Vertical, 'id'>>(EMPTY_VERTICAL)
+  const [sortCol, setSortCol] = useState<keyof Vertical | null>(null)
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+
+  function toggleSort(col: keyof Vertical) {
+    if (sortCol === col) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setSortCol(col)
+      setSortDir('asc')
+    }
+  }
+
+  function SortIcon({ col }: { col: keyof Vertical }) {
+    if (sortCol !== col) return <ChevronsUpDown size={12} className="ml-1 opacity-40" />
+    return sortDir === 'asc'
+      ? <ChevronUp size={12} className="ml-1 text-foreground" />
+      : <ChevronDown size={12} className="ml-1 text-foreground" />
+  }
 
   /* Optimistic updates */
   const pendingIntent = fetcher.formData?.get('intent') as string | null
@@ -172,9 +190,16 @@ export default function DealsLanding() {
 
   const liveVerticals: Vertical[] = verticals.filter((v) => v.id !== deletingId)
 
-  const filteredVerticals = verdictFilter === 'All'
-    ? liveVerticals
-    : liveVerticals.filter((v) => v.verdict === verdictFilter)
+  const filteredVerticals = (() => {
+    const base = verdictFilter === 'All' ? liveVerticals : liveVerticals.filter((v) => v.verdict === verdictFilter)
+    if (!sortCol) return base
+    return [...base].sort((a, b) => {
+      const av = a[sortCol] ?? ''
+      const bv = b[sortCol] ?? ''
+      const cmp = String(av).localeCompare(String(bv), undefined, { sensitivity: 'base' })
+      return sortDir === 'asc' ? cmp : -cmp
+    })
+  })()
 
   /* Modal helpers */
   function openAdd() {
@@ -341,15 +366,29 @@ export default function DealsLanding() {
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="pl-5 min-w-[220px]">Vertical</TableHead>
-                    <TableHead className="min-w-[100px]">Verdict</TableHead>
-                    <TableHead className="min-w-[120px]">Demand</TableHead>
-                    <TableHead className="min-w-[150px]">Recession</TableHead>
-                    <TableHead className="min-w-[100px]">Tech Risk</TableHead>
-                    <TableHead className="min-w-[100px]">Reg. Moat</TableHead>
-                    <TableHead className="min-w-[90px]">Gross %</TableHead>
-                    <TableHead className="min-w-[90px]">SDE %</TableHead>
-                    <TableHead className="min-w-[90px]">Multiple</TableHead>
+                    {(
+                      [
+                        { label: 'Vertical', col: 'name', cls: 'pl-5 min-w-[220px]' },
+                        { label: 'Verdict', col: 'verdict', cls: 'min-w-[100px]' },
+                        { label: 'Demand', col: 'demand_trajectory', cls: 'min-w-[120px]' },
+                        { label: 'Recession', col: 'recession_sensitivity', cls: 'min-w-[150px]' },
+                        { label: 'Tech Risk', col: 'tech_disruption_risk', cls: 'min-w-[100px]' },
+                        { label: 'Reg. Moat', col: 'regulatory_moat', cls: 'min-w-[100px]' },
+                        { label: 'Gross %', col: 'gross_margin', cls: 'min-w-[90px]' },
+                        { label: 'SDE %', col: 'sde_margin', cls: 'min-w-[90px]' },
+                        { label: 'Multiple', col: 'buy_multiple', cls: 'min-w-[90px]' },
+                      ] as { label: string; col: keyof Vertical; cls: string }[]
+                    ).map(({ label, col, cls }) => (
+                      <TableHead key={col} className={cls}>
+                        <button
+                          onClick={() => toggleSort(col)}
+                          className="flex items-center text-xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer select-none"
+                        >
+                          {label}
+                          <SortIcon col={col} />
+                        </button>
+                      </TableHead>
+                    ))}
                     <TableHead className="pr-5 w-16" />
                   </TableRow>
                 </TableHeader>
