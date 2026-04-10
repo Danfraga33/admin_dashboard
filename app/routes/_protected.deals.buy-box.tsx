@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { X } from 'lucide-react'
+import { Button } from '~/components/ui/button'
 
 interface BuyBoxCard {
   slug: string
@@ -104,9 +105,9 @@ export default function BuyBox() {
 
   return (
     <div>
-      <h1 className="font-display text-4xl text-foreground mb-1 tracking-wide">Buy Box</h1>
+      <h1 className="font-semibold text-4xl text-foreground mb-1 tracking-wide">Buy Box</h1>
       <p className="text-muted-foreground text-sm mb-10 leading-relaxed">
-        Acquisition criteria \u2014 what you\u2019re looking for and why.
+        Acquisition criteria — what you're looking for and why.
       </p>
 
       {/* Hero card — Market Opportunity (full width) */}
@@ -115,7 +116,7 @@ export default function BuyBox() {
         onClick={() => setSelected(CARDS[0])}
         className="cursor-pointer w-full text-left bg-card border border-primary/20 rounded-lg p-8 mb-6 transition-all hover:border-primary/40 hover:shadow-[0_0_24px_rgba(200,170,110,0.06)] group"
       >
-        <h2 className="font-display text-2xl text-foreground tracking-wide mb-3 group-hover:text-primary transition-colors">
+        <h2 className="font-semibold text-2xl text-foreground tracking-wide mb-3 group-hover:text-primary transition-colors">
           {CARDS[0].title}
         </h2>
         <p className="text-muted-foreground text-sm leading-relaxed mb-5 max-w-2xl">
@@ -142,10 +143,10 @@ export default function BuyBox() {
             type="button"
             onClick={() => setSelected(card)}
             className={`cursor-pointer text-left bg-card border border-border rounded-lg p-6 transition-all hover:border-primary/40 hover:shadow-[0_0_20px_rgba(200,170,110,0.06)] group flex flex-col ${
-              card.slug === 'deal-breakers' ? 'border-error/20 hover:border-error/40' : ''
+              card.slug === 'deal-breakers' ? 'border-destructive/20 hover:border-destructive/40' : ''
             }`}
           >
-            <h3 className="font-display text-lg text-foreground tracking-wide mb-2 group-hover:text-primary transition-colors leading-snug">
+            <h3 className="font-semibold text-lg text-foreground tracking-wide mb-2 group-hover:text-primary transition-colors leading-snug">
               {card.title}
             </h3>
             <p className="text-muted-foreground text-sm leading-relaxed mb-4 flex-1">
@@ -155,7 +156,7 @@ export default function BuyBox() {
               <ul className="space-y-1.5 mb-4">
                 {card.bullets.map((b, i) => (
                   <li key={i} className="flex items-start gap-2 text-sm">
-                    <span className={`mt-0.5 shrink-0 ${b.positive ? 'text-success' : 'text-error'}`}>
+                    <span className={`mt-0.5 shrink-0 ${b.positive ? 'text-success' : 'text-destructive'}`}>
                       {b.positive ? '\u2713' : '\u2717'}
                     </span>
                     <span className="text-foreground/80">{b.text}</span>
@@ -171,70 +172,66 @@ export default function BuyBox() {
       </div>
 
       {/* Detail modal */}
-      <dialog className={`modal ${selected ? 'modal-open' : ''}`}>
-        <div className="modal-box bg-card border border-border max-w-2xl">
-          {selected && (
-            <>
-              <div className="flex items-start justify-between mb-4">
-                <h3 className="font-display text-2xl text-foreground tracking-wide pr-8">
-                  {selected.title}
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setSelected(null)}
-                  className="btn btn-sm btn-ghost btn-circle text-muted-foreground hover:text-foreground shrink-0"
-                >
-                  <X size={18} />
-                </button>
-              </div>
+      {selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm" onClick={() => setSelected(null)}>
+          <div className="bg-card border border-border rounded-lg p-8 w-full max-w-2xl shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-4">
+              <h3 className="font-semibold text-2xl text-foreground tracking-wide pr-8">
+                {selected.title}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="p-1 hover:bg-muted rounded-full text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
 
-              <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-                {selected.subtitle}
-              </p>
+            <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+              {selected.subtitle}
+            </p>
 
-              {selected.bullets && (
-                <ul className="space-y-2 mb-6">
-                  {selected.bullets.map((b, i) => (
-                    <li key={i} className="flex items-start gap-2.5 text-sm">
-                      <span className={`mt-0.5 shrink-0 ${b.positive ? 'text-success' : 'text-error'}`}>
-                        {b.positive ? '\u2713' : '\u2717'}
-                      </span>
-                      <span className="text-foreground">{b.text}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              <div className="divider my-0 before:bg-border after:bg-border" />
-
-              <div className="mt-6 space-y-4">
-                {selected.details.split('\n\n').map((para, i) => (
-                  <p key={i} className="text-sm text-foreground/90 leading-relaxed">
-                    {para.startsWith('\u2022') ? (
-                      <span className="whitespace-pre-line">{para}</span>
-                    ) : (
-                      para
-                    )}
-                  </p>
+            {selected.bullets && (
+              <ul className="space-y-2 mb-6">
+                {selected.bullets.map((b, i) => (
+                  <li key={i} className="flex items-start gap-2.5 text-sm">
+                    <span className={`mt-0.5 shrink-0 ${b.positive ? 'text-success' : 'text-destructive'}`}>
+                      {b.positive ? '\u2713' : '\u2717'}
+                    </span>
+                    <span className="text-foreground">{b.text}</span>
+                  </li>
                 ))}
-              </div>
+              </ul>
+            )}
 
-              <div className="modal-action">
-                <button
-                  type="button"
-                  onClick={() => setSelected(null)}
-                  className="btn btn-sm bg-secondary text-secondary-foreground border-border hover:bg-secondary/80"
-                >
-                  Close
-                </button>
-              </div>
-            </>
-          )}
+            <div className="border-t border-border my-4" />
+
+            <div className="mt-6 space-y-4">
+              {selected.details.split('\n\n').map((para, i) => (
+                <p key={i} className="text-sm text-foreground/90 leading-relaxed">
+                  {para.startsWith('\u2022') ? (
+                    <span className="whitespace-pre-line">{para}</span>
+                  ) : (
+                    para
+                  )}
+                </p>
+              ))}
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => setSelected(null)}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
         </div>
-        <form method="dialog" className="modal-backdrop">
-          <button type="button" onClick={() => setSelected(null)}>close</button>
-        </form>
-      </dialog>
+      )}
     </div>
   )
 }
