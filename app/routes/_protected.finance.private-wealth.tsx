@@ -3,6 +3,7 @@ import { useLoaderData, useFetcher } from 'react-router'
 import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router'
 import { requireSession } from '~/lib/session.server'
 import { X, Pencil, Trash2, Plus } from 'lucide-react'
+import { Button } from '~/components/ui/button'
 
 interface Lender {
   id: string
@@ -245,15 +246,15 @@ export default function PrivateWealth() {
     <div>
       <div className="flex items-start justify-between mb-10">
         <div>
-          <h1 className="font-display text-4xl text-foreground mb-1 tracking-wide">Private Wealth</h1>
+          <h1 className="font-semibold text-4xl text-foreground mb-1 tracking-wide">Private Wealth</h1>
           <p className="text-muted-foreground text-sm leading-relaxed">
             Lending facilities and margin products across private wealth providers.
           </p>
         </div>
-        <button type="button" onClick={openAdd} className="btn btn-sm gap-2 bg-primary text-primary-foreground border-0 hover:bg-primary/90">
+        <Button type="button" onClick={openAdd} size="sm" className="gap-2">
           <Plus size={15} />
           Add Lender
-        </button>
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -266,13 +267,13 @@ export default function PrivateWealth() {
             >
               {!isOptimistic && (
                 <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button type="button" onClick={() => openEdit(lender)} className="btn btn-xs btn-ghost btn-circle text-muted-foreground hover:text-foreground" title="Edit"><Pencil size={13} /></button>
-                  <button type="button" onClick={() => { setSelected(lender); setMode('confirm-delete') }} className="btn btn-xs btn-ghost btn-circle text-muted-foreground hover:text-error" title="Delete"><Trash2 size={13} /></button>
+                  <Button type="button" onClick={() => openEdit(lender)} variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground" title="Edit"><Pencil size={13} /></Button>
+                  <Button type="button" onClick={() => { setSelected(lender); setMode('confirm-delete') }} variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" title="Delete"><Trash2 size={13} /></Button>
                 </div>
               )}
               <button type="button" onClick={() => !isOptimistic && openView(lender)} className="w-full text-left cursor-pointer">
                 <div className="flex items-start justify-between gap-3 mb-4">
-                  <h3 className="font-display text-lg text-foreground tracking-wide leading-snug group-hover:text-primary transition-colors pr-12">{lender.name}</h3>
+                  <h3 className="font-semibold text-lg text-foreground tracking-wide leading-snug group-hover:text-primary transition-colors pr-12">{lender.name}</h3>
                 </div>
                 <div className="space-y-2">
                   <CardRow label="LVR Limit" value={lender.lvr_limit} />
@@ -286,78 +287,79 @@ export default function PrivateWealth() {
 
         {liveLenders.length === 0 && (
           <div className="col-span-full bg-card border border-border rounded-lg p-14 text-center">
-            <p className="font-display text-xl text-foreground mb-2 tracking-wide">No lenders yet.</p>
+            <p className="font-semibold text-xl text-foreground mb-2 tracking-wide">No lenders yet.</p>
             <p className="text-muted-foreground text-sm">Add your first private wealth provider above.</p>
           </div>
         )}
       </div>
 
       {/* Modal */}
-      <dialog className={`modal ${isOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box bg-card border border-border max-w-lg">
-          {mode === 'view' && selected && (
-            <>
-              <ModalHeader title={selected.name} onClose={closeModal} />
-              <div className="space-y-4">
-                <DetailRow label="Name" value={selected.name} />
-                <div className="divider my-0 before:bg-border after:bg-border" />
-                <DetailRow label="LVR Limit" value={selected.lvr_limit} />
-                <DetailRow label="LVR Min" value={selected.lvr_min} />
-                <div className="divider my-0 before:bg-border after:bg-border" />
-                <DetailRow label="Rates Approx" value={selected.rates_approx} />
-                <DetailRow label="Terms" value={selected.terms} />
-                <div className="divider my-0 before:bg-border after:bg-border" />
-                <DetailRow label="Min Withdraw Amount" value={selected.min_withdraw} />
-                <DetailRow label="Restrictions" value={selected.restrictions} long />
-                {selected.notes && (<><div className="divider my-0 before:bg-border after:bg-border" /><DetailRow label="Notes" value={selected.notes} long /></>)}
-              </div>
-              <div className="modal-action">
-                <button type="button" onClick={() => setMode('confirm-delete')} className="btn btn-sm btn-ghost text-error hover:bg-error/10 mr-auto"><Trash2 size={14} />Delete</button>
-                <button type="button" onClick={closeModal} className="btn btn-sm bg-secondary text-secondary-foreground border-border hover:bg-secondary/80">Close</button>
-                <button type="button" onClick={() => openEdit(selected)} className="btn btn-sm bg-primary text-primary-foreground border-0 hover:bg-primary/90"><Pencil size={14} />Edit</button>
-              </div>
-            </>
-          )}
-
-          {(mode === 'edit' || mode === 'add') && (
-            <>
-              <ModalHeader title={mode === 'add' ? 'Add Lender' : 'Edit Lender'} onClose={closeModal} />
-              <div className="space-y-4">
-                <Field label="Name" value={draft.name} onChange={(v) => setDraft((d) => ({ ...d, name: v }))} />
-                <div className="divider my-0 before:bg-border after:bg-border" />
-                <div className="grid grid-cols-2 gap-4">
-                  <Field label="LVR Limit" value={draft.lvr_limit} onChange={(v) => setDraft((d) => ({ ...d, lvr_limit: v }))} placeholder="e.g. 70" suffix="%" />
-                  <Field label="LVR Min" value={draft.lvr_min} onChange={(v) => setDraft((d) => ({ ...d, lvr_min: v }))} placeholder="e.g. 40" suffix="%" />
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm" onClick={closeModal}>
+          <div className="bg-card border border-border rounded-lg p-8 w-full max-w-lg shadow-lg" onClick={(e) => e.stopPropagation()}>
+            {mode === 'view' && selected && (
+              <>
+                <ModalHeader title={selected.name} onClose={closeModal} />
+                <div className="space-y-4">
+                  <DetailRow label="Name" value={selected.name} />
+                  <div className="border-t border-border my-4" />
+                  <DetailRow label="LVR Limit" value={selected.lvr_limit} />
+                  <DetailRow label="LVR Min" value={selected.lvr_min} />
+                  <div className="border-t border-border my-4" />
+                  <DetailRow label="Rates Approx" value={selected.rates_approx} />
+                  <DetailRow label="Terms" value={selected.terms} />
+                  <div className="border-t border-border my-4" />
+                  <DetailRow label="Min Withdraw Amount" value={selected.min_withdraw} />
+                  <DetailRow label="Restrictions" value={selected.restrictions} long />
+                  {selected.notes && (<><div className="border-t border-border my-4" /><DetailRow label="Notes" value={selected.notes} long /></>)}
                 </div>
-                <div className="divider my-0 before:bg-border after:bg-border" />
-                <Field label="Rates Approx" value={draft.rates_approx} onChange={(v) => setDraft((d) => ({ ...d, rates_approx: v }))} placeholder="e.g. 6.2 – 7.1" suffix='%' />
-                <Field label="Terms" value={draft.terms} onChange={(v) => setDraft((d) => ({ ...d, terms: v }))} />
-                <div className="divider my-0 before:bg-border after:bg-border" />
-                <Field label="Min Withdraw Amount" value={draft.min_withdraw} onChange={(v) => setDraft((d) => ({ ...d, min_withdraw: v }))} placeholder="e.g. 500000" prefix="$" />
-                <Field label="Restrictions" value={draft.restrictions} onChange={(v) => setDraft((d) => ({ ...d, restrictions: v }))} multiline />
-                <Field label="Notes" value={draft.notes} onChange={(v) => setDraft((d) => ({ ...d, notes: v }))} multiline />
-              </div>
-              <div className="modal-action">
-                <button type="button" onClick={closeModal} className="btn btn-sm bg-secondary text-secondary-foreground border-border hover:bg-secondary/80">Cancel</button>
-                <button type="button" onClick={submitSave} disabled={!draft.name.trim()} className="btn btn-sm bg-primary text-primary-foreground border-0 hover:bg-primary/90 disabled:opacity-40">{mode === 'add' ? 'Add Lender' : 'Save Changes'}</button>
-              </div>
-            </>
-          )}
+                <div className="flex justify-end gap-2 mt-6">
+                  <Button type="button" onClick={() => setMode('confirm-delete')} variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 mr-auto"><Trash2 size={14} />Delete</Button>
+                  <Button type="button" onClick={closeModal} variant="secondary" size="sm">Close</Button>
+                  <Button type="button" onClick={() => openEdit(selected)} size="sm"><Pencil size={14} />Edit</Button>
+                </div>
+              </>
+            )}
 
-          {mode === 'confirm-delete' && selected && (
-            <>
-              <ModalHeader title="Delete Lender" onClose={closeModal} />
-              <p className="text-sm text-muted-foreground leading-relaxed mb-2">Are you sure you want to remove <span className="text-foreground font-medium">{selected.name}</span>?</p>
-              <p className="text-xs text-muted-foreground">This cannot be undone.</p>
-              <div className="modal-action">
-                <button type="button" onClick={() => setMode('view')} className="btn btn-sm bg-secondary text-secondary-foreground border-border hover:bg-secondary/80">Cancel</button>
-                <button type="button" onClick={submitDelete} className="btn btn-sm bg-error text-white border-0 hover:bg-error/90">Delete</button>
-              </div>
-            </>
-          )}
+            {(mode === 'edit' || mode === 'add') && (
+              <>
+                <ModalHeader title={mode === 'add' ? 'Add Lender' : 'Edit Lender'} onClose={closeModal} />
+                <div className="space-y-4">
+                  <Field label="Name" value={draft.name} onChange={(v) => setDraft((d) => ({ ...d, name: v }))} />
+                  <div className="border-t border-border my-4" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <Field label="LVR Limit" value={draft.lvr_limit} onChange={(v) => setDraft((d) => ({ ...d, lvr_limit: v }))} placeholder="e.g. 70" suffix="%" />
+                    <Field label="LVR Min" value={draft.lvr_min} onChange={(v) => setDraft((d) => ({ ...d, lvr_min: v }))} placeholder="e.g. 40" suffix="%" />
+                  </div>
+                  <div className="border-t border-border my-4" />
+                  <Field label="Rates Approx" value={draft.rates_approx} onChange={(v) => setDraft((d) => ({ ...d, rates_approx: v }))} placeholder="e.g. 6.2 – 7.1" suffix='%' />
+                  <Field label="Terms" value={draft.terms} onChange={(v) => setDraft((d) => ({ ...d, terms: v }))} />
+                  <div className="border-t border-border my-4" />
+                  <Field label="Min Withdraw Amount" value={draft.min_withdraw} onChange={(v) => setDraft((d) => ({ ...d, min_withdraw: v }))} placeholder="e.g. 500000" prefix="$" />
+                  <Field label="Restrictions" value={draft.restrictions} onChange={(v) => setDraft((d) => ({ ...d, restrictions: v }))} multiline />
+                  <Field label="Notes" value={draft.notes} onChange={(v) => setDraft((d) => ({ ...d, notes: v }))} multiline />
+                </div>
+                <div className="flex justify-end gap-2 mt-6">
+                  <Button type="button" onClick={closeModal} variant="secondary" size="sm">Cancel</Button>
+                  <Button type="button" onClick={submitSave} disabled={!draft.name.trim()} size="sm">{mode === 'add' ? 'Add Lender' : 'Save Changes'}</Button>
+                </div>
+              </>
+            )}
+
+            {mode === 'confirm-delete' && selected && (
+              <>
+                <ModalHeader title="Delete Lender" onClose={closeModal} />
+                <p className="text-sm text-muted-foreground leading-relaxed mb-2">Are you sure you want to remove <span className="text-foreground font-medium">{selected.name}</span>?</p>
+                <p className="text-xs text-muted-foreground">This cannot be undone.</p>
+                <div className="flex justify-end gap-2 mt-6">
+                  <Button type="button" onClick={() => setMode('view')} variant="secondary" size="sm">Cancel</Button>
+                  <Button type="button" onClick={submitDelete} variant="destructive" size="sm">Delete</Button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
-        <form method="dialog" className="modal-backdrop"><button type="button" onClick={closeModal}>close</button></form>
-      </dialog>
+      )}
     </div>
   )
 }
@@ -365,8 +367,8 @@ export default function PrivateWealth() {
 function ModalHeader({ title, onClose }: { title: string; onClose: () => void }) {
   return (
     <div className="flex items-start justify-between mb-6">
-      <h3 className="font-display text-2xl text-foreground tracking-wide">{title}</h3>
-      <button type="button" onClick={onClose} className="btn btn-sm btn-ghost btn-circle text-muted-foreground hover:text-foreground"><X size={18} /></button>
+      <h3 className="font-semibold text-2xl text-foreground tracking-wide">{title}</h3>
+      <Button type="button" onClick={onClose} variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground"><X size={18} /></Button>
     </div>
   )
 }

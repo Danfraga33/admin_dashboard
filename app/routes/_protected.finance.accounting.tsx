@@ -3,15 +3,17 @@ import { useLoaderData, useFetcher } from 'react-router'
 import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router'
 import { requireSession } from '~/lib/session.server'
 import { X, Pencil, Trash2, Plus } from 'lucide-react'
+import { Button } from '~/components/ui/button'
+import { Badge } from '~/components/ui/badge'
 
 type AccountStatus = 'Active' | 'Inactive' | 'Under Review'
 
 const STATUSES: AccountStatus[] = ['Active', 'Inactive', 'Under Review']
 
-const STATUS_BADGE: Record<AccountStatus, string> = {
-  Active: 'badge-success',
-  Inactive: 'badge-neutral',
-  'Under Review': 'badge-warning',
+const STATUS_BADGE_CLASS: Record<AccountStatus, string> = {
+  Active: 'bg-emerald-500/15 text-emerald-700 border-emerald-500/20 dark:text-emerald-400',
+  Inactive: 'bg-secondary text-secondary-foreground border-border',
+  'Under Review': 'bg-amber-500/15 text-amber-700 border-amber-500/20 dark:text-amber-400',
 }
 
 interface Account {
@@ -244,11 +246,11 @@ export default function Accounting() {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-4xl text-foreground">Accounting</h1>
-        <button onClick={openAdd} className="btn btn-primary btn-sm gap-2">
+        <h1 className="font-semibold text-4xl text-foreground">Accounting</h1>
+        <Button onClick={openAdd} size="sm" className="gap-2">
           <Plus size={15} />
           Add Account
-        </button>
+        </Button>
       </div>
 
       {visibleAccounts.length === 0 ? (
@@ -265,9 +267,9 @@ export default function Accounting() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-medium text-foreground truncate">{account.name}</h3>
-                    <span className={`badge badge-sm p-2 ${STATUS_BADGE[account.status] ?? 'badge-neutral'}`}>
+                    <Badge variant="outline" className={STATUS_BADGE_CLASS[account.status] ?? ''}>
                       {account.status}
-                    </span>
+                    </Badge>
                   </div>
                   {account.description && (
                     <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
@@ -279,20 +281,23 @@ export default function Accounting() {
                   className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <button
+                  <Button
                     onClick={() => openEdit(account)}
-                    className="btn btn-ghost btn-xs p-1"
+                    variant="ghost"
+                    size="icon-sm"
                     title="Edit"
                   >
                     <Pencil size={13} />
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={() => confirmDelete(account)}
-                    className="btn btn-ghost btn-xs p-1 text-error"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="text-destructive"
                     title="Delete"
                   >
                     <Trash2 size={13} />
-                  </button>
+                  </Button>
                 </div>
               </div>
               {(account.annual_price || account.monthly_price) && (
@@ -317,194 +322,195 @@ export default function Accounting() {
       )}
 
       {/* Modal */}
-      <dialog className={`modal ${isModalOpen ? 'modal-open' : ''}`}>
-        <div className="modal-box max-w-lg">
-          {/* VIEW */}
-          {mode === 'view' && selected && (
-            <>
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <h3 className="font-display text-2xl text-foreground">{selected.name}</h3>
-                  <span className={`badge ${STATUS_BADGE[selected.status] ?? 'badge-neutral'}`}>
-                    {selected.status}
-                  </span>
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm" onClick={closeModal}>
+          <div className="bg-card border border-border rounded-lg p-8 w-full max-w-lg shadow-lg" onClick={(e) => e.stopPropagation()}>
+            {/* VIEW */}
+            {mode === 'view' && selected && (
+              <>
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h3 className="font-semibold text-2xl text-foreground">{selected.name}</h3>
+                    <Badge variant="outline" className={STATUS_BADGE_CLASS[selected.status] ?? ''}>
+                      {selected.status}
+                    </Badge>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button onClick={() => openEdit(selected)} variant="ghost" size="sm" className="gap-1">
+                      <Pencil size={14} /> Edit
+                    </Button>
+                    <Button onClick={closeModal} variant="ghost" size="icon-sm">
+                      <X size={16} />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-2 shrink-0">
-                  <button onClick={() => openEdit(selected)} className="btn btn-ghost btn-sm gap-1">
-                    <Pencil size={14} /> Edit
-                  </button>
-                  <button onClick={closeModal} className="btn btn-ghost btn-sm btn-circle">
+                <dl className="space-y-4">
+                  {selected.description && (
+                    <div>
+                      <dt className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Description</dt>
+                      <dd className="text-sm text-foreground">{selected.description}</dd>
+                    </div>
+                  )}
+                  {selected.focus && (
+                    <div>
+                      <dt className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Focus</dt>
+                      <dd className="text-sm text-foreground">{selected.focus}</dd>
+                    </div>
+                  )}
+                  {selected.annual_price && (
+                    <div>
+                      <dt className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Annual Price</dt>
+                      <dd className="text-sm text-foreground">{selected.annual_price}</dd>
+                    </div>
+                  )}
+                  {selected.monthly_price && (
+                    <div>
+                      <dt className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Monthly Price</dt>
+                      <dd className="text-sm text-foreground">{selected.monthly_price}</dd>
+                    </div>
+                  )}
+                  {selected.contact_name && (
+                    <div>
+                      <dt className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Point of Contact</dt>
+                      <dd className="text-sm text-foreground">{selected.contact_name}</dd>
+                    </div>
+                  )}
+                  {selected.notes && (
+                    <div>
+                      <dt className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Notes</dt>
+                      <dd className="text-sm text-foreground whitespace-pre-wrap">{selected.notes}</dd>
+                    </div>
+                  )}
+                </dl>
+              </>
+            )}
+
+            {/* EDIT / ADD */}
+            {(mode === 'edit' || mode === 'add') && (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="font-semibold text-xl text-foreground">
+                    {mode === 'add' ? 'Add Account' : 'Edit Account'}
+                  </h3>
+                  <Button onClick={closeModal} variant="ghost" size="icon-sm">
                     <X size={16} />
-                  </button>
+                  </Button>
                 </div>
-              </div>
-              <dl className="space-y-4">
-                {selected.description && (
+                <div className="space-y-4">
                   <div>
-                    <dt className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Description</dt>
-                    <dd className="text-sm text-foreground">{selected.description}</dd>
+                    <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-1">Name</label>
+                    <input
+                      className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+                      value={draft.name}
+                      onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                      placeholder="e.g. USGLOBALTAX"
+                    />
                   </div>
-                )}
-                {selected.focus && (
                   <div>
-                    <dt className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Focus</dt>
-                    <dd className="text-sm text-foreground">{selected.focus}</dd>
+                    <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-1">Description</label>
+                    <input
+                      className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+                      value={draft.description}
+                      onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+                      placeholder="Short description"
+                    />
                   </div>
-                )}
-                {selected.annual_price && (
                   <div>
-                    <dt className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Annual Price</dt>
-                    <dd className="text-sm text-foreground">{selected.annual_price}</dd>
+                    <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-1">Focus</label>
+                    <input
+                      className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+                      value={draft.focus}
+                      onChange={(e) => setDraft({ ...draft, focus: e.target.value })}
+                      placeholder="e.g. US Tax Compliance"
+                    />
                   </div>
-                )}
-                {selected.monthly_price && (
-                  <div>
-                    <dt className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Monthly Price</dt>
-                    <dd className="text-sm text-foreground">{selected.monthly_price}</dd>
-                  </div>
-                )}
-                {selected.contact_name && (
-                  <div>
-                    <dt className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Point of Contact</dt>
-                    <dd className="text-sm text-foreground">{selected.contact_name}</dd>
-                  </div>
-                )}
-                {selected.notes && (
-                  <div>
-                    <dt className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Notes</dt>
-                    <dd className="text-sm text-foreground whitespace-pre-wrap">{selected.notes}</dd>
-                  </div>
-                )}
-              </dl>
-            </>
-          )}
-
-          {/* EDIT / ADD */}
-          {(mode === 'edit' || mode === 'add') && (
-            <>
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-display text-xl text-foreground">
-                  {mode === 'add' ? 'Add Account' : 'Edit Account'}
-                </h3>
-                <button onClick={closeModal} className="btn btn-ghost btn-sm btn-circle">
-                  <X size={16} />
-                </button>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-1">Name</label>
-                  <input
-                    className="input input-bordered w-full text-sm"
-                    value={draft.name}
-                    onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                    placeholder="e.g. USGLOBALTAX"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-1">Description</label>
-                  <input
-                    className="input input-bordered w-full text-sm"
-                    value={draft.description}
-                    onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-                    placeholder="Short description"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-1">Focus</label>
-                  <input
-                    className="input input-bordered w-full text-sm"
-                    value={draft.focus}
-                    onChange={(e) => setDraft({ ...draft, focus: e.target.value })}
-                    placeholder="e.g. US Tax Compliance"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-1">Annual Price</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
-                      <input
-                        className="input input-bordered w-full text-sm pl-7"
-                        value={draft.annual_price}
-                        onChange={(e) => setDraft({ ...draft, annual_price: stripToDigits(e.target.value) })}
-                        placeholder="0"
-                      />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-1">Annual Price</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                        <input
+                          className="w-full bg-input border border-border rounded-md pl-7 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+                          value={draft.annual_price}
+                          onChange={(e) => setDraft({ ...draft, annual_price: stripToDigits(e.target.value) })}
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-1">Monthly Price</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                        <input
+                          className="w-full bg-input border border-border rounded-md pl-7 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+                          value={draft.monthly_price}
+                          onChange={(e) => setDraft({ ...draft, monthly_price: stripToDigits(e.target.value) })}
+                          placeholder="0"
+                        />
+                      </div>
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-1">Monthly Price</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
-                      <input
-                        className="input input-bordered w-full text-sm pl-7"
-                        value={draft.monthly_price}
-                        onChange={(e) => setDraft({ ...draft, monthly_price: stripToDigits(e.target.value) })}
-                        placeholder="0"
-                      />
-                    </div>
+                    <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-1">Point of Contact</label>
+                    <input
+                      className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+                      value={draft.contact_name}
+                      onChange={(e) => setDraft({ ...draft, contact_name: e.target.value })}
+                      placeholder="e.g. John Smith"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-1">Status</label>
+                    <select
+                      className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                      value={draft.status}
+                      onChange={(e) => setDraft({ ...draft, status: e.target.value as AccountStatus })}
+                    >
+                      {STATUSES.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-1">Notes</label>
+                    <textarea
+                      className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+                      rows={3}
+                      value={draft.notes}
+                      onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
+                      placeholder="Any additional notes"
+                    />
                   </div>
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-1">Point of Contact</label>
-                  <input
-                    className="input input-bordered w-full text-sm"
-                    value={draft.contact_name}
-                    onChange={(e) => setDraft({ ...draft, contact_name: e.target.value })}
-                    placeholder="e.g. John Smith"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-1">Status</label>
-                  <select
-                    className="select select-bordered w-full text-sm"
-                    value={draft.status}
-                    onChange={(e) => setDraft({ ...draft, status: e.target.value as AccountStatus })}
+                <div className="flex justify-end gap-2 mt-6">
+                  <Button onClick={closeModal} variant="ghost" size="sm">Cancel</Button>
+                  <Button
+                    onClick={mode === 'add' ? submitAdd : submitEdit}
+                    size="sm"
+                    disabled={!draft.name.trim()}
                   >
-                    {STATUSES.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
+                    {mode === 'add' ? 'Add' : 'Save'}
+                  </Button>
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground uppercase tracking-widest block mb-1">Notes</label>
-                  <textarea
-                    className="textarea textarea-bordered w-full text-sm"
-                    rows={3}
-                    value={draft.notes}
-                    onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
-                    placeholder="Any additional notes"
-                  />
-                </div>
-              </div>
-              <div className="modal-action">
-                <button onClick={closeModal} className="btn btn-ghost btn-sm">Cancel</button>
-                <button
-                  onClick={mode === 'add' ? submitAdd : submitEdit}
-                  className="btn btn-primary btn-sm"
-                  disabled={!draft.name.trim()}
-                >
-                  {mode === 'add' ? 'Add' : 'Save'}
-                </button>
-              </div>
-            </>
-          )}
+              </>
+            )}
 
-          {/* CONFIRM DELETE */}
-          {mode === 'confirm-delete' && selected && (
-            <>
-              <h3 className="font-display text-xl text-foreground mb-4">Delete Account</h3>
-              <p className="text-sm text-muted-foreground mb-6">
-                Are you sure you want to delete <span className="text-foreground font-medium">{selected.name}</span>? This cannot be undone.
-              </p>
-              <div className="modal-action">
-                <button onClick={closeModal} className="btn btn-ghost btn-sm">Cancel</button>
-                <button onClick={submitDelete} className="btn btn-error btn-sm">Delete</button>
-              </div>
-            </>
-          )}
+            {/* CONFIRM DELETE */}
+            {mode === 'confirm-delete' && selected && (
+              <>
+                <h3 className="font-semibold text-xl text-foreground mb-4">Delete Account</h3>
+                <p className="text-sm text-muted-foreground mb-6">
+                  Are you sure you want to delete <span className="text-foreground font-medium">{selected.name}</span>? This cannot be undone.
+                </p>
+                <div className="flex justify-end gap-2 mt-6">
+                  <Button onClick={closeModal} variant="ghost" size="sm">Cancel</Button>
+                  <Button onClick={submitDelete} variant="destructive" size="sm">Delete</Button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
-        <div className="modal-backdrop" onClick={closeModal} />
-      </dialog>
+      )}
     </div>
   )
 }

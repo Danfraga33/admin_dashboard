@@ -1,25 +1,7 @@
 import { useEffect, useRef } from 'react'
 import mermaid from 'mermaid'
-
-mermaid.initialize({
-  startOnLoad: false,
-  theme: 'dark',
-  themeVariables: {
-    primaryColor: '#1e293b',
-    primaryTextColor: '#e2e8f0',
-    primaryBorderColor: '#475569',
-    lineColor: '#64748b',
-    secondaryColor: '#0f172a',
-    tertiaryColor: '#1e293b',
-    fontFamily: 'Geist Mono, monospace',
-    fontSize: '13px',
-  },
-  flowchart: {
-    useMaxWidth: false,
-    nodeSpacing: 120,
-    rankSpacing: 140,
-  },
-})
+import { useTheme } from '~/components/theme-provider'
+import { Card, CardHeader, CardTitle, CardContent } from '~/components/ui/card'
 
 const CURRENT_CHART = `flowchart TD
     A[Total Cash]
@@ -54,19 +36,53 @@ const OPTIMAL_BENEFITS = [
   'Individual — avoids catastrophic single-stock blow-ups with debt. Easier to hold through volatility without lender pressure. Keeps single stocks as pure equity, optional upside only.',
 ]
 
-function MermaidDiagram({ chart, id }: { chart: string; id: string }) {
+const LIGHT_THEME_VARIABLES = {
+  primaryColor: '#f1f5f9',
+  primaryTextColor: '#1e293b',
+  primaryBorderColor: '#cbd5e1',
+  lineColor: '#94a3b8',
+  secondaryColor: '#f8fafc',
+  tertiaryColor: '#f1f5f9',
+  fontFamily: 'Geist, sans-serif',
+  fontSize: '13px',
+}
+
+const DARK_THEME_VARIABLES = {
+  primaryColor: '#1e293b',
+  primaryTextColor: '#e2e8f0',
+  primaryBorderColor: '#475569',
+  lineColor: '#64748b',
+  secondaryColor: '#0f172a',
+  tertiaryColor: '#1e293b',
+  fontFamily: 'Geist, sans-serif',
+  fontSize: '13px',
+}
+
+function MermaidDiagram({ chart, id, theme }: { chart: string; id: string; theme: 'light' | 'dark' }) {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!ref.current) return
+
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: theme === 'dark' ? 'dark' : 'default',
+      themeVariables: theme === 'dark' ? DARK_THEME_VARIABLES : LIGHT_THEME_VARIABLES,
+      flowchart: {
+        useMaxWidth: false,
+        nodeSpacing: 120,
+        rankSpacing: 140,
+      },
+    })
+
     ref.current.innerHTML = ''
     mermaid
-      .render(`mermaid-inv-${id}`, chart)
+      .render(`mermaid-inv-${id}-${theme}`, chart)
       .then(({ svg }) => {
         if (ref.current) ref.current.innerHTML = svg
       })
       .catch(console.error)
-  }, [chart, id])
+  }, [chart, id, theme])
 
   return (
     <div
@@ -78,53 +94,60 @@ function MermaidDiagram({ chart, id }: { chart: string; id: string }) {
 }
 
 export default function InvestmentFlowchart() {
+  const { theme } = useTheme()
+
   return (
-    <div className="space-y-8">
-      <h1 className="font-display text-4xl text-foreground">Investment Flowchart</h1>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Current */}
-        <div className="space-y-6">
-          <h2 className="font-display text-2xl text-foreground">Current</h2>
-          <div className="rounded-xl border border-border bg-card p-6">
-            <MermaidDiagram chart={CURRENT_CHART} id="current" />
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-semibold text-4xl text-foreground">
+          Investment Flowchart
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Current */}
+          <div className="space-y-6">
+            <h2 className="font-semibold text-2xl text-foreground">Current</h2>
+            <div className="rounded-xl border border-border bg-card p-6">
+              <MermaidDiagram chart={CURRENT_CHART} id="current" theme={theme} />
+            </div>
+            <div className="rounded-xl border border-border bg-card p-6">
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-4">
+                Reasons
+              </h3>
+              <ul className="space-y-2">
+                {CURRENT_BENEFITS.map((b) => (
+                  <li key={b} className="flex items-start gap-2 text-sm text-foreground">
+                    <span className="text-muted-foreground mt-0.5 shrink-0">•</span>
+                    {b}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-4">
-              Reasons
-            </h3>
-            <ul className="space-y-2">
-              {CURRENT_BENEFITS.map((b) => (
-                <li key={b} className="flex items-start gap-2 text-sm text-foreground">
-                  <span className="text-muted-foreground mt-0.5 shrink-0">•</span>
-                  {b}
-                </li>
-              ))}
-            </ul>
+
+          {/* Optimal */}
+          <div className="space-y-6">
+            <h2 className="font-semibold text-2xl text-foreground">Optimal</h2>
+            <div className="rounded-xl border border-border bg-card p-6">
+              <MermaidDiagram chart={OPTIMAL_CHART} id="optimal" theme={theme} />
+            </div>
+            <div className="rounded-xl border border-border bg-card p-6">
+              <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-4">
+                Reasons
+              </h3>
+              <ul className="space-y-2">
+                {OPTIMAL_BENEFITS.map((b) => (
+                  <li key={b} className="flex items-start gap-2 text-sm text-foreground">
+                    <span className="text-muted-foreground mt-0.5 shrink-0">•</span>
+                    {b}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
-
-        {/* Optimal */}
-        <div className="space-y-6">
-          <h2 className="font-display text-2xl text-foreground">Optimal</h2>
-          <div className="rounded-xl border border-border bg-card p-6">
-            <MermaidDiagram chart={OPTIMAL_CHART} id="optimal" />
-          </div>
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-4">
-              Reasons
-            </h3>
-            <ul className="space-y-2">
-              {OPTIMAL_BENEFITS.map((b) => (
-                <li key={b} className="flex items-start gap-2 text-sm text-foreground">
-                  <span className="text-muted-foreground mt-0.5 shrink-0">•</span>
-                  {b}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }
