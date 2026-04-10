@@ -1,47 +1,65 @@
 import { useState, useEffect } from 'react'
-import { NavLink, Form } from 'react-router'
+import { NavLink, Form, useLocation } from 'react-router'
 import {
-  CalendarDays,
-  BarChart2,
-  CheckSquare,
-  Activity,
+  LayoutDashboard,
+  FileText,
+  TrendingUp,
+  DollarSign,
+  ChevronDown,
+  ChevronRight,
+  ChevronLeft,
   LogOut,
-  Target,
-  Landmark,
-  GitMerge,
-  Network,
-  Receipt,
+  CalendarDays,
+  CheckSquare,
 } from 'lucide-react'
+import { cn } from '~/lib/utils'
+import { Avatar, AvatarFallback } from '~/components/ui/avatar'
 
-const NAV = [
+interface NavItem {
+  label: string
+  icon?: React.ComponentType<{ className?: string }>
+  to?: string
+  children?: { label: string; to: string }[]
+}
+
+const navSections: { items: NavItem[] }[] = [
   {
-    group: 'Content',
-    links: [
-      { to: '/content/planner', label: 'Planner', icon: CalendarDays },
-      { to: '/content/metrics', label: 'X Metrics', icon: BarChart2 },
-      { to: '/content/todos', label: 'To-Dos', icon: CheckSquare },
+    items: [
+      {
+        label: 'Overview',
+        icon: LayoutDashboard,
+        to: '/',
+      },
     ],
   },
   {
-    group: 'Business',
-    links: [
-      { to: '/business/saas', label: 'SaaS Health', icon: Activity },
+    items: [
+      {
+        label: 'Content',
+        icon: FileText,
+        children: [
+          { label: 'Planner', to: '/content/planner' },
+          { label: 'To-dos', to: '/content/todos' },
+        ],
+      },
     ],
   },
   {
-    group: 'Deal Flow',
-    links: [
-      { to: '/deals/buy-box', label: 'Buy Box', icon: Target },
-      { to: '/deals/pipeline', label: 'Pipeline', icon: GitMerge },
+    items: [
+      {
+        label: 'Deal Flow',
+        icon: TrendingUp,
+        to: '/deals',
+      },
     ],
   },
   {
-    group: 'Finance',
-    links: [
-      { to: '/finance/private-wealth', label: 'Private Wealth', icon: Landmark },
-      { to: '/finance/flowchart', label: 'Structure Flowchart', icon: Network },
-      { to: '/finance/investment-flowchart', label: 'Investment Flowchart', icon: GitMerge },
-      { to: '/finance/accounting', label: 'Accounting', icon: Receipt },
+    items: [
+      {
+        label: 'Finance',
+        icon: DollarSign,
+        to: '/finance',
+      },
     ],
   },
 ]
@@ -52,87 +70,187 @@ interface SidebarProps {
 }
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+  const location = useLocation()
+  const [expandedItems, setExpandedItems] = useState<string[]>(['Content'])
+
+  // Auto-expand Content group when on a content route
+  useEffect(() => {
+    if (location.pathname.startsWith('/content') && !expandedItems.includes('Content')) {
+      setExpandedItems((prev) => [...prev, 'Content'])
+    }
+  }, [location.pathname])
+
+  const toggleExpanded = (label: string) => {
+    setExpandedItems((prev) =>
+      prev.includes(label) ? prev.filter((i) => i !== label) : [...prev, label]
+    )
+  }
+
+  function isItemActive(item: NavItem): boolean {
+    if (item.to) {
+      if (item.to === '/') return location.pathname === '/'
+      return location.pathname.startsWith(item.to)
+    }
+    if (item.children) {
+      return item.children.some((c) => location.pathname.startsWith(c.to))
+    }
+    return false
+  }
+
   return (
     <aside
-      className={`fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300 z-40 ${
-        collapsed ? 'w-[60px]' : 'w-[220px]'
-      }`}
+      className={cn(
+        'flex flex-col h-screen bg-background border-r border-border transition-all duration-300',
+        collapsed ? 'w-16' : 'w-64'
+      )}
     >
-      {/* Wordmark */}
-      <div className={`border-b border-sidebar-border flex items-center ${collapsed ? 'px-3 py-6 justify-center' : 'px-6 py-6'}`}>
-        <NavLink to="/" className="min-w-0 overflow-hidden">
-          {collapsed ? (
-            <span className="font-display text-lg text-primary leading-none block tracking-wide">F</span>
-          ) : (
-            <>
-              <span className="font-display text-xl text-primary leading-tight block tracking-wide whitespace-nowrap">
-                Fraga Ventures
-              </span>
-              <span className="text-[11px] text-muted-foreground tracking-widest uppercase mt-1 block whitespace-nowrap">
-                Ops Dashboard
-              </span>
-            </>
-          )}
-        </NavLink>
+      {/* Logo */}
+      <div className="flex items-center gap-3 px-4 py-5 border-b border-border">
+        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
+          <span className="text-primary-foreground font-bold text-sm">FV</span>
+        </div>
+        {!collapsed && (
+          <div className="flex flex-col">
+            <span className="font-semibold text-sm text-foreground">Fraga Ventures</span>
+            <span className="text-xs text-muted-foreground">Ops Dashboard</span>
+          </div>
+        )}
+        <button
+          onClick={onToggle}
+          className="ml-auto p-1 hover:bg-muted rounded-md transition-colors cursor-pointer"
+        >
+          <ChevronLeft
+            className={cn(
+              'w-4 h-4 text-muted-foreground transition-transform',
+              collapsed && 'rotate-180'
+            )}
+          />
+        </button>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-5 px-2">
-        {NAV.map(({ group, links }) => (
-          <div key={group} className="mb-7">
-            {!collapsed && (
-              <p className="px-3 mb-2 text-[11px] font-medium text-muted-foreground uppercase tracking-widest">
-                {group}
-              </p>
-            )}
-            {collapsed && <div className="mb-2 h-px bg-sidebar-border/50 mx-2" />}
+      {/* Main Navigation */}
+      <nav className="flex-1 overflow-y-auto py-4 px-3">
+        {navSections.map((section, sectionIdx) => (
+          <div key={sectionIdx} className="mb-2">
             <ul className="space-y-1">
-              {links.map(({ to, label, icon: Icon }) => (
-                <li key={to}>
-                  <NavLink
-                    to={to}
-                    title={collapsed ? label : undefined}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors cursor-pointer ${
-                        isActive
-                          ? 'bg-sidebar-accent text-primary font-medium'
-                          : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
-                      } ${collapsed ? 'justify-center' : ''}`
-                    }
-                  >
-                    <Icon size={17} className="shrink-0" />
-                    {!collapsed && <span className="text-[15px]">{label}</span>}
-                  </NavLink>
-                </li>
-              ))}
+              {section.items.map((item) => {
+                const Icon = item.icon
+                const isExpanded = expandedItems.includes(item.label)
+                const isActive = isItemActive(item)
+
+                return (
+                  <li key={item.label}>
+                    {item.to ? (
+                      <NavLink
+                        to={item.to}
+                        end={item.to === '/'}
+                        className={cn(
+                          'flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                          isActive
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                          collapsed && 'justify-center px-2'
+                        )}
+                        title={collapsed ? item.label : undefined}
+                      >
+                        {Icon && <Icon className="w-5 h-5 flex-shrink-0" />}
+                        {!collapsed && <span className="flex-1 text-left">{item.label}</span>}
+                      </NavLink>
+                    ) : (
+                      <button
+                        onClick={() => toggleExpanded(item.label)}
+                        className={cn(
+                          'flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer',
+                          isActive
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                          collapsed && 'justify-center px-2'
+                        )}
+                        title={collapsed ? item.label : undefined}
+                      >
+                        {Icon && <Icon className="w-5 h-5 flex-shrink-0" />}
+                        {!collapsed && (
+                          <>
+                            <span className="flex-1 text-left">{item.label}</span>
+                            <span className="text-muted-foreground">
+                              {isExpanded ? (
+                                <ChevronDown className="w-4 h-4" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4" />
+                              )}
+                            </span>
+                          </>
+                        )}
+                      </button>
+                    )}
+
+                    {/* Children */}
+                    {!collapsed && item.children && isExpanded && (
+                      <ul className="mt-1 ml-8 space-y-1">
+                        {item.children.map((child) => (
+                          <li key={child.label}>
+                            <NavLink
+                              to={child.to}
+                              className={({ isActive: childActive }) =>
+                                cn(
+                                  'flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-colors',
+                                  childActive
+                                    ? 'bg-primary/10 text-primary font-medium'
+                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                )
+                              }
+                            >
+                              <span>{child.label}</span>
+                            </NavLink>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                )
+              })}
             </ul>
           </div>
         ))}
       </nav>
 
-      {/* Logout */}
-      <div className="px-2 py-4 border-t border-sidebar-border">
+      {/* Bottom */}
+      <div className="border-t border-border py-4 px-3">
+        {/* Logout */}
         <Form method="post" action="/logout">
           <button
             type="submit"
             title={collapsed ? 'Sign out' : undefined}
-            className={`cursor-pointer w-full flex items-center gap-3 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50 rounded-md transition-colors ${collapsed ? 'justify-center' : ''}`}
+            className={cn(
+              'flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer',
+              collapsed && 'justify-center px-2'
+            )}
           >
-            <LogOut size={16} className="shrink-0" />
-            {!collapsed && 'Sign out'}
+            <LogOut className="w-5 h-5 flex-shrink-0" />
+            {!collapsed && <span>Sign out</span>}
           </button>
         </Form>
-      </div>
 
-      {/* Toggle arrow — hidden on tablet and below */}
-      <button
-        onClick={(e) => { e.stopPropagation(); onToggle() }}
-        className="hidden md:flex absolute -right-4 top-20 w-8 h-8 bg-sidebar border border-sidebar-border rounded-full items-center justify-center text-muted-foreground hover:text-foreground hover:bg-sidebar-accent/50 transition-colors cursor-pointer shadow-sm"
-        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        type="button"
-      >
-        <span className={`text-base transition-transform duration-300 inline-block ${collapsed ? '' : 'rotate-180'}`}>›</span>
-      </button>
+        {/* User Profile */}
+        <div
+          className={cn(
+            'flex items-center gap-3 mt-3 px-3 py-2 rounded-lg hover:bg-muted transition-colors',
+            collapsed && 'justify-center px-2'
+          )}
+        >
+          <Avatar className="w-8 h-8">
+            <AvatarFallback className="bg-primary/10 text-primary text-xs">
+              DF
+            </AvatarFallback>
+          </Avatar>
+          {!collapsed && (
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">Daniel Fraga</p>
+              <p className="text-xs text-muted-foreground truncate">Ops Dashboard</p>
+            </div>
+          )}
+        </div>
+      </div>
     </aside>
   )
 }
