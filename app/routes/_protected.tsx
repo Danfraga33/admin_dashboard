@@ -94,6 +94,11 @@ const ROUTE_CONFIG: Record<string, { title: string; subtitle: string; breadcrumb
     subtitle: 'Portfolio health metrics and performance.',
     breadcrumbs: [{ label: 'Business' }, { label: 'SaaS' }],
   },
+  '/notes': {
+    title: 'Notes',
+    subtitle: 'General notes and reference material.',
+    breadcrumbs: [{ label: 'Notes' }],
+  },
 }
 
 const DEFAULT_CONFIG = {

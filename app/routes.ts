@@ -20,5 +20,6 @@ export default [
     route('finance/flowchart', 'routes/_protected.finance.flowchart.tsx'),
     route('finance/investment-flowchart', 'routes/_protected.finance.investment-flowchart.tsx'),
     route('finance/accounting', 'routes/_protected.finance.accounting.tsx'),
+    route('notes', 'routes/_protected.notes.tsx'),
   ]),
 ] satisfies RouteConfig

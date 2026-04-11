@@ -11,6 +11,7 @@ import {
   LogOut,
   CalendarDays,
   CheckSquare,
+  StickyNote,
 } from 'lucide-react'
 import { cn } from '~/lib/utils'
 import { Avatar, AvatarFallback } from '~/components/ui/avatar'
@@ -59,6 +60,15 @@ const navSections: { items: NavItem[] }[] = [
         label: 'Finance',
         icon: DollarSign,
         to: '/finance',
+      },
+    ],
+  },
+  {
+    items: [
+      {
+        label: 'Notes',
+        icon: StickyNote,
+        to: '/notes',
       },
     ],
   },
