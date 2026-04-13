@@ -107,10 +107,10 @@ function NoteModal({ note, onClose }: { note: any; onClose: () => void }) {
       onClick={onClose}
     >
       <div
-        className="bg-card border border-border rounded-lg p-8 w-full max-w-lg shadow-lg"
+        className="bg-card border border-border rounded-lg p-8 w-full max-w-lg max-h-[90vh] flex flex-col shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between mb-6">
+        <div className="flex items-start justify-between mb-6 shrink-0">
           <h2 className="font-semibold text-2xl text-foreground tracking-wide">{note.title}</h2>
           <button
             onClick={onClose}
@@ -121,18 +121,18 @@ function NoteModal({ note, onClose }: { note: any; onClose: () => void }) {
         </div>
 
         {note.body ? (
-          <div className="mb-6">
+          <div className="mb-6 overflow-y-auto">
             <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{note.body}</p>
           </div>
         ) : (
           <p className="text-sm text-muted-foreground mb-6">No content.</p>
         )}
 
-        <p className="text-[11px] text-muted-foreground mb-6">
+        <p className="text-[11px] text-muted-foreground mb-6 shrink-0">
           Updated {new Date(note.updated_at).toLocaleDateString()}
         </p>
 
-        <div className="flex items-center gap-3 pt-4 border-t border-border">
+        <div className="flex items-center gap-3 pt-4 border-t border-border shrink-0">
           <button
             onClick={() => setEditing(true)}
             className="bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer"
