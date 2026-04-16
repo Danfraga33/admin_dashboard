@@ -107,7 +107,7 @@ function NoteModal({ note, onClose }: { note: any; onClose: () => void }) {
       onClick={onClose}
     >
       <div
-        className="bg-card border border-border rounded-lg p-8 w-full max-w-lg max-h-[90vh] flex flex-col shadow-lg"
+        className="bg-card border border-border rounded-lg p-8 w-full max-w-2xl max-h-[90vh] flex flex-col shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-6 shrink-0">
