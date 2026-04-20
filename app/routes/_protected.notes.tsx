@@ -169,7 +169,10 @@ function NoteModal({ note, onClose }: { note: any; onClose: () => void }) {
             <input type="hidden" name="id" value={note.id} />
             <button
               type="submit"
-              onClick={onClose}
+              onClick={(e) => {
+                if (!window.confirm('Delete this note?')) e.preventDefault()
+                else onClose()
+              }}
               className="text-sm text-muted-foreground hover:text-destructive-foreground transition-colors cursor-pointer"
             >
               Delete
@@ -332,6 +335,9 @@ export default function Notes() {
                       <input type="hidden" name="id" value={note.id} />
                       <button
                         type="submit"
+                        onClick={(e) => {
+                          if (!window.confirm('Delete this note?')) e.preventDefault()
+                        }}
                         className="text-xs text-muted-foreground hover:text-destructive-foreground transition-colors cursor-pointer"
                       >
                         Delete
