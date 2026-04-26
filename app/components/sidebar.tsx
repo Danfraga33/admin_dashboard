@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { NavLink, Form, useLocation } from 'react-router'
 import {
-  LayoutDashboard,
+  Target,
   FileText,
   TrendingUp,
   DollarSign,
@@ -27,9 +27,9 @@ const navSections: { items: NavItem[] }[] = [
   {
     items: [
       {
-        label: 'Overview',
-        icon: LayoutDashboard,
-        to: '/',
+        label: 'Focuses',
+        icon: Target,
+        to: '/focuses',
       },
     ],
   },

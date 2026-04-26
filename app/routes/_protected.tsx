@@ -99,6 +99,11 @@ const ROUTE_CONFIG: Record<string, { title: string; subtitle: string; breadcrumb
     subtitle: 'General notes and reference material.',
     breadcrumbs: [{ label: 'Notes' }],
   },
+  '/focuses': {
+    title: 'Focuses',
+    subtitle: 'What you are working on right now.',
+    breadcrumbs: [{ label: 'Focuses' }],
+  },
 }
 
 const DEFAULT_CONFIG = {
