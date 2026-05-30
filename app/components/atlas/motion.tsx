@@ -42,7 +42,7 @@ export function Reveal({ delay = 0, y = 12, blur = false, className, children, .
           ? { opacity: [0, 1], y: [y, 0], filter: blur ? ['blur(6px)', 'blur(0px)'] : undefined }
           : { opacity: 1, y: 0, filter: blur ? 'blur(0px)' : undefined }
       }
-      transition={{ duration: 0.52, ease: EASE, delay: delay / 1000 }}
+      transition={{ duration: 0.36, ease: EASE, delay: (delay * DELAY_SCALE) / 1000 }}
       {...rest}
     >
       {children}
@@ -52,6 +52,13 @@ export function Reveal({ delay = 0, y = 12, blur = false, className, children, .
 
 /** Stagger helper: delay (ms) for index i. */
 export const stag = (i: number, base = 0, step = 70) => base + i * step
+
+/**
+ * Global entrance-delay scale. Every Reveal delay is multiplied by this, so the
+ * whole staggered cascade tightens from one knob without touching call sites.
+ * 1 = original editorial pacing; lower = snappier nav.
+ */
+const DELAY_SCALE = 0.55
 
 /** Count-up with reduced-motion + SSR safety (renders final value when not animating). */
 export function useCountUp(

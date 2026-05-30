@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { Outlet, useLocation } from 'react-router'
+import { Outlet, useLocation, useNavigation } from 'react-router'
 import type { LoaderFunctionArgs } from 'react-router'
 import { requireSession } from '~/lib/session.server'
+import { cn } from '~/lib/utils'
 import { Sidebar, useSidebarState } from '~/components/sidebar'
 import { Topbar } from '~/components/atlas/topbar'
 import { ThemeProvider } from '~/components/theme-provider'
@@ -34,8 +35,10 @@ export default function ProtectedLayout() {
   const { collapsed, toggle } = useSidebarState()
   const [drawer, setDrawer] = useState(false)
   const location = useLocation()
+  const navigation = useNavigation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const title = titleFor(location.pathname)
+  const isNavigating = navigation.state === 'loading'
   const palette = useCommandPalette()
   const { recents, push: pushRecent } = useRecents()
 
@@ -73,9 +76,15 @@ export default function ProtectedLayout() {
           />
 
           <div className="flex min-w-0 flex-1 flex-col">
+            {/* instant nav feedback: indeterminate top progress bar while a route loads */}
+            {isNavigating && (
+              <div className="pointer-events-none fixed inset-x-0 top-0 z-50 h-0.5 overflow-hidden">
+                <div className="h-full w-2/5 rounded-full bg-chart-1" style={{ animation: 'atlasNavBar 900ms ease-in-out infinite' }} />
+              </div>
+            )}
             <Topbar title={title} onMenu={() => setDrawer(true)} onOpenPalette={() => palette.setOpen(true)} />
             <div ref={scrollRef} className="flex-1 overflow-y-auto">
-              <div className="px-3 py-6 md:px-4 md:py-9">
+              <div className={cn('px-3 py-6 transition-opacity duration-150 md:px-4 md:py-9', isNavigating && 'opacity-60')}>
                 <Outlet />
                 <div className="h-10" />
               </div>

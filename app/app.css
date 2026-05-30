@@ -136,6 +136,11 @@
   from { transform: translateX(-100%); }
   to { transform: translateX(0); }
 }
+@keyframes atlasNavBar {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(150%); }
+  100% { transform: translateX(350%); }
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
