@@ -6,9 +6,7 @@
     "build": "react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc",
-    "sync:ibkr": "tsx scripts/sync-ibkr.ts",
-    "ibkr:keepalive": "tsx scripts/ibkr-keepalive.ts"
+    "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.11",

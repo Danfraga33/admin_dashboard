@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react'
 import { useLoaderData, type LoaderFunctionArgs } from 'react-router'
 import { useReducedMotion } from 'framer-motion'
 import { Check, Star } from 'lucide-react'
-import { AGENTS, type Holding, type Portfolio } from '~/lib/atlas-data'
+import { AGENTS, PORTFOLIO, type Holding, type Portfolio } from '~/lib/atlas-data'
 import { requireSession } from '~/lib/session.server'
-import { readPortfolioForLoader } from '~/lib/ibkr.server'
 import {
   Reveal,
   RevealContext,
@@ -21,10 +20,15 @@ import {
   stag,
 } from '~/components/atlas'
 
+// Portfolio source is mock until the Sharesight API is wired (see docs/plan.md §2).
 export async function loader({ request }: LoaderFunctionArgs) {
-  const { session, supabase } = await requireSession(request)
-  const { portfolio, cash, live, syncedAt } = await readPortfolioForLoader(supabase, session!.user.id)
-  return { portfolio, cash, live, syncedAt, scout: AGENTS.find((a) => a.id === 'scout')! }
+  await requireSession(request)
+  return {
+    portfolio: PORTFOLIO,
+    cash: 206300,
+    live: false,
+    scout: AGENTS.find((a) => a.id === 'scout')!,
+  }
 }
 
 /** Brief "Scout fetching…" skeleton on client mount; SSR + reduced-motion render loaded. */
@@ -155,8 +159,8 @@ export default function Investments() {
           title="The Portfolio"
           sub={
             live
-              ? 'Scout pulls live positions from Interactive Brokers and writes the read so you don\'t have to.'
-              : 'Showing sample data — connect Interactive Brokers to go live.'
+              ? 'Scout pulls live positions from Sharesight and writes the read so you don\'t have to.'
+              : 'Showing sample data — connect Sharesight to go live.'
           }
           right={
             <div className="md:text-right">
@@ -174,11 +178,11 @@ export default function Investments() {
         <div className="mt-7">
           <AgentSummary
             agent={scout}
-            label={live ? 'Portfolio & market read · live from IBKR' : 'Portfolio & market read · sample data'}
+            label={live ? 'Portfolio & market read · live from Sharesight' : 'Portfolio & market read · sample data'}
             text={p.scoutNote}
             footer={
               <>
-                <Check size={13} className="text-chart-2" /> {live ? `Fetched ${p.holdings.length} holdings from Interactive Brokers` : 'Connect IBKR to replace sample data'}
+                <Check size={13} className="text-chart-2" /> {live ? `Fetched ${p.holdings.length} holdings from Sharesight` : 'Connect Sharesight to replace sample data'}
               </>
             }
           />

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useLoaderData, type LoaderFunctionArgs } from 'react-router'
 import { TrendingUp, TrendingDown, Dot, Check, ArrowUpRight, Sparkles, Lock } from 'lucide-react'
 import {
   AGENTS,
@@ -14,7 +14,8 @@ import {
   type Stage,
   type ChartColor,
 } from '~/lib/atlas-data'
-import { cn } from '~/lib/utils'
+import { cn, fmtCompact } from '~/lib/utils'
+import { requireSession } from '~/lib/session.server'
 import {
   Reveal,
   RevealContext,
@@ -35,8 +36,19 @@ import {
 } from '~/components/atlas'
 import { useAgents } from '~/components/atlas/agents-context'
 
-export function loader() {
-  return { AGENTS, BRIEFING, STAGES, ACTIVITY, PORTFOLIO, VENTURES, FOCUS_ITEMS }
+export async function loader({ request }: LoaderFunctionArgs) {
+  await requireSession(request)
+  return {
+    AGENTS,
+    BRIEFING,
+    STAGES,
+    ACTIVITY,
+    PORTFOLIO,
+    VENTURES,
+    FOCUS_ITEMS,
+    investTotal: PORTFOLIO.total,
+    investDayPct: PORTFOLIO.dayPct,
+  }
 }
 
 function SignalRow({ sig, agents, i }: { sig: Signal; agents: Agent[]; i: number }) {
@@ -296,8 +308,8 @@ function Ticker({ agents }: { agents: Agent[] }) {
 
 export default function DailyUpdate() {
   const navigate = useNavigate()
+  const { investTotal, investDayPct } = useLoaderData<typeof loader>()
   const { agents, running } = useAgents()
-  const p = PORTFOLIO
   const v = VENTURES
   const liveCount = agents.filter((a) => a.state === 'running').length
 
@@ -337,11 +349,11 @@ export default function DailyUpdate() {
             delay={220}
             label="Investments"
             icon={TrendingUp}
-            metric="$1.28M"
-            deltaPct={p.dayPct}
+            metric={fmtCompact(investTotal)}
+            deltaPct={investDayPct}
             sub="Portfolio value · today"
             insight="AI basket +3.2% — rebalance window open"
-            spark={p.spark}
+            spark={PORTFOLIO.spark}
             sparkColor="chart-1"
             onClick={() => navigate('/investments')}
           />
