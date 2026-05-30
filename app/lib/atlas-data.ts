@@ -95,16 +95,9 @@ export interface ProjectItem {
   accent: ChartColor
 }
 
-export interface Ship {
-  date: string
-  text: string
-  tone: Tone
-}
-
 export interface Projects {
   forgeNote: string
   items: ProjectItem[]
-  ships: Ship[]
 }
 
 export interface Finance {
@@ -227,20 +220,12 @@ export const PORTFOLIO: Portfolio = {
 
 export const PROJECTS: Projects = {
   forgeNote:
-    "Two builds are converging on Stage 1's goal. The RAG agent is in staging and stable — ship it to prod once you wire auth. Orchestration is the bottleneck: it's 70% there but the multi-agent handoff still drops context. That's today's highest-leverage hour.",
+    "Pavement is the closest to revenue at 88% — finish the demo-site clipper and it's pitch-ready. The other three sit in the 40-55% band: Next Frontier Hub needs the multi-ticker pipeline, Jarvis the agent handoff, Traction Engine its outreach loop. Highest-leverage hour today: ship Pavement's last 12%.",
   items: [
-    { name: 'Agent Core', tag: 'RAG agent + tool use', status: 'Shipping', progress: 88, stack: ['TS', 'LangGraph', 'pgvector'], metricLabel: 'Eval score', metric: '0.91', activity: 'Deployed to staging · 2h ago', accent: 'chart-2' },
-    { name: 'Orchestrator', tag: 'Multi-agent handoff', status: 'Building', progress: 70, stack: ['TS', 'Temporal', 'Redis'], metricLabel: 'Tasks passing', metric: '34/48', activity: 'Context-drop bug open · 1h ago', accent: 'chart-1' },
-    { name: 'Atlas', tag: 'This dashboard', status: 'Building', progress: 52, stack: ['React', 'RR v7', 'Tailwind'], metricLabel: 'Views live', metric: '4', activity: 'Investments view added · now', accent: 'chart-4' },
-    { name: 'Distro Engine', tag: 'Content → channels', status: 'Live', progress: 100, stack: ['Node', 'Cron', 'X API'], metricLabel: '30d reach', metric: '1.2M', activity: 'Auto-posted 3 today · 22m ago', accent: 'chart-5' },
-    { name: 'Buy-box Scanner', tag: 'SaaS deal sourcing', status: 'Building', progress: 41, stack: ['Python', 'Playwright'], metricLabel: 'Sources', metric: '12', activity: 'Added 2 marketplaces · 3h ago', accent: 'chart-1' },
-    { name: 'Ledger Sync', tag: 'Finance aggregation', status: 'Paused', progress: 24, stack: ['Node', 'Plaid'], metricLabel: 'Accounts', metric: '6', activity: 'Awaiting API keys · 2d ago', accent: 'chart-2' },
-  ],
-  ships: [
-    { date: 'May 30', text: 'Agent Core → staging', tone: 'up' },
-    { date: 'May 28', text: 'Distro Engine auto-posting live', tone: 'up' },
-    { date: 'May 24', text: 'Atlas dashboard scaffold', tone: 'flat' },
-    { date: 'May 19', text: 'Buy-box Scanner first sources', tone: 'flat' },
+    { name: 'Pavement', tag: 'Local-business lead-gen SaaS', status: 'Building', progress: 88, stack: ['Next.js', 'Supabase', 'Playwright'], metricLabel: 'Complete', metric: '88%', activity: 'Demo-site generator wired · now', accent: 'chart-2' },
+    { name: 'Next Frontier Hub', tag: 'Investment-thesis app · NVDA→multi-ticker', status: 'Building', progress: 54, stack: ['Next.js', 'Supabase', 'Claude'], metricLabel: 'Complete', metric: '54%', activity: '10-step thesis scoring built · 1d ago', accent: 'chart-1' },
+    { name: 'Jarvis', tag: 'SaaS-build orchestrator · Dev→QA→Deploy', status: 'Building', progress: 47, stack: ['TS', 'Claude CLI', 'CI'], metricLabel: 'Complete', metric: '47%', activity: 'Agent pipeline scaffolding · 2d ago', accent: 'chart-4' },
+    { name: 'SaaS Traction Engine', tag: 'ICP → channels → outreach loop', status: 'Building', progress: 41, stack: ['Next.js', 'Supabase'], metricLabel: 'Complete', metric: '41%', activity: 'Single-tenant portal scaffolded · 3d ago', accent: 'chart-5' },
   ],
 }
 
