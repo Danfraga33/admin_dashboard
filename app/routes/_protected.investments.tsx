@@ -148,7 +148,7 @@ export default function Investments() {
       <div className="mx-auto max-w-screen-2xl">
         <PageHeader
           kicker="Investments"
-          title="The portfolio"
+          title="The Portfolio"
           sub="Scout pulls positions from your brokerage and writes the read so you don't have to."
           right={
             <div className="md:text-right">
