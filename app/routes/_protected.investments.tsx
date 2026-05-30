@@ -4,7 +4,7 @@ import { useReducedMotion } from 'framer-motion'
 import { Check, Star } from 'lucide-react'
 import { AGENTS, type Holding, type Portfolio } from '~/lib/atlas-data'
 import { requireSession } from '~/lib/session.server'
-import { readPortfolio } from '~/lib/ibkr.server'
+import { readPortfolioForLoader } from '~/lib/ibkr.server'
 import {
   Reveal,
   RevealContext,
@@ -23,7 +23,7 @@ import {
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { session, supabase } = await requireSession(request)
-  const { portfolio, cash, live, syncedAt } = await readPortfolio(supabase, session!.user.id)
+  const { portfolio, cash, live, syncedAt } = await readPortfolioForLoader(supabase, session!.user.id)
   return { portfolio, cash, live, syncedAt, scout: AGENTS.find((a) => a.id === 'scout')! }
 }
 

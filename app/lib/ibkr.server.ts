@@ -1,51 +1,42 @@
 /**
  * IBKR Client Portal Web API — portfolio fetch + Supabase sync.
  *
- * Runs in a Node cron job (NOT in a route loader — IBKR rate limits + the 24h
- * LST handshake must not run per page-load). Writes normalized portfolio data
- * into Supabase; the investments loader reads from there.
+ * Auth model: INDIVIDUAL self-access via the Client Portal Gateway.
+ * The gateway (Java, run locally or on an always-on box — see IBeam for headless)
+ * holds the authenticated session after a browser login. We just make plain HTTPS
+ * GETs to it; no request signing. The gateway's TLS cert is self-signed, so we
+ * disable cert verification for that host only.
  *
- * Endpoints used:
- *   GET /portfolio/accounts                       — resolve account, prime backend
- *   GET /portfolio/{accountId}/summary            — total value, cash
- *   GET /portfolio/{accountId}/positions/{page}   — holdings (paged)
- *   GET /iserver/marketdata/snapshot              — day % change per conid
+ * (OAuth 1.0a signing — ibkr-oauth.server.ts — is for third-party VENDORS, not
+ * individual self-access. Kept for reference, unused on this path.)
+ *
+ * Runs in a Node cron job next to the gateway, NOT in a route loader. Writes
+ * normalized portfolio data into Supabase; the investments loader reads from there.
+ *
+ * Endpoints used (all under {gateway}/v1/api):
+ *   GET /iserver/auth/status                       — verify the session is live
+ *   GET /portfolio/accounts                        — resolve account, prime backend
+ *   GET /portfolio/{accountId}/summary             — total value, cash
+ *   GET /portfolio/{accountId}/positions/{page}    — holdings (paged)
+ *   GET /iserver/marketdata/snapshot               — day % change per conid
  */
+import { Agent, request as httpsRequest } from 'node:https'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import {
-  getLiveSessionToken,
-  signedHeaders,
-  ibkrBaseUrl,
-  type IbkrOAuthConfig,
-  type LiveSessionToken,
-} from './ibkr-oauth.server'
 import { PORTFOLIO, type Holding, type Portfolio, type Tone } from './atlas-data'
 
 // ---------- config from env ----------
 
-export function ibkrConfigFromEnv(): IbkrOAuthConfig {
-  const need = (k: string): string => {
-    const v = process.env[k]
-    if (!v) throw new Error(`Missing env: ${k}`)
-    return v
-  }
-  return {
-    consumerKey: need('IBKR_CONSUMER_KEY'),
-    accessToken: need('IBKR_ACCESS_TOKEN'),
-    accessTokenSecret: need('IBKR_ACCESS_TOKEN_SECRET'),
-    // PEM keys carry newlines — store base64 in env, decode here. Falls back to raw PEM.
-    encryptionKeyPem: decodePem(need('IBKR_ENCRYPTION_KEY')),
-    signatureKeyPem: decodePem(need('IBKR_SIGNATURE_KEY')),
-    dhPrime: need('IBKR_DH_PRIME'),
-    dhGenerator: Number(process.env.IBKR_DH_GENERATOR ?? '2'),
-    realm: process.env.IBKR_REALM ?? 'limited_poa',
-  }
+/** Gateway base, e.g. https://localhost:5000. The /v1/api suffix is added per call. */
+function gatewayBase(): string {
+  return (process.env.IBKR_GATEWAY_URL ?? 'https://localhost:5000').replace(/\/$/, '')
 }
 
-function decodePem(v: string): string {
-  if (v.includes('BEGIN')) return v.replace(/\\n/g, '\n')
-  return Buffer.from(v, 'base64').toString('utf8')
-}
+/**
+ * Agent that accepts the gateway's self-signed cert. Scoped to gateway calls ONLY
+ * (via node:https request below) — global fetch / Supabase keep full TLS verification.
+ * The local Client Portal Gateway always serves a self-signed cert.
+ */
+const gatewayAgent = new Agent({ rejectUnauthorized: false })
 
 function serviceClient(): SupabaseClient {
   return createClient(
@@ -57,18 +48,82 @@ function serviceClient(): SupabaseClient {
 
 // ---------- raw API helpers ----------
 
-async function ibkrGet<T>(
-  cfg: IbkrOAuthConfig,
-  lst: LiveSessionToken,
-  path: string,
-  query: Record<string, string> = {},
-): Promise<T> {
-  const url = `${ibkrBaseUrl}${path}`
+/**
+ * GET against the gateway using node:https directly, so the self-signed-cert
+ * bypass stays strictly on gateway calls. (Node's global fetch is undici and
+ * ignores a node:https Agent, so we don't use fetch here.)
+ */
+function ibkrGet<T>(path: string, query: Record<string, string> = {}): Promise<T> {
   const qs = new URLSearchParams(query).toString()
-  const headers = signedHeaders(cfg, lst.token, 'GET', url, query)
-  const res = await fetch(qs ? `${url}?${qs}` : url, { headers })
-  if (!res.ok) throw new Error(`IBKR GET ${path} failed: ${res.status} ${await res.text()}`)
-  return (await res.json()) as T
+  const url = `${gatewayBase()}/v1/api${path}${qs ? `?${qs}` : ''}`
+  return new Promise<T>((resolve, reject) => {
+    const req = httpsRequest(
+      url,
+      {
+        method: 'GET',
+        agent: gatewayAgent,
+        // The gateway returns 403 for requests with no User-Agent — always send one.
+        headers: { Accept: 'application/json', 'User-Agent': 'atlas-dashboard/1.0' },
+      },
+      (res) => {
+        const chunks: Buffer[] = []
+        res.on('data', (c) => chunks.push(c as Buffer))
+        res.on('end', () => {
+          const body = Buffer.concat(chunks).toString('utf8')
+          const status = res.statusCode ?? 0
+          if (status < 200 || status >= 300) {
+            reject(new Error(`IBKR GET ${path} failed: ${status} ${body}`))
+            return
+          }
+          try {
+            resolve(JSON.parse(body) as T)
+          } catch {
+            reject(new Error(`IBKR GET ${path}: invalid JSON — ${body.slice(0, 200)}`))
+          }
+        })
+      },
+    )
+    req.on('error', reject)
+    req.end()
+  })
+}
+
+interface AuthStatus {
+  authenticated: boolean
+  connected: boolean
+}
+
+/** Confirm the gateway session is alive before fetching. Throws a clear error if not. */
+async function assertAuthenticated(): Promise<void> {
+  let status: AuthStatus
+  try {
+    status = await ibkrGet<AuthStatus>('/iserver/auth/status')
+  } catch (e) {
+    throw new Error(
+      `IBKR gateway unreachable at ${gatewayBase()} — is the gateway running? (${
+        e instanceof Error ? e.message : e
+      })`,
+    )
+  }
+  if (!status.authenticated) {
+    throw new Error(
+      'IBKR gateway is running but the session is not authenticated — log in at the gateway URL (browser) or via IBeam.',
+    )
+  }
+}
+
+interface Tickle {
+  session: string
+  iserver?: { authStatus?: { authenticated: boolean } }
+}
+
+/**
+ * Ping the gateway to keep the session from idling out (~5 min idle = dropped).
+ * Returns whether the session is still authenticated. Used by the keep-alive loop.
+ */
+export async function tickle(): Promise<{ authenticated: boolean }> {
+  const t = await ibkrGet<Tickle>('/tickle')
+  return { authenticated: t.iserver?.authStatus?.authenticated ?? false }
 }
 
 // ---------- IBKR response shapes (partial) ----------
@@ -78,9 +133,9 @@ interface IbkrAccount {
 }
 interface IbkrPosition {
   conid: number
-  contractDesc?: string
-  name?: string
-  ticker?: string
+  contractDesc?: string // e.g. "AG" — the symbol IBKR returns on positions
+  ticker?: string // not present on this endpoint; kept for safety
+  name?: string // not present on this endpoint; resolved later via secdef if needed
   position: number
   mktValue: number
   assetClass?: string
@@ -92,8 +147,8 @@ interface IbkrSummary {
 }
 interface IbkrSnapshot {
   conid: number
-  // field 83 = % change for the day (string like "+1.23%")
-  '83'?: string
+  // field 83 = % change for the day. Number (1.94) or string ("+1.94%") per instrument.
+  '83'?: number | string
 }
 
 const ASSET_CLASS_LABEL: Record<string, string> = {
@@ -127,43 +182,45 @@ export interface PortfolioSnapshot {
   holdings: SyncHolding[]
 }
 
-export async function fetchPortfolio(cfg: IbkrOAuthConfig): Promise<PortfolioSnapshot> {
-  const lst = await getLiveSessionToken(cfg)
+export async function fetchPortfolio(): Promise<PortfolioSnapshot> {
+  await assertAuthenticated()
 
   // 1. Resolve the account. /portfolio/accounts must be called first to prime the backend.
-  const accounts = await ibkrGet<IbkrAccount[]>(cfg, lst, '/portfolio/accounts')
+  const accounts = await ibkrGet<IbkrAccount[]>('/portfolio/accounts')
   const accountId = process.env.IBKR_ACCOUNT_ID ?? accounts[0]?.accountId
   if (!accountId) throw new Error('No IBKR account id resolved')
 
   // 2. Summary (total value + cash).
-  const summary = await ibkrGet<IbkrSummary>(cfg, lst, `/portfolio/${accountId}/summary`)
+  const summary = await ibkrGet<IbkrSummary>(`/portfolio/${accountId}/summary`)
   const total = summary.netliquidation?.amount ?? 0
   const cash = summary.totalcashvalue?.amount ?? 0
 
   // 3. Positions (paged — page until a short page comes back).
   const positions: IbkrPosition[] = []
   for (let page = 0; page < 20; page++) {
-    const batch = await ibkrGet<IbkrPosition[]>(
-      cfg,
-      lst,
-      `/portfolio/${accountId}/positions/${page}`,
-    )
+    const batch = await ibkrGet<IbkrPosition[]>(`/portfolio/${accountId}/positions/${page}`)
     if (!batch.length) break
     positions.push(...batch)
     if (batch.length < 30) break // IBKR pages at 30
   }
 
   // 4. Day % change per conid via market-data snapshot (field 83).
+  // IBKR warms the subscription lazily: the first call returns bare {conid},
+  // the second returns the fields. So we prime once, wait briefly, then read.
   const conids = positions.map((p) => p.conid).join(',')
   const dayPctByConid: Record<number, number> = {}
   if (conids) {
-    const snap = await ibkrGet<IbkrSnapshot[]>(cfg, lst, '/iserver/marketdata/snapshot', {
+    await ibkrGet<IbkrSnapshot[]>('/iserver/marketdata/snapshot', { conids, fields: '83' })
+    await new Promise((r) => setTimeout(r, 1500))
+    const snap = await ibkrGet<IbkrSnapshot[]>('/iserver/marketdata/snapshot', {
       conids,
       fields: '83',
     })
     for (const s of snap) {
-      const raw = s['83']?.replace(/[+%]/g, '') ?? '0'
-      dayPctByConid[s.conid] = Number(raw) || 0
+      // Field 83 comes back as a number (1.94) or a string ("+1.94%") depending on instrument.
+      const v = s['83']
+      const n = typeof v === 'number' ? v : Number(String(v ?? '').replace(/[+%]/g, ''))
+      dayPctByConid[s.conid] = Number.isFinite(n) ? n : 0
     }
   }
 
@@ -207,8 +264,7 @@ export async function fetchPortfolio(cfg: IbkrOAuthConfig): Promise<PortfolioSna
 export async function syncIbkr(userId: string): Promise<{ ok: boolean; error?: string }> {
   const sb = serviceClient()
   try {
-    const cfg = ibkrConfigFromEnv()
-    const snap = await fetchPortfolio(cfg)
+    const snap = await fetchPortfolio()
 
     // ytd_pct + scout_note are not derivable from these endpoints — preserve existing if present.
     const { data: prev } = await sb
@@ -350,4 +406,58 @@ export async function readPortfolio(
     watch: PORTFOLIO.watch, // user-curated, not from IBKR — kept as mock for now
   }
   return { portfolio, cash: p.cash, live: true, syncedAt: p.synced_at }
+}
+
+/** Build the `Portfolio` shape directly from a freshly-fetched live snapshot (dev path). */
+function snapshotToPortfolio(snap: PortfolioSnapshot): Portfolio {
+  const COLORS = ['chart-1', 'chart-2', 'chart-4', 'chart-5', 'chart-3']
+  const byClass = new Map<string, number>()
+  for (const h of snap.holdings) byClass.set(h.assetClass, (byClass.get(h.assetClass) ?? 0) + h.val)
+  const allocation = [...byClass.entries()].map(([label, val], i) => ({
+    label,
+    pct: snap.total > 0 ? Math.round((val / snap.total) * 100) : 0,
+    color: COLORS[i % COLORS.length] as Portfolio['allocation'][number]['color'],
+  }))
+  return {
+    total: snap.total,
+    dayPct: snap.dayPct,
+    dayAbs: snap.dayAbs,
+    ytdPct: 0,
+    spark: PORTFOLIO.spark,
+    scoutNote: PORTFOLIO.scoutNote,
+    holdings: snap.holdings.map((h) => ({
+      sym: h.sym,
+      name: h.name,
+      val: h.val,
+      pct: h.pct,
+      shares: h.shares,
+      alloc: h.alloc,
+      spark: PORTFOLIO.holdings[0]?.spark ?? [],
+      tone: h.tone,
+      note: h.note,
+    })),
+    allocation: allocation.length ? allocation : PORTFOLIO.allocation,
+    watch: PORTFOLIO.watch,
+  }
+}
+
+/**
+ * Loader entry. In dev with the gateway running (IBKR_LIVE_IN_DEV=1), fetch live
+ * straight from the gateway for instant data. Otherwise — and always in prod —
+ * read the Supabase cache the sync job populates. Live fetch failures fall back
+ * to cache, never breaking the page.
+ */
+export async function readPortfolioForLoader(
+  sb: SupabaseClient,
+  userId: string,
+): Promise<{ portfolio: Portfolio; cash: number; live: boolean; syncedAt: string | null }> {
+  if (process.env.IBKR_LIVE_IN_DEV === '1') {
+    try {
+      const snap = await fetchPortfolio()
+      return { portfolio: snapshotToPortfolio(snap), cash: snap.cash, live: true, syncedAt: 'live' }
+    } catch {
+      // gateway down / not authenticated — fall through to cache
+    }
+  }
+  return readPortfolio(sb, userId)
 }

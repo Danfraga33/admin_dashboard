@@ -1,4 +1,9 @@
 /**
+ * ⚠️ NOT ON THE ACTIVE PATH. OAuth 1.0a is IBKR's auth method for THIRD-PARTY
+ * VENDORS. For individual self-access (our case) the Gateway holds the session and
+ * ibkr.server.ts makes unsigned calls — this file is unused. Kept for the day we
+ * go multi-user/vendor, or if IBKR grants first-party OAuth on request.
+ *
  * IBKR Client Portal Web API — OAuth 1.0a signer.
  *
  * Ported from the reference Python implementation (Voyz/ibind, oauth1a.py).
