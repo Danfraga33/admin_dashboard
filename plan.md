@@ -66,64 +66,84 @@ Pick one (start with A, add C later):
 
 ## 2. Connect Interactive Brokers for portfolio
 
-IBKR via **Client Portal Web API**, **OAuth 1.0a headless** (self-service portal — no gateway process, no daily browser re-auth, survives unattended on a cloud cron). Base URL `https://api.ibkr.com/v1/api`. Feeds the **Investments (Scout)** view at [routes/_protected.investments.tsx](app/routes/_protected.investments.tsx).
+IBKR via the **Client Portal Gateway** — **individual self-access**. The gateway (Java) holds an authenticated session after a browser login; the sync job makes unsigned HTTPS calls to it. Feeds the **Investments (Scout)** view at [routes/_protected.investments.tsx](app/routes/_protected.investments.tsx).
 
-**Architecture:** Node cron job runs the OAuth handshake + fetch → writes Supabase → the route loader reads Supabase. Vercel never touches IBKR (serverless can't hold the stateful LST handshake). Sync host = **GitHub Actions cron** (could swap to any always-on box).
+> **Why not OAuth?** IBKR's OAuth 1.0a self-service is for **third-party vendors**, not individuals accessing their own account — confirmed in IBKR docs, and the self-service portal isn't exposed on an individual Pro account. For individuals the auth IS the gateway login; there's no API toggle and no consumer key. (The OAuth signer in [app/lib/ibkr-oauth.server.ts](app/lib/ibkr-oauth.server.ts) is kept for a future multi-user/vendor path, currently unused.)
 
-**Code status: built.** Files in place:
-- [app/lib/ibkr-oauth.server.ts](app/lib/ibkr-oauth.server.ts) — OAuth 1.0a signer (DH + RSA-SHA256 + LST), ported from the `Voyz/ibind` reference. `toByteArray` sign-bit quirk verified against reference vectors.
-- [app/lib/ibkr.server.ts](app/lib/ibkr.server.ts) — `fetchPortfolio()`, `syncIbkr(userId)`, `readPortfolio(sb, userId)`.
-- [scripts/sync-ibkr.ts](scripts/sync-ibkr.ts) — cron runner (`npm run sync:ibkr`).
-- [.github/workflows/sync-ibkr.yml](.github/workflows/sync-ibkr.yml) — every 10 min, weekdays, market hours.
+**Architecture:** the gateway + Node sync job run on an **always-on box** (local PC for dev, then Railway/Fly/VPS/IBeam-Docker). The job writes Supabase; the route loader reads Supabase. **Vercel hosts only the UI** and never touches IBKR or the gateway.
+
+```
+[always-on box]                         [Vercel]
+ gateway (Java, holds session)           dashboard UI
+   ↓ unsigned localhost:5000 calls        ↑ reads
+ sync job (cron) ──writes──► [Supabase] ◄──reads── /investments
+```
+
+**Code status: built (gateway transport).**
+- [app/lib/ibkr.server.ts](app/lib/ibkr.server.ts) — `fetchPortfolio()` (gateway calls + `auth/status` check), `syncIbkr(userId)`, `readPortfolio(sb, userId)`. Self-signed cert handled.
+- [scripts/sync-ibkr.ts](scripts/sync-ibkr.ts) — runner (`npm run sync:ibkr`).
 - [supabase/migrations/007_ibkr_portfolio.sql](supabase/migrations/007_ibkr_portfolio.sql) — tables + RLS + `sync_runs`.
-- Loader swapped: `/investments` reads Supabase, falls back to the `PORTFOLIO` mock until the first sync (so the UI never breaks pre-keys; the page shows a "sample data" sub-label).
+- Loader swapped: `/investments` reads Supabase, falls back to the `PORTFOLIO` mock until first sync (UI shows a "sample data" label, never breaks).
+- ⚠️ [.github/workflows/sync-ibkr.yml](.github/workflows/sync-ibkr.yml) — was for the OAuth/cloud-cron path. **Won't work as-is** for the gateway path (GitHub runners can't reach your local gateway). Repoint at the box or delete once the box is chosen.
 
-**What's left = the IBKR portal setup (you) + install + wire env (below).**
+### 2.1 Prereqs — DO THIS
+- [ ] Install **Java JRE** (8u192+). `java -version` to confirm. *(Not currently installed on this machine.)*
+- [ ] Wait for the **paper account** to open (live account works too; paper is safer for first test).
+- [ ] On IBKR's Market Data Subscriptions page, **sign the "Market Data API Terms" acknowledgement** — gates live quotes used by the day-% snapshot.
+- [ ] Account id is `U8770342` → `IBKR_ACCOUNT_ID` (or leave blank to auto-resolve).
 
-### 2.1 IBKR self-service OAuth setup — DO THIS (no IBKR approval wait; self-service)
-Portal docs: <https://www.interactivebrokers.com/campus/ibkr-api-page/oauth-1-0a-extended/>
-- [ ] Log into IBKR → **Settings → API → Settings**, enable the Client Portal / Web API.
-- [ ] Open the **OAuth Self-Service Portal**, log in with the username you want API sessions to run as.
-- [ ] **Consumer key:** choose a 9-char key (A–Z, uppercased). → `IBKR_CONSUMER_KEY`.
-- [ ] **Generate two RSA keypairs** (2048-bit) locally:
-  ```bash
-  openssl genrsa -out private_signature.pem 2048
-  openssl rsa -in private_signature.pem -pubout -out public_signature.pem
-  openssl genrsa -out private_encryption.pem 2048
-  openssl rsa -in private_encryption.pem -pubout -out public_encryption.pem
-  ```
-  Upload `public_signature.pem` + `public_encryption.pem` to the portal. Keep the two **private** PEMs → `IBKR_SIGNATURE_KEY` / `IBKR_ENCRYPTION_KEY`.
-- [ ] **Generate the DH param prime** and grab the prime hex:
-  ```bash
-  openssl dhparam -out dhparam.pem 2048
-  ```
-  Upload `dhparam.pem` to the portal. The portal also shows the prime; put the **hex prime** in `IBKR_DH_PRIME` (generator is `2`).
-- [ ] In the portal, generate the **access token** + **access token secret** → `IBKR_ACCESS_TOKEN` / `IBKR_ACCESS_TOKEN_SECRET`.
-- [ ] Note your **account id** (e.g. `U1234567`) → `IBKR_ACCOUNT_ID`. Realm = `limited_poa` (live) — `IBKR_REALM`.
-- [ ] PEM keys have newlines. Either keep them with `\n` escapes in the env value, or base64-encode the whole PEM (`base64 -w0 private_signature.pem`). The loader (`decodePem`) handles both.
+### 2.2 Run + authenticate the gateway — DO THIS
+- [ ] Download the **Client Portal Gateway** zip (IBKR Web API docs → Quickstart), unzip.
+- [ ] Log out of TWS/mobile for that username first (IBKR blocks simultaneous logins).
+- [ ] Launch: Windows `bin\run.bat root\conf.yaml` · Unix `bin/run.sh root/conf.yaml`. Leave it running (port 5000).
+- [ ] Browser → `https://localhost:5000` → accept the self-signed cert warning → log in + 2FA. See `Client login succeeds`.
 
-### 2.2 Install + wire env — DO THIS
-- [ ] `npm install` (pulls the newly-added `tsx` devDep).
+### 2.3 Install + wire env + sync — DO THIS
+- [ ] `npm install` (pulls `tsx`).
 - [ ] Run [supabase/migrations/007_ibkr_portfolio.sql](supabase/migrations/007_ibkr_portfolio.sql) in the Supabase SQL editor.
-- [ ] Fill `.env.local` from [.env.example](.env.example) — all `IBKR_*` keys + `SUPABASE_SERVICE_ROLE_KEY` (Supabase dashboard → Project Settings → API → service_role).
-- [ ] Add the same secrets to **GitHub repo → Settings → Secrets → Actions** (the workflow reads them): `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `IBKR_CONSUMER_KEY`, `IBKR_ACCESS_TOKEN`, `IBKR_ACCESS_TOKEN_SECRET`, `IBKR_ENCRYPTION_KEY`, `IBKR_SIGNATURE_KEY`, `IBKR_DH_PRIME`, `IBKR_ACCOUNT_ID`, `IBKR_REALM`.
-
-### 2.3 Test the handshake — DO THIS
-- [ ] Local dry-run against your account:
+- [ ] Fill `.env.local` from [.env.example](.env.example): `IBKR_GATEWAY_URL` (default `https://localhost:5000`), `IBKR_ACCOUNT_ID`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
+- [ ] With the gateway authenticated, run:
   ```bash
   IBKR_SYNC_USER_ID=<your-supabase-user-uuid> npm run sync:ibkr
   ```
-  Expect `[ibkr] <uuid> synced`. If the LST step fails, the error prints the IBKR response.
-- [ ] Confirm rows: `ibkr_portfolio` (1) + `ibkr_holdings` (N) + a `sync_runs` ok=true row.
-- [ ] Open `/investments` — should flip from "sample data" to live, totals reconciling to IBKR.
-- [ ] In GitHub Actions, run the **Sync IBKR portfolio** workflow via *Run workflow* to confirm the cron path works.
+  Expect `[ibkr] <uuid> synced`. Errors are explicit: "gateway unreachable" (not running) or "session not authenticated" (re-login in browser).
+- [ ] Confirm rows: `ibkr_portfolio` (1) + `ibkr_holdings` (N) + `sync_runs` ok=true.
+- [ ] Open `/investments` — flips from "sample data" to live, totals reconciling to IBKR.
 
-### 2.4 Known follow-ups (deferred, not blocking)
-- [ ] `watch` (Scout watchlist) — user-curated, still mock. Needs its own table later.
-- [ ] `scoutNote` (the AI read) — preserved from prior value / mock until an LLM summarizer runs over the synced numbers.
-- [ ] `ytd_pct` — not on these endpoints; preserved across syncs, defaults 0. Source from FlexQuery or `/portfolio/{acct}/performance` later.
-- [ ] Per-holding sparklines — currently borrow a mock series. Build from `ibkr_value_history` once it has depth, or per-conid history.
-- [ ] LST is valid 24h; the runner re-handshakes each run (fine at 10-min cadence). For higher frequency, cache the LST + add the tickle keep-alive.
+### 2.4 Session lifetime — IMPORTANT
+The gateway session is **not** self-maintaining:
+- **Idle drop (~5 min):** an idle session dies. Keep it alive with the tickler:
+  ```bash
+  npm run ibkr:keepalive    # GET /tickle every 60s; warns if the session lapses
+  ```
+  Run it alongside the gateway. (The 10-min sync alone is too slow to prevent idle drop.)
+- **Hard cap (~24h):** a full re-login (browser + 2FA at `https://localhost:5000`) is required once a day. No way around it for the manual gateway — IBeam (below) automates it.
+
+### 2.5 Make it unattended — Oracle Cloud + IBeam (chosen target, $0/mo)
+Goal: gateway runs 24/7 with no daily browser login, free, reachable by Vercel.
+- [ ] **Oracle Cloud Always Free** VM (ARM Ampere A1, up to 4 vCPU/24GB — free forever, not a trial).
+- [ ] Run **IBeam (Docker)** on it — auto-tickles AND auto-re-logins past the 24h cap (headless Chrome injects credentials). Fully unattended.
+  ```yaml
+  # compose.yaml
+  services:
+    ibeam:
+      image: voyz/ibeam
+      env_file: [env.list]   # IBEAM_ACCOUNT, IBEAM_PASSWORD
+      ports: ['5000:5000']
+      network_mode: bridge
+      restart: 'no'
+  ```
+- [ ] **2FA must be IB Key "seamless"** (IBKR Mobile) or IBeam can't auto-pass it. Configure before relying on it.
+- [ ] **Security — critical:** IBeam stores raw IBKR username+password on the VM. Test with **paper creds first**. Lock the VM firewall so `:5000` is reachable ONLY by the sync job + your IP — never public.
+- [ ] Point `IBKR_GATEWAY_URL` at the VM (private IP / SSH tunnel, not public). Run the sync on the same VM via cron every 5–15 min market hours.
+- [ ] Prod flow becomes: Oracle VM (IBeam+gateway+sync) → Supabase → Vercel UI. Unset `IBKR_LIVE_IN_DEV` in prod so the loader reads Supabase.
+
+### 2.6 Known follow-ups (deferred, not blocking)
+- [ ] `watch` (Scout watchlist) — user-curated, still mock.
+- [ ] `scoutNote` (the AI read) — preserved/mock until an LLM summarizer runs over synced numbers.
+- [ ] `ytd_pct` — not on these endpoints; preserved across syncs, defaults 0. Source from `/portfolio/{acct}/performance` or FlexQuery later.
+- [ ] Per-holding sparklines — borrow a mock series; build from history later.
+- [ ] Gateway session ~24h; re-login (or IBeam) required. The `auth/status` check fails loudly when it lapses.
 
 ---
 
@@ -136,6 +156,7 @@ Portal docs: <https://www.interactivebrokers.com/campus/ibkr-api-page/oauth-1-0a
 - [ ] **Migration discipline:** run new migrations in Supabase SQL editor (matches existing `supabase-migration.sql` workflow), keep numbered files in `supabase/migrations/`.
 
 ## Open decisions
-- [ ] IBKR: gateway-host vs OAuth 1.0a headless — **OAuth recommended** for unattended server. Confirm IBKR grants consumer key.
+- [x] IBKR auth: **gateway (individual self-access)** — OAuth is vendor-only, not available to an individual account.
+- [x] IBKR gateway host: local PC + tickler (dev, now) → **Oracle Cloud Always Free + IBeam** (unattended prod, $0/mo).
 - [ ] `spark`/history: start capturing now (value-history table) or backfill later from FlexQuery?
 - [ ] `scoutNote`/`forgeNote` AI summaries: wire an LLM pass over synced data, or keep static until later phase?
