@@ -28,7 +28,7 @@ export function Topbar({ title, onMenu }: { title: string; onMenu: () => void })
         </button>
         <div className="flex items-center gap-2 text-sm">
           <Sparkles size={15} className="text-muted-foreground" />
-          <span className="text-muted-foreground">Atlas</span>
+          <span className="text-muted-foreground">Daniel</span>
           <ChevronRight size={14} className="text-muted-foreground/50" />
           <span className="font-medium text-foreground">{title}</span>
         </div>

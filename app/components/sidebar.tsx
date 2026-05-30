@@ -46,6 +46,7 @@ function NavRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
     <NavLink
       to={item.to}
       end={item.end}
+      prefetch="intent"
       title={collapsed ? item.label : undefined}
       className={({ isActive }) =>
         cn(
@@ -188,11 +189,11 @@ export function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
               collapsed && 'justify-center px-0',
             )}
           >
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-chart-1/15 font-mono text-xs font-semibold text-chart-1">F</span>
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-chart-1/15 font-mono text-xs font-semibold text-chart-1">D</span>
             {!collapsed && (
               <div className="min-w-0 flex-1 text-left">
-                <p className="truncate text-sm font-medium text-foreground">Fraga</p>
-                <p className="truncate text-[11px] text-muted-foreground">Operator · single seat</p>
+                <p className="truncate text-sm font-medium text-foreground">Daniel</p>
+                <p className="truncate text-[11px] text-muted-foreground">Operator</p>
               </div>
             )}
             {!collapsed && <LogOut size={16} className="text-muted-foreground" />}

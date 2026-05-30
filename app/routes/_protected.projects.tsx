@@ -123,7 +123,7 @@ export default function Projects() {
 
   return (
     <RevealContext.Provider value={false}>
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-screen-2xl">
         <PageHeader
           kicker="Projects"
           title="What I'm building"

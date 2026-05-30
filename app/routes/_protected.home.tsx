@@ -303,7 +303,7 @@ export default function DailyUpdate() {
 
   return (
     <RevealContext.Provider value={false}>
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-screen-2xl">
         <div className="flex flex-col gap-5 border-b border-border pb-7 md:flex-row md:items-end md:justify-between">
           <div>
             <Reveal delay={0}>

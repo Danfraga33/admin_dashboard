@@ -140,7 +140,7 @@ export default function Ventures() {
 
   return (
     <RevealContext.Provider value={false}>
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-screen-2xl">
         <PageHeader
           kicker="Fraga Ventures · Acquisitions"
           title="Own & integrate"

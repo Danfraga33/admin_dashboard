@@ -64,7 +64,7 @@ export default function ProtectedLayout() {
           <div className="flex min-w-0 flex-1 flex-col">
             <Topbar title={title} onMenu={() => setDrawer(true)} />
             <div ref={scrollRef} className="flex-1 overflow-y-auto">
-              <div className="px-4 py-6 md:px-8 md:py-9">
+              <div className="px-3 py-6 md:px-4 md:py-9">
                 <Outlet />
                 <div className="h-10" />
               </div>
