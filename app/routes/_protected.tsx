@@ -6,6 +6,7 @@ import { Sidebar, useSidebarState } from '~/components/sidebar'
 import { Topbar } from '~/components/atlas/topbar'
 import { ThemeProvider } from '~/components/theme-provider'
 import { AgentsProvider } from '~/components/atlas/agents-context'
+import { CommandPalette, useCommandPalette, useRecents } from '~/components/atlas/command-palette'
 
 export async function loader({ request }: LoaderFunctionArgs) {
   await requireSession(request)
@@ -35,12 +36,15 @@ export default function ProtectedLayout() {
   const location = useLocation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const title = titleFor(location.pathname)
+  const palette = useCommandPalette()
+  const { recents, push: pushRecent } = useRecents()
 
-  // scroll to top + close drawer on navigation
+  // scroll to top + close drawer + record visited route on navigation
   useEffect(() => {
     setDrawer(false)
     if (scrollRef.current) scrollRef.current.scrollTop = 0
-  }, [location.pathname])
+    pushRecent(location.pathname)
+  }, [location.pathname, pushRecent])
 
   return (
     <ThemeProvider>
@@ -61,8 +65,15 @@ export default function ProtectedLayout() {
             </div>
           )}
 
+          <CommandPalette
+            open={palette.open}
+            onClose={() => palette.setOpen(false)}
+            recents={recents}
+            onSelect={(item) => pushRecent(item.to)}
+          />
+
           <div className="flex min-w-0 flex-1 flex-col">
-            <Topbar title={title} onMenu={() => setDrawer(true)} />
+            <Topbar title={title} onMenu={() => setDrawer(true)} onOpenPalette={() => palette.setOpen(true)} />
             <div ref={scrollRef} className="flex-1 overflow-y-auto">
               <div className="px-3 py-6 md:px-4 md:py-9">
                 <Outlet />

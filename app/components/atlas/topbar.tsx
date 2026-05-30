@@ -16,7 +16,7 @@ function LiveClock() {
   return <span className="font-mono text-xs tabular-nums text-muted-foreground">{now ?? '--:--:--'}</span>
 }
 
-export function Topbar({ title, onMenu }: { title: string; onMenu: () => void }) {
+export function Topbar({ title, onMenu, onOpenPalette }: { title: string; onMenu: () => void; onOpenPalette: () => void }) {
   const { theme, setTheme } = useTheme()
   const { running, runAgents } = useAgents()
 
@@ -34,7 +34,7 @@ export function Topbar({ title, onMenu }: { title: string; onMenu: () => void })
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          <button className="hidden items-center gap-2 rounded-lg border border-border bg-muted/40 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground sm:flex cursor-pointer">
+          <button onClick={onOpenPalette} className="hidden items-center gap-2 rounded-lg border border-border bg-muted/40 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground sm:flex cursor-pointer">
             <Search size={14} />
             <span>Ask Atlas</span>
             <kbd className="ml-1 rounded border border-border bg-background px-1 font-mono text-[10px]">⌘K</kbd>
