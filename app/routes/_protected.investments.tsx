@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useLoaderData, type LoaderFunctionArgs } from 'react-router'
 import { useReducedMotion } from 'framer-motion'
 import { Check, Star } from 'lucide-react'
-import { AGENTS, PORTFOLIO, type Holding } from '~/lib/atlas-data'
+import { AGENTS, type Holding, type Portfolio } from '~/lib/atlas-data'
+import { requireSession } from '~/lib/session.server'
+import { readPortfolio } from '~/lib/ibkr.server'
 import {
   Reveal,
   RevealContext,
@@ -18,8 +21,10 @@ import {
   stag,
 } from '~/components/atlas'
 
-export function loader() {
-  return { PORTFOLIO, scout: AGENTS.find((a) => a.id === 'scout')! }
+export async function loader({ request }: LoaderFunctionArgs) {
+  const { session, supabase } = await requireSession(request)
+  const { portfolio, cash, live, syncedAt } = await readPortfolio(supabase, session!.user.id)
+  return { portfolio, cash, live, syncedAt, scout: AGENTS.find((a) => a.id === 'scout')! }
 }
 
 /** Brief "Scout fetching…" skeleton on client mount; SSR + reduced-motion render loaded. */
@@ -71,7 +76,7 @@ function HoldingRow({ h, i }: { h: Holding; i: number }) {
   )
 }
 
-function Holdings({ data }: { data: typeof PORTFOLIO }) {
+function Holdings({ data }: { data: Portfolio }) {
   const loaded = useFetch(820)
   return (
     <Reveal delay={260}>
@@ -88,7 +93,7 @@ function Holdings({ data }: { data: typeof PORTFOLIO }) {
   )
 }
 
-function Allocation({ data }: { data: typeof PORTFOLIO }) {
+function Allocation({ data }: { data: Portfolio }) {
   return (
     <Reveal delay={300}>
       <Card className="p-5">
@@ -117,7 +122,7 @@ function Allocation({ data }: { data: typeof PORTFOLIO }) {
   )
 }
 
-function Watchlist({ data }: { data: typeof PORTFOLIO }) {
+function Watchlist({ data }: { data: Portfolio }) {
   return (
     <Reveal delay={340}>
       <Card className="p-5">
@@ -140,8 +145,7 @@ function Watchlist({ data }: { data: typeof PORTFOLIO }) {
 }
 
 export default function Investments() {
-  const p = PORTFOLIO
-  const scout = AGENTS.find((a) => a.id === 'scout')!
+  const { portfolio: p, cash, live, scout } = useLoaderData<typeof loader>()
 
   return (
     <RevealContext.Provider value={false}>
@@ -149,7 +153,11 @@ export default function Investments() {
         <PageHeader
           kicker="Investments"
           title="The Portfolio"
-          sub="Scout pulls positions from your brokerage and writes the read so you don't have to."
+          sub={
+            live
+              ? 'Scout pulls live positions from Interactive Brokers and writes the read so you don\'t have to.'
+              : 'Showing sample data — connect Interactive Brokers to go live.'
+          }
           right={
             <div className="md:text-right">
               <Label>Total value · today</Label>
@@ -166,11 +174,11 @@ export default function Investments() {
         <div className="mt-7">
           <AgentSummary
             agent={scout}
-            label="Portfolio & market read · updated just now"
+            label={live ? 'Portfolio & market read · live from IBKR' : 'Portfolio & market read · sample data'}
             text={p.scoutNote}
             footer={
               <>
-                <Check size={13} className="text-chart-2" /> Fetched 14 holdings &amp; 3 watchlist names · synthesized in 1.2s
+                <Check size={13} className="text-chart-2" /> {live ? `Fetched ${p.holdings.length} holdings from Interactive Brokers` : 'Connect IBKR to replace sample data'}
               </>
             }
           />
@@ -180,7 +188,7 @@ export default function Investments() {
           <StatTile label="Total value" value={p.total} prefix="$" spark={p.spark} sparkColor="chart-1" delay={120} />
           <StatTile label="Today" value={p.dayAbs} prefix="+$" delta={p.dayPct} sparkColor="chart-2" delay={180} />
           <StatTile label="Return · YTD" value={p.ytdPct} suffix="%" decimals={1} delta={p.ytdPct} delay={240} />
-          <StatTile label="Dry powder · cash" value={206300} prefix="$" sparkColor="chart-2" delay={300} />
+          <StatTile label="Dry powder · cash" value={cash} prefix="$" sparkColor="chart-2" delay={300} />
         </div>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-3">
