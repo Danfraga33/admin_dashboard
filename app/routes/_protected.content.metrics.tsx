@@ -1,4 +1,4 @@
-import { Form, useLoaderData, useNavigation } from 'react-router'
+import { Form, data, useLoaderData, useNavigation } from 'react-router'
 import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router'
 import { requireSession } from '~/lib/session.server'
 import { StatCard } from '~/components/stat-card'
@@ -10,7 +10,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .select('*')
     .order('recorded_date', { ascending: false })
   const latest = metrics?.[0] ?? null
-  return Response.json({ metrics: metrics ?? [], latest }, { headers: responseHeaders })
+  return data({ metrics: metrics ?? [], latest }, { headers: responseHeaders })
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -25,7 +25,7 @@ export async function action({ request }: ActionFunctionArgs) {
     profile_visits: Number(formData.get('profile_visits')) || null,
   })
 
-  return Response.json({}, { headers: responseHeaders })
+  return data({}, { headers: responseHeaders })
 }
 
 export default function XMetrics() {
@@ -89,7 +89,7 @@ export default function XMetrics() {
             {metrics.length === 0 && (
               <tr><td colSpan={4} className="px-5 py-10 text-center text-muted-foreground">No snapshots yet.</td></tr>
             )}
-            {(metrics as any[]).map((m, i) => (
+            {metrics.map((m, i) => (
               <tr key={m.id} className={`border-b border-border last:border-0 ${i % 2 === 1 ? 'bg-muted/20' : ''}`}>
                 <td className="px-5 py-3.5 font-mono text-foreground">{m.recorded_date}</td>
                 <td className="px-5 py-3.5 font-mono text-foreground">{m.followers?.toLocaleString() ?? '—'}</td>

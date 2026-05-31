@@ -1,4 +1,4 @@
-import { Form, useLoaderData, useNavigation } from 'react-router'
+import { Form, data, useLoaderData, useNavigation } from 'react-router'
 import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router'
 import { requireSession } from '~/lib/session.server'
 import { StatusBadge } from '~/components/status-badge'
@@ -9,7 +9,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .from('content_schedule')
     .select('*')
     .order('post_date', { ascending: true })
-  return Response.json({ schedule: schedule ?? [] }, { headers: responseHeaders })
+  return data({ schedule: schedule ?? [] }, { headers: responseHeaders })
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -31,7 +31,7 @@ export async function action({ request }: ActionFunctionArgs) {
     await supabase.from('content_schedule').delete().eq('id', String(formData.get('id')))
   }
 
-  return Response.json({}, { headers: responseHeaders })
+  return data({}, { headers: responseHeaders })
 }
 
 export default function ContentSchedule() {
@@ -101,7 +101,7 @@ export default function ContentSchedule() {
                 </td>
               </tr>
             )}
-            {(schedule as any[]).map((entry, i) => (
+            {schedule.map((entry, i) => (
               <tr key={entry.id} className={`border-b border-border last:border-0 ${i % 2 === 1 ? 'bg-muted/20' : ''}`}>
                 <td className="px-4 py-3 font-mono text-foreground">{entry.post_date}</td>
                 <td className="px-4 py-3 text-muted-foreground">{entry.platform}</td>

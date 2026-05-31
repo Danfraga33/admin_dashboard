@@ -1,4 +1,4 @@
-import { Link, useLoaderData } from 'react-router'
+import { Link, data, useLoaderData } from 'react-router'
 import type { LoaderFunctionArgs } from 'react-router'
 import { requireSession } from '~/lib/session.server'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
@@ -11,7 +11,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     supabase.from('content_schedule').select('*').order('post_date', { ascending: true }).limit(5),
     supabase.from('todos').select('*').order('due_date', { ascending: true }).limit(5),
   ])
-  return Response.json(
+  return data(
     { schedule: schedule ?? [], todos: todos ?? [] },
     { headers: responseHeaders },
   )

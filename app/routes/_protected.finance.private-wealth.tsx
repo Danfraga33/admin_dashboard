@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useLoaderData, useFetcher } from 'react-router'
+import { data, useLoaderData, useFetcher } from 'react-router'
 import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router'
 import { requireSession } from '~/lib/session.server'
 import { X, Pencil, Trash2, Plus } from 'lucide-react'
@@ -74,7 +74,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .from('lenders')
     .select('*')
     .order('created_at', { ascending: true })
-  return Response.json({ lenders: lenders ?? [] }, { headers: responseHeaders })
+  return data({ lenders: lenders ?? [] }, { headers: responseHeaders })
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -113,7 +113,7 @@ export async function action({ request }: ActionFunctionArgs) {
     await supabase.from('lenders').delete().eq('id', String(formData.get('id')))
   }
 
-  return Response.json({}, { headers: responseHeaders })
+  return data({}, { headers: responseHeaders })
 }
 
 // --- Component ---

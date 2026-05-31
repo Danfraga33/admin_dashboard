@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useLoaderData, useFetcher } from 'react-router'
+import { data, useLoaderData, useFetcher } from 'react-router'
 import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router'
 import { requireSession } from '~/lib/session.server'
 import { X, Pencil, Trash2, Plus } from 'lucide-react'
@@ -55,11 +55,11 @@ function stripToDigits(val: string): string {
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { supabase, responseHeaders } = await requireSession(request)
-  const { data } = await supabase
+  const { data: rows } = await supabase
     .from('accounts')
     .select('*')
     .order('created_at', { ascending: true })
-  return Response.json({ accounts: (data ?? []) as Account[] }, { headers: responseHeaders })
+  return data({ accounts: (rows ?? []) as Account[] }, { headers: responseHeaders })
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -101,7 +101,7 @@ export async function action({ request }: ActionFunctionArgs) {
     await supabase.from('accounts').delete().eq('id', String(form.get('id')))
   }
 
-  return Response.json({}, { headers: responseHeaders })
+  return data({}, { headers: responseHeaders })
 }
 
 export default function Accounting() {

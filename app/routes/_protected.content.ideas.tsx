@@ -1,4 +1,4 @@
-import { Form, useLoaderData, useNavigation } from 'react-router'
+import { Form, data, useLoaderData, useNavigation } from 'react-router'
 import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router'
 import { requireSession } from '~/lib/session.server'
 import { StatusBadge } from '~/components/status-badge'
@@ -9,7 +9,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .from('content_ideas')
     .select('*')
     .order('created_at', { ascending: false })
-  return Response.json({ ideas: ideas ?? [] }, { headers: responseHeaders })
+  return data({ ideas: ideas ?? [] }, { headers: responseHeaders })
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -31,7 +31,7 @@ export async function action({ request }: ActionFunctionArgs) {
     await supabase.from('content_ideas').delete().eq('id', String(formData.get('id')))
   }
 
-  return Response.json({}, { headers: responseHeaders })
+  return data({}, { headers: responseHeaders })
 }
 
 export default function ContentIdeas() {
@@ -102,7 +102,7 @@ export default function ContentIdeas() {
                 </td>
               </tr>
             )}
-            {ideas.map((idea: any, i: number) => (
+            {ideas.map((idea, i) => (
               <tr
                 key={idea.id}
                 className={`border-b border-border last:border-0 ${i % 2 === 1 ? 'bg-muted/20' : ''}`}

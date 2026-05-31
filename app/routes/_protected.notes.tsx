@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Form, useActionData, useLoaderData, useNavigation } from 'react-router'
+import { Form, data, useActionData, useLoaderData, useNavigation } from 'react-router'
 import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router'
 import { requireSession } from '~/lib/session.server'
 
@@ -15,7 +15,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .from('notes')
     .select('*')
     .order('updated_at', { ascending: false })
-  return Response.json({ notes: notes ?? [] }, { headers: responseHeaders })
+  return data({ notes: notes ?? [] }, { headers: responseHeaders })
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -31,7 +31,7 @@ export async function action({ request }: ActionFunctionArgs) {
     })
     if (error) {
       console.error('create-note error:', error)
-      return Response.json(
+      return data(
         {
           ok: false,
           intent: 'create',
@@ -41,7 +41,7 @@ export async function action({ request }: ActionFunctionArgs) {
       )
     }
 
-    return Response.json(
+    return data(
       {
         ok: true,
         intent: 'create',
@@ -72,7 +72,7 @@ export async function action({ request }: ActionFunctionArgs) {
     if (error) console.error('delete-note error:', error)
   }
 
-  return Response.json({ ok: true, intent: String(intent ?? '') }, { headers: responseHeaders })
+  return data({ ok: true, intent: String(intent ?? '') }, { headers: responseHeaders })
 }
 
 function NoteModal({ note, onClose }: { note: any; onClose: () => void }) {

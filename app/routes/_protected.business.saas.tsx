@@ -1,4 +1,4 @@
-import { useLoaderData } from 'react-router'
+import { data, useLoaderData } from 'react-router'
 import type { LoaderFunctionArgs } from 'react-router'
 import { requireSession } from '~/lib/session.server'
 import { StatCard } from '~/components/stat-card'
@@ -11,7 +11,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .select('*, saas_metrics(*)')
     .order('acquired_at', { ascending: true })
 
-  return Response.json({ businesses: businesses ?? [] }, { headers: responseHeaders })
+  return data({ businesses: businesses ?? [] }, { headers: responseHeaders })
 }
 
 export default function SaasHealth() {
@@ -36,7 +36,7 @@ export default function SaasHealth() {
       <p className="text-muted-foreground text-sm mb-10 leading-relaxed">Portfolio metrics per business.</p>
 
       <div className="space-y-8">
-        {(businesses as any[]).map((biz) => {
+        {businesses.map((biz) => {
           const metrics = biz.saas_metrics ?? []
           const latest = metrics.sort((a: any, b: any) =>
             b.recorded_month.localeCompare(a.recorded_month)

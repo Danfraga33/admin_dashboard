@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Form, useLoaderData, useNavigation, useFetcher } from 'react-router'
+import { Form, data, useLoaderData, useNavigation, useFetcher } from 'react-router'
 import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router'
 import { requireSession } from '~/lib/session.server'
 import { StatusBadge } from '~/components/status-badge'
@@ -10,7 +10,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     supabase.from('content_schedule').select('*').order('post_date', { ascending: true }),
     supabase.from('content_ideas').select('*').order('created_at', { ascending: false }),
   ])
-  return Response.json(
+  return data(
     { schedule: schedule ?? [], ideas: ideas ?? [] },
     { headers: responseHeaders },
   )
@@ -73,7 +73,7 @@ export async function action({ request }: ActionFunctionArgs) {
     if (error) console.error('delete-idea error:', error)
   }
 
-  return Response.json({}, { headers: responseHeaders })
+  return data({}, { headers: responseHeaders })
 }
 
 const MONTHS = [

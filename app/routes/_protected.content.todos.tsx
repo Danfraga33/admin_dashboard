@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Form, useLoaderData, useNavigation } from 'react-router'
+import { Form, data, useLoaderData, useNavigation } from 'react-router'
 import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router'
 import { requireSession } from '~/lib/session.server'
 import { StatusBadge } from '~/components/status-badge'
@@ -11,7 +11,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .from('todos')
     .select('*')
     .order('due_date', { ascending: true })
-  return Response.json({ todos: todos ?? [] }, { headers: responseHeaders })
+  return data({ todos: todos ?? [] }, { headers: responseHeaders })
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -53,7 +53,7 @@ export async function action({ request }: ActionFunctionArgs) {
     if (error) console.error('delete-todo error:', error)
   }
 
-  return Response.json({}, { headers: responseHeaders })
+  return data({}, { headers: responseHeaders })
 }
 
 function TodoModal({ todo, onClose }: { todo: any; onClose: () => void }) {
@@ -199,8 +199,8 @@ export default function Todos() {
   const { todos } = useLoaderData<typeof loader>()
   const navigation = useNavigation()
   const isSubmitting = navigation.state === 'submitting'
-  const open = (todos as any[]).filter((t: any) => !t.completed)
-  const done = (todos as any[]).filter((t: any) => t.completed)
+  const open = todos.filter((t) => !t.completed)
+  const done = todos.filter((t) => t.completed)
   const [selectedTodo, setSelectedTodo] = useState<any | null>(null)
 
   return (

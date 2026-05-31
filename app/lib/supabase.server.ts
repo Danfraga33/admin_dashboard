@@ -1,7 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
+import type { Database } from './database.types'
 
 export function createSupabaseServerClient(request: Request, responseHeaders: Headers) {
-  return createServerClient(
+  return createServerClient<Database>(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_ANON_KEY!,
     {

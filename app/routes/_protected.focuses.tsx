@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useFetcher, useLoaderData } from 'react-router'
+import { data, useFetcher, useLoaderData } from 'react-router'
 import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router'
 import { motion, useReducedMotion } from 'framer-motion'
 import { requireSession } from '~/lib/session.server'
@@ -53,7 +53,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     focuses = reloaded.data
   }
 
-  return Response.json({ focuses: focuses ?? [] }, { headers: responseHeaders })
+  return data({ focuses: focuses ?? [] }, { headers: responseHeaders })
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -70,7 +70,7 @@ export async function action({ request }: ActionFunctionArgs) {
       .eq('id', String(formData.get('id')))
   }
 
-  return Response.json({ ok: true }, { headers: responseHeaders })
+  return data({ ok: true }, { headers: responseHeaders })
 }
 
 // ─── Editable body ────────────────────────────────────────────────────────────
