@@ -64,8 +64,8 @@ export function StatTile({
   delay?: number
 }) {
   return (
-    <Reveal delay={delay}>
-      <Card className="p-5 transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-md">
+    <Reveal delay={delay} className="h-full">
+      <Card className="flex h-full flex-col p-5 transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-md">
         <div className="flex items-center justify-between">
           <Label>{label}</Label>
           {delta != null && <Delta pct={delta} />}
@@ -74,11 +74,9 @@ export function StatTile({
           <Num value={value} prefix={prefix} suffix={suffix} decimals={decimals} className="text-2xl text-foreground md:text-3xl leading-none" />
           {unit && <span className="mb-0.5 text-sm text-muted-foreground">{unit}</span>}
         </div>
-        {spark && (
-          <div className="mt-3">
-            <Sparkline data={spark} color={sparkColor} w={240} h={34} />
-          </div>
-        )}
+        <div className="mt-3 flex h-[34px] items-end">
+          {spark && <Sparkline data={spark} color={sparkColor} w={240} h={34} />}
+        </div>
       </Card>
     </Reveal>
   )

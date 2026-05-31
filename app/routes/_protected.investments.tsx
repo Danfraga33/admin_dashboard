@@ -188,7 +188,7 @@ export default function Investments() {
           />
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatTile label="Total value" value={p.total} prefix="$" spark={p.spark} sparkColor="chart-1" delay={120} />
           <StatTile label="Today" value={p.dayAbs} prefix="+$" delta={p.dayPct} sparkColor="chart-2" delay={180} />
           <StatTile label="Return · YTD" value={p.ytdPct} suffix="%" decimals={1} delta={p.ytdPct} delay={240} />
