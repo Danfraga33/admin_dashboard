@@ -161,7 +161,7 @@ export const AGENTS: Agent[] = [
 
 export const BRIEFING: Briefing = {
   date: 'Friday, May 30',
-  greeting: 'Good morning, Fraga.',
+  greeting: 'Good morning, Daniel.',
   synthLabel: 'Synthesized by Atlas from 4 agents',
   summary:
     "Portfolio is up 1.8% overnight — NVDA and the AI basket carried it while cash held flat. Scout flags two buy-box SaaS targets that crossed your revenue threshold this week. On the build side, the RAG agent shipped to staging and the orchestration prototype is unblocked. Net worth ticked to $4.24M. Your highest-leverage move today: close out the multi-agent orchestration study — it's the last gate on Stage 1.",
@@ -190,7 +190,7 @@ export const ACTIVITY: ActivityEvent[] = [
 ]
 
 export const PORTFOLIO: Portfolio = {
-  total: 1284300,
+  total: 2884311,
   dayPct: 1.84,
   dayAbs: 23210,
   ytdPct: 22.6,
