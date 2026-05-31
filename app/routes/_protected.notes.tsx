@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { Form, data, useActionData, useLoaderData, useNavigation } from 'react-router'
+import { Form, data, useActionData, useFetcher, useFetchers, useLoaderData, useNavigation } from 'react-router'
 import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { requireSession } from '~/lib/session.server'
 
 type NotesActionData = {
@@ -75,8 +77,58 @@ export async function action({ request }: ActionFunctionArgs) {
   return data({ ok: true, intent: String(intent ?? '') }, { headers: responseHeaders })
 }
 
+function NoteMarkdown({ children }: { children: string }) {
+  return (
+    <div className="text-lg text-foreground leading-loose space-y-4">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          h1: ({ children }) => <h1 className="text-2xl font-semibold tracking-wide mt-6 mb-2 first:mt-0">{children}</h1>,
+          h2: ({ children }) => <h2 className="text-xl font-semibold tracking-wide mt-6 mb-2 first:mt-0">{children}</h2>,
+          h3: ({ children }) => <h3 className="text-lg font-semibold mt-4 mb-1 first:mt-0">{children}</h3>,
+          p: ({ children }) => <p className="leading-loose">{children}</p>,
+          ul: ({ children }) => <ul className="list-disc pl-6 space-y-1">{children}</ul>,
+          ol: ({ children }) => <ol className="list-decimal pl-6 space-y-1">{children}</ol>,
+          li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+          a: ({ children, href }) => (
+            <a href={href} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2 hover:opacity-80">
+              {children}
+            </a>
+          ),
+          strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+          em: ({ children }) => <em className="italic">{children}</em>,
+          blockquote: ({ children }) => (
+            <blockquote className="border-l-2 border-border pl-4 italic text-muted-foreground">{children}</blockquote>
+          ),
+          code: ({ children, className }) =>
+            className ? (
+              <code className={className}>{children}</code>
+            ) : (
+              <code className="bg-muted/40 rounded px-1.5 py-0.5 text-base font-mono">{children}</code>
+            ),
+          pre: ({ children }) => (
+            <pre className="bg-muted/40 rounded-md p-4 overflow-x-auto text-base font-mono leading-relaxed">{children}</pre>
+          ),
+          hr: () => <hr className="border-border my-4" />,
+          table: ({ children }) => (
+            <div className="overflow-x-auto">
+              <table className="w-full text-base border-collapse">{children}</table>
+            </div>
+          ),
+          th: ({ children }) => <th className="border border-border px-3 py-1.5 text-left font-medium">{children}</th>,
+          td: ({ children }) => <td className="border border-border px-3 py-1.5">{children}</td>,
+        }}
+      >
+        {children}
+      </ReactMarkdown>
+    </div>
+  )
+}
+
 function NoteModal({ note, onClose }: { note: any; onClose: () => void }) {
   const [editing, setEditing] = useState(false)
+  const updateFetcher = useFetcher()
+  const deleteFetcher = useFetcher()
 
   if (editing) {
     return (
@@ -85,11 +137,11 @@ function NoteModal({ note, onClose }: { note: any; onClose: () => void }) {
         onClick={onClose}
       >
         <div
-          className="bg-card border border-border rounded-lg p-8 w-full max-w-lg shadow-lg"
+          className="bg-card border border-border rounded-lg p-8 w-full max-w-3xl max-h-[90vh] flex flex-col shadow-lg"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-semibold text-2xl text-foreground tracking-wide">Edit Note</h2>
+          <div className="flex items-center justify-between mb-6 shrink-0">
+            <h2 className="font-semibold text-3xl text-foreground tracking-wide">Edit Note</h2>
             <button
               onClick={onClose}
               className="text-xl text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
@@ -97,7 +149,7 @@ function NoteModal({ note, onClose }: { note: any; onClose: () => void }) {
               ×
             </button>
           </div>
-          <Form method="post" className="flex flex-col gap-4" onSubmit={onClose}>
+          <updateFetcher.Form method="post" className="flex flex-col gap-4 flex-1 min-h-0" onSubmit={onClose}>
             <input type="hidden" name="intent" value="update" />
             <input type="hidden" name="id" value={note.id} />
             <input
@@ -105,22 +157,21 @@ function NoteModal({ note, onClose }: { note: any; onClose: () => void }) {
               defaultValue={note.title}
               required
               placeholder="Title"
-              className="bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              className="bg-input border border-border rounded-md px-3 py-2.5 text-base text-foreground focus:outline-none focus:ring-2 focus:ring-ring shrink-0"
             />
             <textarea
               name="body"
               defaultValue={note.body ?? ''}
-              rows={8}
               placeholder="Note body..."
-              className="bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              className="bg-input border border-border rounded-md px-3 py-2.5 text-base text-foreground leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring resize-none flex-1 min-h-[40vh]"
             />
             <button
               type="submit"
-              className="self-end bg-primary text-primary-foreground rounded-md px-4 py-2.5 text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer"
+              className="self-end bg-primary text-primary-foreground rounded-md px-4 py-2.5 text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer shrink-0"
             >
               Save
             </button>
-          </Form>
+          </updateFetcher.Form>
         </div>
       </div>
     )
@@ -132,11 +183,11 @@ function NoteModal({ note, onClose }: { note: any; onClose: () => void }) {
       onClick={onClose}
     >
       <div
-        className="bg-card border border-border rounded-lg p-8 w-full max-w-2xl max-h-[90vh] flex flex-col shadow-lg"
+        className="bg-card border border-border rounded-lg p-8 w-full max-w-3xl max-h-[90vh] flex flex-col shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-6 shrink-0">
-          <h2 className="font-semibold text-2xl text-foreground tracking-wide">{note.title}</h2>
+          <h2 className="font-semibold text-3xl text-foreground tracking-wide">{note.title}</h2>
           <button
             onClick={onClose}
             className="text-xl text-muted-foreground hover:text-foreground transition-colors cursor-pointer ml-4"
@@ -147,7 +198,7 @@ function NoteModal({ note, onClose }: { note: any; onClose: () => void }) {
 
         {note.body ? (
           <div className="mb-6 overflow-y-auto">
-            <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{note.body}</p>
+            <NoteMarkdown>{note.body}</NoteMarkdown>
           </div>
         ) : (
           <p className="text-sm text-muted-foreground mb-6">No content.</p>
@@ -164,7 +215,7 @@ function NoteModal({ note, onClose }: { note: any; onClose: () => void }) {
           >
             Edit
           </button>
-          <Form method="post">
+          <deleteFetcher.Form method="post">
             <input type="hidden" name="intent" value="delete" />
             <input type="hidden" name="id" value={note.id} />
             <button
@@ -177,10 +228,59 @@ function NoteModal({ note, onClose }: { note: any; onClose: () => void }) {
             >
               Delete
             </button>
-          </Form>
+          </deleteFetcher.Form>
         </div>
       </div>
     </div>
+  )
+}
+
+function NoteRow({
+  note,
+  striped,
+  onSelect,
+}: {
+  note: any
+  striped: boolean
+  onSelect: (note: any) => void
+}) {
+  const fetcher = useFetcher()
+  const isOptimisticRow = note.id === 'optimistic-new-note'
+
+  return (
+    <tr
+      onClick={() => {
+        if (!isOptimisticRow) onSelect(note)
+      }}
+      className={`border-b border-border last:border-0 transition-colors ${
+        isOptimisticRow ? 'cursor-default bg-muted/40' : 'cursor-pointer hover:bg-muted/10'
+      } ${striped ? 'bg-muted/20' : ''}`}
+    >
+      <td className="px-5 py-3.5 text-foreground font-medium">{note.title}</td>
+      <td className="px-5 py-3.5 text-muted-foreground max-w-[300px] truncate hidden md:table-cell">
+        {note.body || '—'}
+      </td>
+      <td className="px-5 py-3.5 font-mono text-muted-foreground hidden md:table-cell">
+        {isOptimisticRow ? 'Saving...' : new Date(note.updated_at).toLocaleDateString()}
+      </td>
+      <td className="px-5 py-3.5" onClick={(e) => e.stopPropagation()}>
+        {isOptimisticRow ? null : (
+          <fetcher.Form method="post">
+            <input type="hidden" name="intent" value="delete" />
+            <input type="hidden" name="id" value={note.id} />
+            <button
+              type="submit"
+              onClick={(e) => {
+                if (!window.confirm('Delete this note?')) e.preventDefault()
+              }}
+              className="text-xs text-muted-foreground hover:text-destructive-foreground transition-colors cursor-pointer"
+            >
+              Delete
+            </button>
+          </fetcher.Form>
+        )}
+      </td>
+    </tr>
   )
 }
 
@@ -207,7 +307,36 @@ export default function Notes() {
       }
     : null
 
-  const visibleNotes = optimisticNote ? [optimisticNote, ...(notes as any[])] : (notes as any[])
+  // In-flight fetcher submissions persist their formData through both the
+  // submitting and loading (revalidation) phases — unlike useNavigation —
+  // so optimistic edits/deletes hold until fresh loader data arrives.
+  const fetchers = useFetchers()
+  const pendingUpdates = new Map<string, { title: string; body: string | null }>()
+  const pendingDeletes = new Set<string>()
+
+  for (const f of fetchers) {
+    if (!f.formData) continue
+    const intent = f.formData.get('intent')
+    const id = String(f.formData.get('id') ?? '')
+    if (!id) continue
+    if (intent === 'update') {
+      pendingUpdates.set(id, {
+        title: String(f.formData.get('title') ?? ''),
+        body: String(f.formData.get('body') ?? '') || null,
+      })
+    } else if (intent === 'delete') {
+      pendingDeletes.add(id)
+    }
+  }
+
+  const workingNotes = (notes as any[])
+    .filter((n) => !pendingDeletes.has(n.id))
+    .map((n) => {
+      const upd = pendingUpdates.get(n.id)
+      return upd ? { ...n, ...upd, updated_at: new Date().toISOString() } : n
+    })
+
+  const visibleNotes = optimisticNote ? [optimisticNote, ...workingNotes] : workingNotes
 
   useEffect(() => {
     if (!actionData || actionData.intent !== 'create') return
@@ -306,48 +435,14 @@ export default function Notes() {
                 </td>
               </tr>
             )}
-            {visibleNotes.map((note: any, i: number) => {
-              const isOptimisticRow = note.id === 'optimistic-new-note'
-
-              return (
-              <tr
+            {visibleNotes.map((note: any, i: number) => (
+              <NoteRow
                 key={note.id}
-                onClick={() => {
-                  if (!isOptimisticRow) setSelectedNote(note)
-                }}
-                className={`border-b border-border last:border-0 transition-colors ${
-                  isOptimisticRow
-                    ? 'cursor-default bg-muted/40'
-                    : 'cursor-pointer hover:bg-muted/10'
-                } ${i % 2 === 1 ? 'bg-muted/20' : ''}`}
-              >
-                <td className="px-5 py-3.5 text-foreground font-medium">{note.title}</td>
-                <td className="px-5 py-3.5 text-muted-foreground max-w-[300px] truncate hidden md:table-cell">
-                  {note.body || '—'}
-                </td>
-                <td className="px-5 py-3.5 font-mono text-muted-foreground hidden md:table-cell">
-                  {isOptimisticRow ? 'Saving...' : new Date(note.updated_at).toLocaleDateString()}
-                </td>
-                <td className="px-5 py-3.5" onClick={(e) => e.stopPropagation()}>
-                  {isOptimisticRow ? null : (
-                    <Form method="post">
-                      <input type="hidden" name="intent" value="delete" />
-                      <input type="hidden" name="id" value={note.id} />
-                      <button
-                        type="submit"
-                        onClick={(e) => {
-                          if (!window.confirm('Delete this note?')) e.preventDefault()
-                        }}
-                        className="text-xs text-muted-foreground hover:text-destructive-foreground transition-colors cursor-pointer"
-                      >
-                        Delete
-                      </button>
-                    </Form>
-                  )}
-                </td>
-              </tr>
-              )
-            })}
+                note={note}
+                striped={i % 2 === 1}
+                onSelect={setSelectedNote}
+              />
+            ))}
           </tbody>
         </table>
       </div>
