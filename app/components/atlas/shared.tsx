@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react'
+import { Check, Hammer } from 'lucide-react'
 import type { Agent, ChartColor } from '~/lib/atlas-data'
 import { Reveal, Num } from './motion'
 import { Card, SpotlightCard } from './cards'
@@ -122,6 +122,36 @@ export function AgentSummary({
         {footer && <div className="mt-4 flex items-center gap-2 border-t border-border pt-3 text-xs text-muted-foreground">{footer}</div>}
       </SpotlightCard>
     </Reveal>
+  )
+}
+
+/** Full-page placeholder shown when a feature flag is off. */
+export function InConstruction({
+  kicker,
+  title = 'In Construction',
+  sub = 'This page is being built. Check back soon.',
+}: {
+  kicker: string
+  title?: string
+  sub?: string
+}) {
+  return (
+    <div className="mx-auto flex min-h-[60vh] max-w-screen-2xl flex-col items-center justify-center text-center">
+      <Reveal delay={0}>
+        <span className="grid size-14 place-items-center rounded-2xl border border-border bg-card shadow-sm">
+          <Hammer size={24} className="text-muted-foreground" />
+        </span>
+      </Reveal>
+      <Reveal delay={60} className="mt-6">
+        <Kicker>{kicker}</Kicker>
+      </Reveal>
+      <Reveal delay={120}>
+        <h2 className="mt-3 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">{title}</h2>
+      </Reveal>
+      <Reveal delay={180}>
+        <p className="mt-3 max-w-sm text-sm text-muted-foreground">{sub}</p>
+      </Reveal>
+    </div>
   )
 }
 

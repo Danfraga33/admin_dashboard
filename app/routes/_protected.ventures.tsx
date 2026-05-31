@@ -1,4 +1,5 @@
 import { Check, TrendingUp, Target, Sparkles } from 'lucide-react'
+import { useLoaderData } from 'react-router'
 import { AGENTS, VENTURES, type Deal, type Finance } from '~/lib/atlas-data'
 import {
   Reveal,
@@ -14,11 +15,16 @@ import {
   AgentSummary,
   PageHeader,
   StatTile,
+  InConstruction,
   stag,
 } from '~/components/atlas'
 
 export function loader() {
-  return { VENTURES, ledger: AGENTS.find((a) => a.id === 'ledger')! }
+  return {
+    VENTURES,
+    ledger: AGENTS.find((a) => a.id === 'ledger')!,
+    show: process.env.SHOW_VENTURES === 'true',
+  }
 }
 
 function NetWorthChart({ f }: { f: Finance }) {
@@ -134,9 +140,18 @@ function CapitalCard({ f }: { f: Finance }) {
 }
 
 export default function Ventures() {
+  const { show } = useLoaderData<typeof loader>()
   const data = VENTURES
   const f = data.finance
   const ledger = AGENTS.find((a) => a.id === 'ledger')!
+
+  if (!show) {
+    return (
+      <RevealContext.Provider value={false}>
+        <InConstruction kicker="Fraga Ventures · Acquisitions" />
+      </RevealContext.Provider>
+    )
+  }
 
   return (
     <RevealContext.Provider value={false}>
