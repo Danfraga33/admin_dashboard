@@ -50,7 +50,7 @@ function NavRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
     <NavLink
       to={item.to}
       end={item.end}
-      prefetch="intent"
+      prefetch="render"
       title={collapsed ? item.label : undefined}
       className={({ isActive }) =>
         cn(
