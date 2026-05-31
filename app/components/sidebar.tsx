@@ -25,6 +25,10 @@ const NAV_WORK: NavItem[] = [
   { label: 'Notes', icon: 'StickyNote', to: '/notes' },
 ]
 
+const NAV_FITNESS: NavItem[] = [
+  { label: 'Gym', icon: 'Dumbbell', to: '/fitness' },
+]
+
 function Brand({ collapsed }: { collapsed: boolean }) {
   return (
     <div className="flex items-center gap-3">
@@ -161,6 +165,14 @@ export function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
         {collapsed && <div className="my-3 mx-3 border-t border-border" />}
         <div className="space-y-0.5">
           {NAV_WORK.map((it) => (
+            <NavRow key={it.to} item={it} collapsed={collapsed} />
+          ))}
+        </div>
+
+        {!collapsed && <p className="px-3 pb-1.5 pt-5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70">Fitness</p>}
+        {collapsed && <div className="my-3 mx-3 border-t border-border" />}
+        <div className="space-y-0.5">
+          {NAV_FITNESS.map((it) => (
             <NavRow key={it.to} item={it} collapsed={collapsed} />
           ))}
         </div>

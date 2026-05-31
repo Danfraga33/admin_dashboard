@@ -30,6 +30,7 @@ import {
   Bell,
   Star,
   Dot,
+  Dumbbell,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -66,6 +67,7 @@ export const ICONS: Record<string, LucideIcon> = {
   Bell,
   Star,
   Dot,
+  Dumbbell,
 }
 
 export function getIcon(name: string): LucideIcon {
