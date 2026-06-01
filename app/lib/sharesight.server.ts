@@ -118,3 +118,43 @@ export function normalizePortfolio(
     watch: PORTFOLIO.watch,
   }
 }
+
+function ymd(d: Date): string {
+  return d.toISOString().slice(0, 10)
+}
+
+async function ssGet(path: string, token: string): Promise<any> {
+  const res = await fetch(`${process.env.SHARESIGHT_API_BASE}${path}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  })
+  if (!res.ok) throw new Error(`Sharesight GET ${path} failed: ${res.status}`)
+  return res.json()
+}
+
+export async function fetchPortfolio(token: string, now: Date): Promise<Portfolio> {
+  const { portfolios } = await ssGet('/portfolios', token)
+  if (!portfolios?.length) throw new Error('Sharesight returned no portfolios')
+  const id = portfolios[0].id
+  const today = ymd(now)
+  const jan1 = ymd(new Date(now.getFullYear(), 0, 1))
+  const yesterday = ymd(new Date(now.getTime() - 24 * 60 * 60 * 1000))
+
+  const valuationRes = await ssGet(`/portfolios/${id}/valuation?balance_date=${today}`, token)
+  const ytdRes = await ssGet(
+    `/portfolios/${id}/performance?start_date=${jan1}&end_date=${today}`,
+    token
+  )
+  const dayRes = await ssGet(
+    `/portfolios/${id}/performance?start_date=${yesterday}&end_date=${today}`,
+    token
+  ).catch(() => ({ value_gain_percent: 0, value_gain: 0 }))
+
+  return normalizePortfolio(
+    valuationRes.report ?? valuationRes,
+    ytdRes.report ?? ytdRes,
+    {
+      value_gain_percent: (dayRes.report ?? dayRes).value_gain_percent ?? 0,
+      value_gain: (dayRes.report ?? dayRes).value_gain ?? 0,
+    }
+  )
+}
