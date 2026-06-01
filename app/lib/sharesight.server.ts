@@ -240,13 +240,16 @@ export async function readPortfolio(
     let { data: pr } = await admin
       .from('sharesight_portfolio').select('*').eq('user_id', userId).maybeSingle()
 
-    const stale = !pr || Date.now() - new Date(pr.synced_at).getTime() > STALE_MS
-    if (stale) {
+    if (!pr) {
+      // No cache: must block on first sync.
       await syncSharesight(admin, userId)
       const r = await admin.from('sharesight_portfolio').select('*').eq('user_id', userId).maybeSingle()
       pr = r.data
+      if (!pr) return { portfolio: PORTFOLIO, live: false }
+    } else if (Date.now() - new Date(pr.synced_at).getTime() > STALE_MS) {
+      // Stale but present: serve stale now, refresh in background.
+      void syncSharesight(admin, userId).catch(() => {})
     }
-    if (!pr) return { portfolio: PORTFOLIO, live: false }
 
     const [{ data: holdings }, { data: allocation }] = await Promise.all([
       admin.from('sharesight_holdings').select('*').eq('user_id', userId).order('position'),
