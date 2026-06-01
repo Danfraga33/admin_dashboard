@@ -4,6 +4,8 @@ import { useReducedMotion } from 'framer-motion'
 import { Check, Star } from 'lucide-react'
 import { AGENTS, PORTFOLIO, type Holding, type Portfolio } from '~/lib/atlas-data'
 import { requireSession } from '~/lib/session.server'
+import { createSupabaseAdminClient } from '~/lib/supabase.admin'
+import { readPortfolio } from '~/lib/sharesight.server'
 import {
   Reveal,
   RevealContext,
@@ -20,13 +22,15 @@ import {
   stag,
 } from '~/components/atlas'
 
-// Portfolio source is mock until the Sharesight API is wired (see docs/plan.md §2).
 export async function loader({ request }: LoaderFunctionArgs) {
-  await requireSession(request)
+  const { session } = await requireSession(request)
+  const admin = createSupabaseAdminClient()
+  const { portfolio, live } = await readPortfolio(admin, session.user.id)
+  const cashHolding = portfolio.holdings.find((h) => h.sym === 'CASH')
   return {
-    portfolio: PORTFOLIO,
-    cash: 206300,
-    live: false,
+    portfolio,
+    cash: cashHolding?.val ?? 0,
+    live,
     scout: AGENTS.find((a) => a.id === 'scout')!,
   }
 }

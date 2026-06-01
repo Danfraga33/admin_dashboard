@@ -16,6 +16,8 @@ import {
 } from '~/lib/atlas-data'
 import { cn, fmtCompact } from '~/lib/utils'
 import { requireSession } from '~/lib/session.server'
+import { createSupabaseAdminClient } from '~/lib/supabase.admin'
+import { readPortfolio } from '~/lib/sharesight.server'
 import {
   Reveal,
   RevealContext,
@@ -37,17 +39,19 @@ import {
 import { useAgents } from '~/components/atlas/agents-context'
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  await requireSession(request)
+  const { session } = await requireSession(request)
+  const admin = createSupabaseAdminClient()
+  const { portfolio } = await readPortfolio(admin, session.user.id)
   return {
     AGENTS,
     BRIEFING,
     STAGES,
     ACTIVITY,
-    PORTFOLIO,
+    PORTFOLIO: portfolio,
     VENTURES,
     FOCUS_ITEMS,
-    investTotal: PORTFOLIO.total,
-    investDayPct: PORTFOLIO.dayPct,
+    investTotal: portfolio.total,
+    investDayPct: portfolio.dayPct,
   }
 }
 
