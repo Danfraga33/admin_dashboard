@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { getToken } from './sharesight.server'
 import { normalizePortfolio } from './sharesight.server'
+import { buildPortfolioFromRows } from './sharesight.server'
 
 const TOKEN_RESPONSE = { access_token: 'fresh-token', expires_in: 1800 }
 
@@ -87,5 +88,20 @@ describe('normalizePortfolio', () => {
     expect(p.allocation).toEqual([{ label: 'Equities', pct: 100, color: 'chart-1' }])
     expect(p.watch.length).toBeGreaterThan(0)
     expect(p.scoutNote.length).toBeGreaterThan(0)
+  })
+})
+
+describe('buildPortfolioFromRows', () => {
+  it('assembles Portfolio from cache rows', () => {
+    const p = buildPortfolioFromRows(
+      { total: 50000, day_pct: 1.2, day_abs: 600, ytd_pct: 10 },
+      [{ sym: 'NVDA', name: 'NVIDIA', val: 30000, pct: 3.9, shares: 100, alloc: 60, tone: 'up', note: '' }],
+      [{ label: 'Equities', pct: 100, color: 'chart-1' }]
+    )
+    expect(p.total).toBe(50000)
+    expect(p.holdings[0].sym).toBe('NVDA')
+    expect(p.holdings[0].spark.length).toBeGreaterThan(0)
+    expect(p.allocation[0].label).toBe('Equities')
+    expect(p.watch.length).toBeGreaterThan(0)
   })
 })

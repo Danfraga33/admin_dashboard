@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { PORTFOLIO, type Portfolio, type Holding, type Tone, type ChartColor } from './atlas-data'
 
 const SAFETY_MARGIN_MS = 5 * 60 * 1000 // refresh 5min before the 30min expiry
@@ -157,4 +158,105 @@ export async function fetchPortfolio(token: string, now: Date): Promise<Portfoli
       value_gain: (dayRes.report ?? dayRes).value_gain ?? 0,
     }
   )
+}
+
+interface PortfolioRow { total: number; day_pct: number; day_abs: number; ytd_pct: number }
+interface HoldingRow {
+  sym: string; name: string; val: number; pct: number
+  shares: number | null; alloc: number; tone: string; note: string
+}
+interface AllocationRow { label: string; pct: number; color: string }
+
+export function buildPortfolioFromRows(
+  pr: PortfolioRow,
+  holdings: HoldingRow[],
+  allocation: AllocationRow[]
+): Portfolio {
+  return {
+    total: pr.total,
+    dayPct: pr.day_pct,
+    dayAbs: pr.day_abs,
+    ytdPct: pr.ytd_pct,
+    spark: sparkFor('PORTFOLIO'),
+    scoutNote: PORTFOLIO.scoutNote,
+    holdings: holdings.map((h) => ({
+      sym: h.sym, name: h.name, val: h.val, pct: h.pct,
+      shares: h.shares, alloc: h.alloc, spark: sparkFor(h.sym),
+      tone: h.tone as Tone, note: h.note,
+    })),
+    allocation: allocation.map((a) => ({ label: a.label, pct: a.pct, color: a.color as ChartColor })),
+    watch: PORTFOLIO.watch,
+  }
+}
+
+const STALE_MS = 30 * 60 * 1000
+
+export async function syncSharesight(admin: SupabaseClient, userId: string): Promise<void> {
+  try {
+    const token = await getToken({
+      now: () => new Date(),
+      fetch,
+      oauthGet: async () => {
+        const { data } = await admin.from('sharesight_oauth').select('access_token, expires_at').eq('id', 1).maybeSingle()
+        return data as OauthRow | null
+      },
+      oauthSet: async (row) => {
+        await admin.from('sharesight_oauth').upsert({ id: 1, ...row })
+      },
+    })
+    const p = await fetchPortfolio(token, new Date())
+
+    await admin.from('sharesight_portfolio').upsert({
+      user_id: userId, total: p.total, day_pct: p.dayPct, day_abs: p.dayAbs,
+      ytd_pct: p.ytdPct, synced_at: new Date().toISOString(),
+    })
+    await admin.from('sharesight_holdings').delete().eq('user_id', userId)
+    await admin.from('sharesight_holdings').insert(
+      p.holdings.map((h, i) => ({
+        user_id: userId, sym: h.sym, name: h.name, val: h.val, pct: h.pct,
+        shares: h.shares, alloc: h.alloc, tone: h.tone, note: h.note, position: i,
+      }))
+    )
+    await admin.from('sharesight_allocation').delete().eq('user_id', userId)
+    await admin.from('sharesight_allocation').insert(
+      p.allocation.map((a, i) => ({
+        user_id: userId, label: a.label, pct: a.pct, color: a.color, position: i,
+      }))
+    )
+    await admin.from('sync_runs').insert({ source: 'sharesight', ok: true })
+  } catch (err) {
+    await admin.from('sync_runs').insert({
+      source: 'sharesight', ok: false, error: err instanceof Error ? err.message : String(err),
+    })
+    throw err
+  }
+}
+
+export async function readPortfolio(
+  admin: SupabaseClient,
+  userId: string
+): Promise<{ portfolio: Portfolio; live: boolean }> {
+  try {
+    let { data: pr } = await admin
+      .from('sharesight_portfolio').select('*').eq('user_id', userId).maybeSingle()
+
+    const stale = !pr || Date.now() - new Date(pr.synced_at).getTime() > STALE_MS
+    if (stale) {
+      await syncSharesight(admin, userId)
+      const r = await admin.from('sharesight_portfolio').select('*').eq('user_id', userId).maybeSingle()
+      pr = r.data
+    }
+    if (!pr) return { portfolio: PORTFOLIO, live: false }
+
+    const [{ data: holdings }, { data: allocation }] = await Promise.all([
+      admin.from('sharesight_holdings').select('*').eq('user_id', userId).order('position'),
+      admin.from('sharesight_allocation').select('*').eq('user_id', userId).order('position'),
+    ])
+    return {
+      portfolio: buildPortfolioFromRows(pr, (holdings ?? []) as HoldingRow[], (allocation ?? []) as AllocationRow[]),
+      live: true,
+    }
+  } catch {
+    return { portfolio: PORTFOLIO, live: false }
+  }
 }
