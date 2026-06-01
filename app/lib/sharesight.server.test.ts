@@ -49,23 +49,20 @@ describe('getToken', () => {
 const VALUATION = {
   value: 100000,
   holdings: [
-    { instrument: { code: 'NVDA', name: 'NVIDIA' }, value: 60000, quantity: 240, allocation: 60 },
-    { instrument: { code: 'VOO', name: 'S&P 500 ETF' }, value: 40000, quantity: 100, allocation: 40 },
-  ],
-  sub_totals: [
-    { group: 'Equities', value: 100000, percentage: 100 },
+    { symbol: 'NVDA', name: 'NVIDIA', grouping: 'NASDAQ', value: 60000, quantity: 240 },
+    { symbol: 'VOO', name: 'S&P 500 ETF', grouping: 'NYSE', value: 40000, quantity: 100 },
   ],
 }
 
 const PERFORMANCE = {
-  value_gain_percent: 22.6,
+  total_gain_percent: 22.6,
   holdings: [
-    { instrument_code: 'NVDA', capital_gain_percent: 3.9 },
-    { instrument_code: 'VOO', capital_gain_percent: -0.8 },
+    { symbol: 'NVDA', total_gain_percent: 3.9 },
+    { symbol: 'VOO', total_gain_percent: -0.8 },
   ],
 }
 
-const DAY = { value_gain_percent: 1.84, value_gain: 1840 }
+const DAY = { total_gain_percent: 1.84, total_gain: 1840 }
 
 describe('normalizePortfolio', () => {
   it('maps valuation + performance into Portfolio shape', () => {
@@ -85,7 +82,10 @@ describe('normalizePortfolio', () => {
     expect(nvda.spark.length).toBeGreaterThan(0)
     const voo = p.holdings.find((h) => h.sym === 'VOO')!
     expect(voo.tone).toBe('down')
-    expect(p.allocation).toEqual([{ label: 'Equities', pct: 100, color: 'chart-1' }])
+    expect(p.allocation).toEqual([
+      { label: 'NASDAQ', pct: 60, color: 'chart-1' },
+      { label: 'NYSE', pct: 40, color: 'chart-4' },
+    ])
     expect(p.watch.length).toBeGreaterThan(0)
     expect(p.scoutNote.length).toBeGreaterThan(0)
   })

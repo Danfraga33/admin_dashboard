@@ -61,23 +61,24 @@ function toneOf(pct: number): Tone {
 }
 
 interface SsValuationHolding {
-  instrument: { code: string; name: string }
+  symbol: string
+  name: string
+  market?: string
+  grouping: string
   value: number
   quantity: number | null
-  allocation: number
 }
 interface SsValuation {
   value: number
   holdings: SsValuationHolding[]
-  sub_totals: { group: string; value: number; percentage: number }[]
 }
 interface SsPerformance {
-  value_gain_percent: number
-  holdings: { instrument_code: string; capital_gain_percent: number }[]
+  total_gain_percent: number
+  holdings: { symbol: string; total_gain_percent: number }[]
 }
 interface SsDayWindow {
-  value_gain_percent: number
-  value_gain: number
+  total_gain_percent: number
+  total_gain: number
 }
 
 export function normalizePortfolio(
@@ -85,33 +86,42 @@ export function normalizePortfolio(
   performance: SsPerformance,
   day: SsDayWindow
 ): Portfolio {
+  const total = valuation.value
   const perfBySym = new Map(
-    performance.holdings.map((h) => [h.instrument_code, h.capital_gain_percent])
+    performance.holdings.map((h) => [h.symbol, h.total_gain_percent])
   )
   const holdings: Holding[] = valuation.holdings.map((h) => {
-    const pct = perfBySym.get(h.instrument.code) ?? 0
+    const pct = perfBySym.get(h.symbol) ?? 0
     return {
-      sym: h.instrument.code,
-      name: h.instrument.name,
+      sym: h.symbol,
+      name: h.name,
       val: h.value,
       pct,
       shares: h.quantity,
-      alloc: h.allocation,
-      spark: sparkFor(h.instrument.code),
+      alloc: total > 0 ? Math.round((h.value / total) * 1000) / 10 : 0,
+      spark: sparkFor(h.symbol),
       tone: toneOf(pct),
       note: '',
     }
   })
-  const allocation = valuation.sub_totals.map((s, i) => ({
-    label: s.group,
-    pct: Math.round(s.percentage),
-    color: ALLOC_COLORS[i % ALLOC_COLORS.length],
-  }))
+
+  const byClass = new Map<string, number>()
+  for (const h of valuation.holdings) {
+    byClass.set(h.grouping, (byClass.get(h.grouping) ?? 0) + h.value)
+  }
+  const allocation = [...byClass.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([label, value], i) => ({
+      label,
+      pct: total > 0 ? Math.round((value / total) * 100) : 0,
+      color: ALLOC_COLORS[i % ALLOC_COLORS.length],
+    }))
+
   return {
-    total: valuation.value,
-    dayPct: day.value_gain_percent,
-    dayAbs: day.value_gain,
-    ytdPct: performance.value_gain_percent,
+    total,
+    dayPct: day.total_gain_percent,
+    dayAbs: day.total_gain,
+    ytdPct: performance.total_gain_percent,
     spark: sparkFor('PORTFOLIO'),
     scoutNote: PORTFOLIO.scoutNote,
     holdings,
@@ -148,16 +158,12 @@ export async function fetchPortfolio(token: string, now: Date): Promise<Portfoli
   const dayRes = await ssGet(
     `/portfolios/${id}/performance?start_date=${yesterday}&end_date=${today}`,
     token
-  ).catch(() => ({ value_gain_percent: 0, value_gain: 0 }))
+  ).catch(() => ({ total_gain: 0, total_gain_percent: 0 }))
 
-  return normalizePortfolio(
-    valuationRes.report ?? valuationRes,
-    ytdRes.report ?? ytdRes,
-    {
-      value_gain_percent: (dayRes.report ?? dayRes).value_gain_percent ?? 0,
-      value_gain: (dayRes.report ?? dayRes).value_gain ?? 0,
-    }
-  )
+  return normalizePortfolio(valuationRes, ytdRes, {
+    total_gain_percent: dayRes.total_gain_percent ?? 0,
+    total_gain: dayRes.total_gain ?? 0,
+  })
 }
 
 interface PortfolioRow { total: number; day_pct: number; day_abs: number; ytd_pct: number }
