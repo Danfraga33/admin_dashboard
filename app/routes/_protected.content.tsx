@@ -17,6 +17,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   )
 }
 
+export const meta = () => [{ title: 'Atlas · Content' }]
+
 export default function ContentLanding() {
   const { schedule, todos } = useLoaderData<typeof loader>()
   const openTodos = (todos as any[]).filter((t: any) => !t.completed)

@@ -400,6 +400,8 @@ function MealCard({ meal }: { meal: Meal }) {
 }
 
 // ─── Page ───────────────────────────────────────────────────────────────────────
+export const meta = () => [{ title: 'Atlas · Gym' }]
+
 export default function Fitness() {
   const { days, exercises, cardio, meals, targets } = useLoaderData<typeof loader>()
   const addMeal = useFetcher()

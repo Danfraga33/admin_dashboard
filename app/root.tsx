@@ -20,6 +20,8 @@ export async function loader() {
   };
 }
 
+export const meta: Route.MetaFunction = () => [{ title: "Atlas" }];
+
 export const links: Route.LinksFunction = () => [
   { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
   {

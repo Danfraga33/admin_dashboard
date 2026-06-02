@@ -93,6 +93,8 @@ function MermaidDiagram({ chart, id, theme }: { chart: string; id: string; theme
   )
 }
 
+export const meta = () => [{ title: 'Atlas · Investment Flowchart' }]
+
 export default function InvestmentFlowchart() {
   const { theme } = useTheme()
 

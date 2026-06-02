@@ -118,6 +118,8 @@ export async function action({ request }: ActionFunctionArgs) {
 
 // --- Component ---
 
+export const meta = () => [{ title: 'Atlas · Private Wealth' }]
+
 export default function PrivateWealth() {
   const { lenders } = useLoaderData<typeof loader>()
   const fetcher = useFetcher()

@@ -284,6 +284,8 @@ function NoteRow({
   )
 }
 
+export const meta = () => [{ title: 'Atlas · Notes' }]
+
 export default function Notes() {
   const { notes } = useLoaderData<typeof loader>()
   const actionData = useActionData() as NotesActionData | undefined

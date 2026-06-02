@@ -152,6 +152,8 @@ function Watchlist({ data }: { data: Portfolio }) {
   )
 }
 
+export const meta = () => [{ title: 'Atlas · Investments' }]
+
 export default function Investments() {
   const { portfolio: p, cash, live, scout } = useLoaderData<typeof loader>()
 

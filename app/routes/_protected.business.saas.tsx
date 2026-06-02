@@ -14,6 +14,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return data({ businesses: businesses ?? [] }, { headers: responseHeaders })
 }
 
+export const meta = () => [{ title: 'Atlas · SaaS' }]
+
 export default function SaasHealth() {
   const { businesses } = useLoaderData<typeof loader>()
 

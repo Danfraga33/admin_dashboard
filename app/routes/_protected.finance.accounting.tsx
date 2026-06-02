@@ -104,6 +104,8 @@ export async function action({ request }: ActionFunctionArgs) {
   return data({}, { headers: responseHeaders })
 }
 
+export const meta = () => [{ title: 'Atlas · Accounting' }]
+
 export default function Accounting() {
   const { accounts } = useLoaderData<typeof loader>()
   const fetcher = useFetcher()

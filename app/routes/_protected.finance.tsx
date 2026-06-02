@@ -17,6 +17,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   )
 }
 
+export const meta = () => [{ title: 'Atlas · Finance' }]
+
 export default function FinanceLanding() {
   const { lenders, accounts } = useLoaderData<typeof loader>()
 

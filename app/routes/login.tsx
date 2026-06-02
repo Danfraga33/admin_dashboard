@@ -31,6 +31,8 @@ export async function action({ request }: ActionFunctionArgs) {
   throw redirect('/', { headers: responseHeaders })
 }
 
+export const meta = () => [{ title: 'Atlas · Sign In' }]
+
 export default function Login() {
   const actionData = useActionData<typeof action>()
   const navigation = useNavigation()

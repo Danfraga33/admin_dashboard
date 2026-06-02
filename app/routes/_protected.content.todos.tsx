@@ -195,6 +195,8 @@ function TodoModal({ todo, onClose }: { todo: any; onClose: () => void }) {
   )
 }
 
+export const meta = () => [{ title: 'Atlas · Content · Todos' }]
+
 export default function Todos() {
   const { todos } = useLoaderData<typeof loader>()
   const navigation = useNavigation()

@@ -28,6 +28,8 @@ export async function action({ request }: ActionFunctionArgs) {
   return data({}, { headers: responseHeaders })
 }
 
+export const meta = () => [{ title: 'Atlas · Content · Metrics' }]
+
 export default function XMetrics() {
   const { metrics, latest } = useLoaderData<typeof loader>()
   const navigation = useNavigation()

@@ -192,6 +192,8 @@ function EditIdeaModal({ idea, onClose }: { idea: any; onClose: () => void }) {
   )
 }
 
+export const meta = () => [{ title: 'Atlas · Content · Planner' }]
+
 export default function ContentPlanner() {
   const { schedule, ideas } = useLoaderData<typeof loader>()
   const navigation = useNavigation()

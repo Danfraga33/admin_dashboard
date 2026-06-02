@@ -139,6 +139,8 @@ function CapitalCard({ f }: { f: Finance }) {
   )
 }
 
+export const meta = () => [{ title: 'Atlas · Fraga Ventures' }]
+
 export default function Ventures() {
   const { show } = useLoaderData<typeof loader>()
   const data = VENTURES

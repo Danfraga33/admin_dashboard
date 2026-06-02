@@ -61,6 +61,8 @@ function ProjectCard({ p, i }: { p: ProjectItem; i: number }) {
   )
 }
 
+export const meta = () => [{ title: 'Atlas · Projects' }]
+
 export default function Projects() {
   const data = PROJECTS
   const forge = AGENTS.find((a) => a.id === 'forge')!

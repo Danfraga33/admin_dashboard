@@ -310,6 +310,8 @@ function Ticker({ agents }: { agents: Agent[] }) {
   )
 }
 
+export const meta = () => [{ title: 'Atlas · Daily Update' }]
+
 export default function DailyUpdate() {
   const navigate = useNavigate()
   const { investTotal, investDayPct } = useLoaderData<typeof loader>()

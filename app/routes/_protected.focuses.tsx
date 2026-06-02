@@ -210,6 +210,8 @@ function FlowConnector({ index }: { index: number }) {
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
+export const meta = () => [{ title: 'Atlas · Focuses' }]
+
 export default function Focuses() {
   const { focuses } = useLoaderData<typeof loader>()
   const layers = focuses as Focus[]

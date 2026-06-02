@@ -34,6 +34,8 @@ export async function action({ request }: ActionFunctionArgs) {
   return data({}, { headers: responseHeaders })
 }
 
+export const meta = () => [{ title: 'Atlas · Content · Schedule' }]
+
 export default function ContentSchedule() {
   const { schedule } = useLoaderData<typeof loader>()
   const navigation = useNavigation()
