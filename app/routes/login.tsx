@@ -1,6 +1,6 @@
-import { Form, redirect, useActionData } from 'react-router'
+import { Form, redirect, useActionData, useNavigation } from 'react-router'
 import type { ActionFunctionArgs, LoaderFunctionArgs } from 'react-router'
-import { Sparkles } from 'lucide-react'
+import { Loader2, Sparkles } from 'lucide-react'
 import { createSupabaseServerClient } from '~/lib/supabase.server'
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -33,6 +33,8 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function Login() {
   const actionData = useActionData<typeof action>()
+  const navigation = useNavigation()
+  const isSubmitting = navigation.formAction === '/login'
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -49,43 +51,52 @@ export default function Login() {
           </div>
 
           <Form method="post" className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm text-foreground mb-1">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm text-foreground mb-1">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
+            <fieldset disabled={isSubmitting} className="space-y-4 disabled:opacity-60">
+              <div>
+                <label htmlFor="email" className="block text-sm text-foreground mb-1">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <div>
+                <label htmlFor="password" className="block text-sm text-foreground mb-1">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  className="w-full bg-input border border-border rounded-md px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
 
-            {actionData?.error && (
-              <p className="text-destructive-foreground text-sm">{actionData.error}</p>
-            )}
+              {actionData?.error && (
+                <p className="text-destructive-foreground text-sm">{actionData.error}</p>
+              )}
 
-            <button
-              type="submit"
-              className="w-full bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity"
-            >
-              Sign in
-            </button>
+              <button
+                type="submit"
+                className="flex w-full items-center justify-center gap-2 bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Signing in…
+                  </>
+                ) : (
+                  'Sign in'
+                )}
+              </button>
+            </fieldset>
           </Form>
         </div>
       </div>
