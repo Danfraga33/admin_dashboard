@@ -8,7 +8,6 @@ import {
   ACTIVITY,
   PORTFOLIO,
   VENTURES,
-  FOCUS_ITEMS,
   type Agent,
   type Signal,
   type Stage,
@@ -49,7 +48,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
     ACTIVITY,
     PORTFOLIO: portfolio,
     VENTURES,
-    FOCUS_ITEMS,
     investTotal: portfolio.total,
     investDayPct: portfolio.dayPct,
   }
@@ -215,76 +213,6 @@ function ThePath({ stages }: { stages: Stage[] }) {
   )
 }
 
-function ActivityFeed({ agents }: { agents: Agent[] }) {
-  return (
-    <Reveal delay={300}>
-      <Card className="p-5 h-full">
-        <div className="flex items-center justify-between">
-          <Kicker>Agent Activity</Kicker>
-          <span className="inline-flex items-center gap-1.5 font-mono text-[10px] text-chart-2">
-            <AgentDot state="running" /> live
-          </span>
-        </div>
-        <ul className="mt-4 space-y-0.5">
-          {ACTIVITY.slice(0, 6).map((ev, i) => {
-            const a = agents.find((x) => x.id === ev.agent)!
-            return (
-              <Reveal key={i} delay={stag(i, 360, 70)} className="flex items-center gap-3 rounded-lg px-1 py-2 hover:bg-muted/40 transition-colors">
-                <AgentAvatar icon={a.icon} accent={a.accent} size={26} />
-                <p className="flex-1 text-[13px] text-foreground/90">
-                  <span className="font-medium text-foreground">{a.name}</span> {ev.text}
-                </p>
-                <span className="font-mono text-[10px] text-muted-foreground">{ev.t}</span>
-              </Reveal>
-            )
-          })}
-        </ul>
-      </Card>
-    </Reveal>
-  )
-}
-
-function FocusStrip({ onNavigate }: { onNavigate: () => void }) {
-  const [items, setItems] = useState(FOCUS_ITEMS)
-  const toggle = (id: string) => setItems((p) => p.map((it) => (it.id === id ? { ...it, done: !it.done } : it)))
-  const done = items.filter((i) => i.done).length
-  return (
-    <Reveal delay={340}>
-      <Card className="p-5 h-full">
-        <div className="flex items-center justify-between">
-          <div>
-            <Label>What I'm working on</Label>
-            <p className="mt-1 text-sm font-semibold tracking-tight text-foreground">Stage 1 · this week</p>
-          </div>
-          <span className="font-mono text-[11px] text-muted-foreground">
-            {done}/{items.length}
-          </span>
-        </div>
-        <ul className="mt-3 divide-y divide-border">
-          {items.map((it) => (
-            <li key={it.id}>
-              <button onClick={() => toggle(it.id)} className="group flex w-full items-center gap-3 py-2.5 text-left cursor-pointer">
-                <span
-                  className={cn(
-                    'grid h-5 w-5 shrink-0 place-items-center rounded-md border transition-colors',
-                    it.done ? 'border-transparent bg-chart-1 text-white' : 'border-border text-transparent group-hover:border-chart-1',
-                  )}
-                >
-                  <Check size={12} strokeWidth={3} />
-                </span>
-                <span className={cn('text-[13px] transition-colors', it.done ? 'text-muted-foreground line-through' : 'text-foreground')}>{it.label}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-        <button onClick={onNavigate} className="group mt-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-foreground cursor-pointer">
-          View all focuses <ArrowUpRight size={14} className="text-muted-foreground transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-        </button>
-      </Card>
-    </Reveal>
-  )
-}
-
 function Ticker({ agents }: { agents: Agent[] }) {
   return (
     <Reveal delay={140} className="mt-6">
@@ -392,11 +320,6 @@ export default function DailyUpdate() {
         </div>
 
         <ThePath stages={STAGES} />
-
-        <div className="mt-12 grid gap-4 md:grid-cols-2">
-          <ActivityFeed agents={agents} />
-          <FocusStrip onNavigate={() => navigate('/focuses')} />
-        </div>
       </div>
     </RevealContext.Provider>
   )

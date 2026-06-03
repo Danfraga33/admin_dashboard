@@ -403,39 +403,6 @@ export type Database = {
         }
         Relationships: []
       }
-      focuses: {
-        Row: {
-          created_at: string
-          final_picture: string | null
-          id: string
-          name: string
-          next_step: string | null
-          position: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          final_picture?: string | null
-          id?: string
-          name: string
-          next_step?: string | null
-          position?: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          final_picture?: string | null
-          id?: string
-          name?: string
-          next_step?: string | null
-          position?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       lenders: {
         Row: {
           created_at: string
