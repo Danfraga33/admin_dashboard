@@ -1,16 +1,14 @@
 import { useState } from 'react'
 import { useNavigate, useLoaderData, type LoaderFunctionArgs } from 'react-router'
-import { TrendingUp, TrendingDown, Dot, Check, ArrowUpRight, Sparkles, Lock } from 'lucide-react'
+import { TrendingUp, TrendingDown, Dot, Check, ArrowUpRight, Sparkles, Hammer } from 'lucide-react'
 import {
   AGENTS,
   BRIEFING,
-  STAGES,
   ACTIVITY,
   PORTFOLIO,
   VENTURES,
   type Agent,
   type Signal,
-  type Stage,
   type ChartColor,
 } from '~/lib/atlas-data'
 import { cn, fmtCompact } from '~/lib/utils'
@@ -31,7 +29,6 @@ import {
   Kicker,
   Label,
   Marquee,
-  StatusBadge,
   Num,
   stag,
 } from '~/components/atlas'
@@ -44,12 +41,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return {
     AGENTS,
     BRIEFING,
-    STAGES,
     ACTIVITY,
     PORTFOLIO: portfolio,
     VENTURES,
     investTotal: portfolio.total,
     investDayPct: portfolio.dayPct,
+    showVentures: process.env.SHOW_VENTURES === 'true',
   }
 }
 
@@ -112,6 +109,7 @@ function SnapshotCard({
   sparkColor,
   bars,
   onClick,
+  construction = false,
 }: {
   delay: number
   label: string
@@ -124,7 +122,30 @@ function SnapshotCard({
   sparkColor?: ChartColor
   bars?: BarData[]
   onClick: () => void
+  construction?: boolean
 }) {
+  if (construction) {
+    return (
+      <Reveal delay={delay}>
+        <SpotlightCard glow="chart-1" className="cursor-pointer p-5" onClick={onClick}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Icon size={16} className="text-muted-foreground" />
+              <Label>{label}</Label>
+            </div>
+            <ArrowUpRight size={15} className="text-muted-foreground transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          </div>
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 py-6 text-center">
+            <span className="grid size-10 place-items-center rounded-xl border border-border bg-card">
+              <Hammer size={18} className="text-muted-foreground" />
+            </span>
+            <p className="font-mono text-sm text-foreground">In Construction</p>
+            <p className="text-xs text-muted-foreground">Being built — check back soon.</p>
+          </div>
+        </SpotlightCard>
+      </Reveal>
+    )
+  }
   return (
     <Reveal delay={delay}>
       <SpotlightCard glow={sparkColor || 'chart-1'} className="cursor-pointer p-5" onClick={onClick}>
@@ -163,56 +184,6 @@ function SnapshotCard({
   )
 }
 
-function PathNode({ stage, i }: { stage: Stage; i: number }) {
-  const active = stage.status === 'Active'
-  const locked = stage.status === 'Locked'
-  return (
-    <div className="relative flex flex-col items-center text-center md:flex-1">
-      <div
-        className={cn(
-          'relative z-10 grid h-12 w-12 place-items-center rounded-full border',
-          active && 'border-transparent bg-chart-1 text-white',
-          locked && 'border-dashed border-border bg-muted text-muted-foreground',
-          !active && !locked && 'border-border bg-card text-foreground',
-        )}
-      >
-        {locked ? <Lock size={16} /> : <span className="font-mono text-base leading-none">{stage.n}</span>}
-      </div>
-      <div className="mt-4 w-full max-w-[15rem]">
-        <StatusBadge status={stage.status} />
-        <h4 className="mt-2.5 text-sm font-semibold tracking-tight text-foreground">{stage.title}</h4>
-        <p className="mt-1 text-xs text-muted-foreground text-balance">{stage.desc}</p>
-        <div className="mt-3 flex items-center gap-2">
-          <Bar pct={stage.progress ?? 0} color="chart-1" delay={500 + i * 120} />
-          <span className="w-8 text-right font-mono text-[10px] text-muted-foreground">{stage.progress == null ? '—' : `${stage.progress}%`}</span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ThePath({ stages }: { stages: Stage[] }) {
-  return (
-    <Reveal delay={240} className="mt-12">
-      <div className="flex items-end justify-between">
-        <Kicker>North Star · The Path</Kicker>
-        <span className="hidden font-mono text-[11px] text-muted-foreground sm:block">skill → cashflow → ownership</span>
-      </div>
-      <p className="mt-3 max-w-md text-sm text-muted-foreground">Ownership is the output of stages one and two — not the starting move.</p>
-      <Card className="relative mt-5 px-6 py-9 md:px-10">
-        <div className="absolute left-[16.66%] right-[16.66%] top-[100px] hidden h-px bg-border md:block" />
-        <div className="absolute left-[16.66%] top-[100px] hidden h-px bg-chart-1 md:block" style={{ width: '0%', animation: 'atlasPathLine 1000ms cubic-bezier(0.22,1,0.36,1) 700ms forwards' }} />
-        <style>{`@keyframes atlasPathLine{to{width:21%}}`}</style>
-        <div className="flex flex-col gap-10 md:flex-row md:gap-6">
-          {stages.map((s, i) => (
-            <PathNode key={s.n} stage={s} i={i} />
-          ))}
-        </div>
-      </Card>
-    </Reveal>
-  )
-}
-
 function Ticker({ agents }: { agents: Agent[] }) {
   return (
     <Reveal delay={140} className="mt-6">
@@ -242,7 +213,7 @@ export const meta = () => [{ title: 'Atlas · Daily Update' }]
 
 export default function DailyUpdate() {
   const navigate = useNavigate()
-  const { investTotal, investDayPct } = useLoaderData<typeof loader>()
+  const { investTotal, investDayPct, showVentures } = useLoaderData<typeof loader>()
   const { agents, running } = useAgents()
   const v = VENTURES
   const liveCount = agents.filter((a) => a.state === 'running').length
@@ -315,11 +286,10 @@ export default function DailyUpdate() {
             insight="2 acquisition targets in buy-box"
             spark={v.finance.netWorthSpark}
             sparkColor="chart-2"
+            construction={!showVentures}
             onClick={() => navigate('/ventures')}
           />
         </div>
-
-        <ThePath stages={STAGES} />
       </div>
     </RevealContext.Provider>
   )
