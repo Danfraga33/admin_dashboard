@@ -132,11 +132,6 @@ export interface Ventures {
   buyBox: BuyBoxCriterion[]
 }
 
-export interface FocusItem {
-  id: string
-  label: string
-  done: boolean
-}
 
 /** Deterministic pseudo-series for sparklines (no Math.random — SSR-stable). */
 function series(seed: number, n: number, base: number, vol: number, drift: number): number[] {
@@ -257,8 +252,3 @@ export const VENTURES: Ventures = {
   ],
 }
 
-export const FOCUS_ITEMS: FocusItem[] = [
-  { id: 'agent', label: 'Build a working AI agent (tool-use + RAG)', done: true },
-  { id: 'workflow', label: 'Ship an agentic workflow end-to-end', done: false },
-  { id: 'orchestration', label: 'Study orchestration patterns (multi-agent)', done: false },
-]

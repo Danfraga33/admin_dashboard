@@ -31,7 +31,6 @@ export const COMMANDS: CommandItem[] = [
 
   { id: 'business-saas', label: 'SaaS', to: '/business/saas', icon: 'Cpu', section: 'Business', keywords: ['mrr', 'arr', 'churn', 'subscriptions', 'product', 'metrics'] },
 
-  { id: 'focuses', label: 'Focuses', to: '/focuses', icon: 'Target', section: 'Workspace', keywords: ['goals', 'priorities', 'objectives'] },
   { id: 'notes', label: 'Notes', to: '/notes', icon: 'StickyNote', section: 'Workspace', keywords: ['memo', 'scratch', 'jot'] },
 ]
 

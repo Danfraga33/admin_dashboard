@@ -21,7 +21,8 @@ export default [
     route('finance/investment-flowchart', 'routes/_protected.finance.investment-flowchart.tsx'),
     route('finance/accounting', 'routes/_protected.finance.accounting.tsx'),
     route('notes', 'routes/_protected.notes.tsx'),
-    route('focuses', 'routes/_protected.focuses.tsx'),
     route('fitness', 'routes/_protected.fitness.tsx'),
+    route('events', 'routes/_protected.events.tsx'),
+    route('resources/saas-events', 'routes/resources.saas-events.tsx'),
   ]),
 ] satisfies RouteConfig

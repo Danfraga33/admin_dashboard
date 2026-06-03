@@ -19,7 +19,6 @@ const VIEW_TITLES: Record<string, string> = {
   '/investments': 'Investments',
   '/projects': 'Projects',
   '/ventures': 'Fraga Ventures',
-  '/focuses': 'Focuses',
   '/content': 'Content',
   '/notes': 'Notes',
 }
