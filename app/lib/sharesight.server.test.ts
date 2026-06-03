@@ -49,16 +49,22 @@ describe('getToken', () => {
 const VALUATION = {
   value: 100000,
   holdings: [
-    { symbol: 'NVDA', name: 'NVIDIA', grouping: 'NASDAQ', value: 60000, quantity: 240 },
-    { symbol: 'VOO', name: 'S&P 500 ETF', grouping: 'NYSE', value: 40000, quantity: 100 },
+    { symbol: 'GDX', name: 'Gold Miners', grouping: 'NYSE', value: 50000, quantity: 240 },
+    { symbol: 'AG', name: 'First Majestic Silver', grouping: 'NYSE', value: 20000, quantity: 100 },
+    { symbol: 'URA', name: 'Uranium ETF', grouping: 'NYSE', value: 20000, quantity: 100 },
+  ],
+  cash_accounts: [
+    { name: 'MQ BANK AUD', value: 8000, currency_code: 'AUD' },
+    { name: 'IBKR', value: 2000, currency_code: 'AUD' },
   ],
 }
 
 const PERFORMANCE = {
   total_gain_percent: 22.6,
   holdings: [
-    { symbol: 'NVDA', total_gain_percent: 3.9 },
-    { symbol: 'VOO', total_gain_percent: -0.8 },
+    { symbol: 'GDX', total_gain_percent: 3.9 },
+    { symbol: 'AG', total_gain_percent: -0.8 },
+    { symbol: 'URA', total_gain_percent: 5.0 },
   ],
 }
 
@@ -71,37 +77,47 @@ describe('normalizePortfolio', () => {
     expect(p.ytdPct).toBe(22.6)
     expect(p.dayPct).toBe(1.84)
     expect(p.dayAbs).toBe(1840)
-    expect(p.holdings).toHaveLength(2)
-    const nvda = p.holdings.find((h) => h.sym === 'NVDA')!
-    expect(nvda.name).toBe('NVIDIA')
-    expect(nvda.val).toBe(60000)
-    expect(nvda.pct).toBe(3.9)
-    expect(nvda.alloc).toBe(60)
-    expect(nvda.shares).toBe(240)
-    expect(nvda.tone).toBe('up')
-    expect(nvda.spark.length).toBeGreaterThan(0)
-    const voo = p.holdings.find((h) => h.sym === 'VOO')!
-    expect(voo.tone).toBe('down')
-    expect(p.allocation).toEqual([
-      { label: 'NASDAQ', pct: 60, color: 'chart-1' },
-      { label: 'NYSE', pct: 40, color: 'chart-4' },
-    ])
-    expect(p.watch.length).toBeGreaterThan(0)
-    expect(p.scoutNote.length).toBeGreaterThan(0)
+    expect(p.holdings).toHaveLength(3)
+    const gdx = p.holdings.find((h) => h.sym === 'GDX')!
+    expect(gdx.val).toBe(50000)
+    expect(gdx.pct).toBe(3.9)
+    expect(gdx.alloc).toBe(50)
+    expect(gdx.tone).toBe('up')
+    expect(p.holdings.find((h) => h.sym === 'AG')!.tone).toBe('down')
+  })
+
+  it('sums cash_accounts into cash', () => {
+    const p = normalizePortfolio(VALUATION, PERFORMANCE, DAY)
+    expect(p.cash).toBe(10000)
+  })
+
+  it('builds allocation by theme plus a Cash slice', () => {
+    const p = normalizePortfolio(VALUATION, PERFORMANCE, DAY)
+    const byLabel = Object.fromEntries(p.allocation.map((a) => [a.label, a.pct]))
+    expect(byLabel).toEqual({ Gold: 50, Silver: 20, Uranium: 20, Cash: 10 })
+  })
+
+  it('classifies unmapped symbols as Other', () => {
+    const p = normalizePortfolio(
+      { value: 1000, holdings: [{ symbol: 'ZZZ', name: 'Mystery', grouping: 'X', value: 1000, quantity: 1 }] },
+      { total_gain_percent: 0, holdings: [] },
+      DAY,
+    )
+    expect(p.allocation.find((a) => a.label === 'Other')!.pct).toBe(100)
   })
 })
 
 describe('buildPortfolioFromRows', () => {
   it('assembles Portfolio from cache rows', () => {
     const p = buildPortfolioFromRows(
-      { total: 50000, day_pct: 1.2, day_abs: 600, ytd_pct: 10 },
-      [{ sym: 'NVDA', name: 'NVIDIA', val: 30000, pct: 3.9, shares: 100, alloc: 60, tone: 'up', note: '' }],
-      [{ label: 'Equities', pct: 100, color: 'chart-1' }]
+      { total: 50000, cash: 5000, day_pct: 1.2, day_abs: 600, ytd_pct: 10 },
+      [{ sym: 'GDX', name: 'Gold Miners', val: 30000, pct: 3.9, shares: 100, alloc: 60, tone: 'up', note: '' }],
+      [{ label: 'Gold', pct: 60, color: 'chart-1' }]
     )
     expect(p.total).toBe(50000)
-    expect(p.holdings[0].sym).toBe('NVDA')
+    expect(p.cash).toBe(5000)
+    expect(p.holdings[0].sym).toBe('GDX')
     expect(p.holdings[0].spark.length).toBeGreaterThan(0)
-    expect(p.allocation[0].label).toBe('Equities')
-    expect(p.watch.length).toBeGreaterThan(0)
+    expect(p.allocation[0].label).toBe('Gold')
   })
 })

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { data, useFetcher, useLoaderData, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router'
 import { useReducedMotion } from 'framer-motion'
 import { Check, Star, Plus, X, Pencil, Loader2 } from 'lucide-react'
-import { AGENTS, PORTFOLIO, type Holding, type Portfolio } from '~/lib/atlas-data'
+import { AGENTS, type Holding, type Portfolio } from '~/lib/atlas-data'
 import { requireSession } from '~/lib/session.server'
 import { createSupabaseAdminClient } from '~/lib/supabase.admin'
 import { readPortfolio } from '~/lib/sharesight.server'
@@ -32,7 +32,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const { session, supabase } = await requireSession(request)
   const admin = createSupabaseAdminClient()
   const { portfolio, live } = await readPortfolio(admin, session.user.id)
-  const cashHolding = portfolio.holdings.find((h) => h.sym === 'CASH')
   const { data: watch } = await supabase
     .from('watchlist')
     .select('id, sym, note')
@@ -40,7 +39,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .order('created_at', { ascending: true })
   return {
     portfolio,
-    cash: cashHolding?.val ?? 0,
+    cash: portfolio.cash,
     live,
     watch: (watch ?? []) as WatchRow[],
     scout: AGENTS.find((a) => a.id === 'scout')!,

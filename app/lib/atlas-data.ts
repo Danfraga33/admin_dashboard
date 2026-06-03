@@ -73,6 +73,7 @@ export interface WatchItem {
 
 export interface Portfolio {
   total: number
+  cash: number
   dayPct: number
   dayAbs: number
   ytdPct: number
@@ -186,6 +187,7 @@ export const ACTIVITY: ActivityEvent[] = [
 
 export const PORTFOLIO: Portfolio = {
   total: 2884311,
+  cash: 240000,
   dayPct: 1.84,
   dayAbs: 23210,
   ytdPct: 22.6,
