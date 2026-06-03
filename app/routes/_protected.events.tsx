@@ -1,18 +1,18 @@
-import { useMemo, useState } from 'react'
-import { data, useLoaderData } from 'react-router'
+import { Suspense, useMemo, useState } from 'react'
+import { Await, data, useLoaderData } from 'react-router'
 import type { LoaderFunctionArgs } from 'react-router'
-import { ChevronLeft, ChevronRight, Plus, Check, ExternalLink, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Check, ExternalLink, Search, Loader2 } from 'lucide-react'
 import { requireSession } from '~/lib/session.server'
 import { getSaasEventsLive } from '~/lib/saas-events.server'
-import { REGIONS_FILTER, type SaasEvent, type Region } from '~/lib/saas-events'
+import { REGIONS_FILTER, DOMAINS_FILTER, type SaasEvent, type SaasEventsResult, type Region, type Domain } from '~/lib/saas-events'
 import { addToMyEvents, removeFromMyEvents, hasMyEvent, type MyEvents } from '~/lib/my-events'
 import { buildMonthGrid, monthLabel, addMonths, WEEKDAYS, isoDate } from '~/lib/calendar'
 import { cn } from '~/lib/utils'
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { responseHeaders } = await requireSession(request)
-  const result = await getSaasEventsLive()
-  return data(result, { headers: responseHeaders })
+  // Do NOT await — stream the slow Gemini fetch so the page renders immediately.
+  return data({ result: getSaasEventsLive() }, { headers: responseHeaders })
 }
 
 export const meta = () => [{ title: 'Atlas · Events' }]
@@ -27,28 +27,49 @@ function groupByDate(events: SaasEvent[]): Map<string, SaasEvent[]> {
   return map
 }
 
+function EventsSkeleton() {
+  return (
+    <div className="flex items-center justify-center gap-3 rounded-lg border border-border bg-card py-24 text-sm text-muted-foreground">
+      <Loader2 size={16} className="animate-spin" />
+      Searching for SaaS, Ecommerce & AI Coding events…
+    </div>
+  )
+}
+
 export default function Events() {
-  const { events, fetchedAt, stale } = useLoaderData<typeof loader>()
+  const { result } = useLoaderData<typeof loader>()
+  return (
+    <div>
+      <div className="mb-1 flex items-end justify-between">
+        <h1 className="text-3xl font-semibold text-foreground">Events</h1>
+      </div>
+      <p className="mb-8 text-sm text-muted-foreground">
+        SaaS, Ecommerce & AI-coding events for the year ahead. Hit{' '}
+        <Plus size={12} className="inline -mt-0.5" /> to add one to your calendar.
+      </p>
+      <Suspense fallback={<EventsSkeleton />}>
+        <Await resolve={result}>{(r: SaasEventsResult) => <EventsView {...r} />}</Await>
+      </Suspense>
+    </div>
+  )
+}
+
+function EventsView({ events, stale }: SaasEventsResult) {
   const today = new Date()
   const [view, setView] = useState({ year: today.getFullYear(), month: today.getMonth() })
   const [myEvents, setMyEvents] = useState<MyEvents>(new Map())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [activeDomain, setActiveDomain] = useState<Domain | null>(null)
   const [activeRegion, setActiveRegion] = useState<Region | null>(null)
   const [query, setQuery] = useState('')
 
-  const categories = useMemo(
-    () => [...new Set(events.map((e) => e.category))].sort(),
-    [events],
-  )
-
-  // discovered + my-added events both render on the grid
+  // discovered + my-added events both render on the grid (respect domain filter)
   const calendarEvents = useMemo(() => {
     const merged = new Map<string, SaasEvent>()
     for (const e of events) merged.set(e.id, e)
     for (const e of myEvents.values()) merged.set(e.id, e)
-    return [...merged.values()]
-  }, [events, myEvents])
+    return [...merged.values()].filter((e) => !activeDomain || e.domain === activeDomain)
+  }, [events, myEvents, activeDomain])
 
   const byDate = useMemo(() => groupByDate(calendarEvents), [calendarEvents])
   const grid = useMemo(() => buildMonthGrid(view.year, view.month), [view])
@@ -56,13 +77,13 @@ export default function Events() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return events.filter((e) => {
+      if (activeDomain && e.domain !== activeDomain) return false
       if (selectedDate && e.date !== selectedDate) return false
-      if (activeCategory && e.category !== activeCategory) return false
       if (activeRegion && e.region !== activeRegion) return false
       if (q && !e.name.toLowerCase().includes(q)) return false
       return true
     })
-  }, [events, selectedDate, activeCategory, activeRegion, query])
+  }, [events, activeDomain, selectedDate, activeRegion, query])
 
   const todayIso = isoDate(today.getFullYear(), today.getMonth(), today.getDate())
 
@@ -75,22 +96,17 @@ export default function Events() {
   }
 
   return (
-    <div>
-      <div className="flex items-end justify-between mb-1">
-        <h1 className="text-3xl font-semibold text-foreground">Events</h1>
-        {myEvents.size > 0 && (
+    <>
+      {myEvents.size > 0 && (
+        <div className="mb-4 text-right">
           <span className="font-mono text-xs text-chart-2">{myEvents.size} on my calendar</span>
-        )}
-      </div>
-      <p className="text-muted-foreground text-sm mb-8">
-        SaaS-learning events for the year ahead. Hit{' '}
-        <Plus size={12} className="inline -mt-0.5" /> to add one to your calendar.
-      </p>
+        </div>
+      )}
 
       {stale && (
         <div className="bg-card border border-border rounded-lg px-4 py-3 mb-6 text-sm text-muted-foreground">
           {events.length === 0
-            ? 'No events loaded. Set GEMINI_API_KEY to fetch live SaaS events.'
+            ? 'No events loaded. Set GEMINI_API_KEY to fetch live events.'
             : 'Showing cached results — live refresh failed.'}
         </div>
       )}
@@ -161,16 +177,16 @@ export default function Events() {
           </div>
 
           <div className="flex flex-wrap gap-1.5 mb-2">
-            <Chip label="All regions" active={!activeRegion} onClick={() => setActiveRegion(null)} />
-            {REGIONS_FILTER.map((r) => (
-              <Chip key={r} label={r} active={activeRegion === r} onClick={() => setActiveRegion(activeRegion === r ? null : r)} />
+            <Chip label="All" active={!activeDomain} onClick={() => setActiveDomain(null)} />
+            {DOMAINS_FILTER.map((d) => (
+              <Chip key={d} label={d} active={activeDomain === d} onClick={() => setActiveDomain(activeDomain === d ? null : d)} />
             ))}
           </div>
 
           <div className="flex flex-wrap gap-1.5 mb-4">
-            <Chip label="All topics" active={!activeCategory} onClick={() => setActiveCategory(null)} />
-            {categories.map((c) => (
-              <Chip key={c} label={c} active={activeCategory === c} onClick={() => setActiveCategory(activeCategory === c ? null : c)} />
+            <Chip label="All regions" active={!activeRegion} onClick={() => setActiveRegion(null)} />
+            {REGIONS_FILTER.map((r) => (
+              <Chip key={r} label={r} active={activeRegion === r} onClick={() => setActiveRegion(activeRegion === r ? null : r)} />
             ))}
           </div>
 
@@ -220,7 +236,7 @@ export default function Events() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 

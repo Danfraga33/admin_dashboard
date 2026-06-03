@@ -40,6 +40,7 @@ describe('validateEvents', () => {
     date: '2026-09-10',
     location: 'San Francisco, USA',
     region: 'USA',
+    domain: 'SaaS',
     format: 'in-person',
     url: 'https://saastrannual.com',
     category: 'Growth',
@@ -68,9 +69,21 @@ describe('validateEvents', () => {
   it('dedups by url+date', () => {
     expect(validateEvents([good, { ...good }], NOW)).toHaveLength(1)
   })
-  it('defaults category to SaaS when missing', () => {
+  it('defaults category to General when missing', () => {
     const out = validateEvents([{ ...good, category: '' }], NOW)
-    expect(out[0].category).toBe('SaaS')
+    expect(out[0].category).toBe('General')
+  })
+  it('keeps explicit domain', () => {
+    expect(validateEvents([{ ...good, domain: 'SaaS' }], NOW)[0].domain).toBe('SaaS')
+  })
+  it('classifies Ecommerce domain', () => {
+    expect(validateEvents([{ ...good, domain: 'Ecommerce' }], NOW)[0].domain).toBe('Ecommerce')
+  })
+  it('classifies AI Coding domain', () => {
+    expect(validateEvents([{ ...good, domain: 'AI Coding' }], NOW)[0].domain).toBe('AI Coding')
+  })
+  it('defaults unknown domain to SaaS', () => {
+    expect(validateEvents([{ ...good, domain: 'whatever' }], NOW)[0].domain).toBe('SaaS')
   })
   it('sorts by date ascending', () => {
     const a = { ...good, url: 'https://a.com', date: '2026-10-01' }

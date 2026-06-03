@@ -3,7 +3,7 @@ import { addToMyEvents, removeFromMyEvents, listMyEvents, hasMyEvent, type MyEve
 import type { SaasEvent } from './saas-events.server'
 
 function ev(id: string, date: string): SaasEvent {
-  return { id, name: `Event ${id}`, date, location: 'X', region: 'Online', format: 'virtual', url: `https://e/${id}`, category: 'SaaS', desc: '' }
+  return { id, name: `Event ${id}`, date, location: 'X', region: 'Online', domain: 'SaaS', format: 'virtual', url: `https://e/${id}`, category: 'SaaS', desc: '' }
 }
 
 describe('my-events store', () => {

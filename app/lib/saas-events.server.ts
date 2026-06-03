@@ -1,7 +1,14 @@
-import { REGIONS_FILTER, type Region, type SaasEvent, type SaasEventsResult } from './saas-events'
+import { REGIONS_FILTER, DOMAINS_FILTER, type Region, type Domain, type SaasEvent, type SaasEventsResult } from './saas-events'
 
-export { REGIONS_FILTER }
-export type { Region, SaasEvent, SaasEventsResult }
+export { REGIONS_FILTER, DOMAINS_FILTER }
+export type { Region, Domain, SaasEvent, SaasEventsResult }
+
+function classifyDomain(domain: unknown): Domain {
+  const d = typeof domain === 'string' ? domain.trim().toLowerCase() : ''
+  if (d.includes('ecom') || d.includes('commerce')) return 'Ecommerce'
+  if (d.includes('ai') || d.includes('coding') || d.includes('agent') || d.includes('llm')) return 'AI Coding'
+  return 'SaaS'
+}
 
 export interface EventsDeps {
   now: () => Date
@@ -9,11 +16,12 @@ export interface EventsDeps {
   apiKey: string | undefined
 }
 
-const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
+const CACHE_TTL_MS = 72 * 60 * 60 * 1000
 const MODEL = 'gemini-2.5-flash'
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`
 
 const THEMES = [
+  // SaaS
   'SaaS conference',
   'SaaS growth and marketing summit',
   'product management conference',
@@ -21,6 +29,17 @@ const THEMES = [
   'B2B SaaS expo',
   'SaaS webinar series',
   'developer tools conference',
+  // Ecommerce
+  'ecommerce conference',
+  'DTC / direct-to-consumer or retail summit',
+  'Shopify or commerce-platform event',
+  'online marketplace / seller conference',
+  // AI Coding
+  'AI coding or AI dev-tools conference',
+  'LLM / AI engineering summit',
+  'AI agent builder event',
+  'vibe coding event',
+  'Claude / Anthropic coding event',
 ]
 
 /** One focused fetch per region → far better coverage than a single multi-region call. */
@@ -42,19 +61,20 @@ function buildPrompt(now: Date, regionLabel: string, regionValue: Region): strin
   const start = now.toISOString().slice(0, 10)
   const end = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate()).toISOString().slice(0, 10)
   const angles = THEMES.map((t) => `- ${t}`).join('\n')
-  return `You are building a calendar of real SaaS-learning events in ${regionLabel}, happening between ${start} and ${end}.
+  return `You are building a calendar of real learning events for builders in three domains — SaaS, Ecommerce, and AI Coding — in ${regionLabel}, happening between ${start} and ${end}.
 
 Search the web thoroughly for each of these angles, focused on ${regionLabel}:
 ${angles}
 
-Find as many real, distinct events as you can — aim for 20-40 across all the angles above. Do not stop at one or two per angle. Output a single JSON array only — no prose, no markdown fences, no trailing commentary. Each object has exactly these keys:
+Find as many real, distinct events as you can — aim for 25-50 across all the angles above. Do not stop at one or two per angle. Output a single JSON array only — no prose, no markdown fences, no trailing commentary. Each object has exactly these keys:
 - name: event name
 - date: start date as ISO "YYYY-MM-DD"
 - location: city + country, or "Online"
 - region: "${regionValue}"
 - format: one of "in-person", "virtual", "hybrid"
+- domain: one of exactly "SaaS", "Ecommerce", "AI Coding" — which of the three this event belongs to
+- category: a short facet within the domain (e.g. SaaS → "Growth"/"Product"/"Founder"; Ecommerce → "DTC"/"Retail"/"Marketplace"; AI Coding → "DevTools"/"Agents"/"LLM")
 - url: the official event page URL
-- category: the SaaS facet it covers (e.g. "Growth", "Product", "Founder", "DevTools", "Sales", "Finance")
 - desc: one sentence on what it covers
 
 Rules:
@@ -63,8 +83,8 @@ Rules:
 - Date must be a real announced date in ISO format. NEVER invent a date.
 - If you are unsure an event is real or its date, omit it entirely.
 - Only events within ${start} to ${end}.
-- Only real SaaS-industry events: conferences, summits, expos, and webinars run for SaaS founders, operators, and product/growth/sales teams.
-- EXCLUDE generic academic and research conferences (e.g. anything titled "International Conference on Economy/Management/Marketing/Administrative Sciences", ICEMM, ICEAAS, ICMAMS, or similar paper-submission events). These are not SaaS-learning events.`
+- Only real industry events for founders, operators, marketers, product, and engineering teams in SaaS, ecommerce, or AI coding.
+- EXCLUDE generic academic and research conferences (e.g. anything titled "International Conference on Economy/Management/Marketing/Administrative Sciences", ICEMM, ICEAAS, ICMAMS, or similar paper-submission events).`
 }
 
 /** Extract first JSON array from model text, tolerating code fences and surrounding prose. */
@@ -136,9 +156,10 @@ export function validateEvents(raw: unknown[], now: Date): SaasEvent[] {
       date,
       location,
       region: classifyRegion(o.region, location, format),
+      domain: classifyDomain(o.domain),
       format,
       url,
-      category: typeof o.category === 'string' && o.category ? o.category : 'SaaS',
+      category: typeof o.category === 'string' && o.category ? o.category : 'General',
       desc: typeof o.desc === 'string' ? o.desc : '',
     })
   }
