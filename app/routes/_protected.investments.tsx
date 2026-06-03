@@ -1,11 +1,17 @@
-import { useEffect, useState } from 'react'
-import { useLoaderData, type LoaderFunctionArgs } from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { Form, data, useFetcher, useLoaderData, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router'
 import { useReducedMotion } from 'framer-motion'
-import { Check, Star } from 'lucide-react'
+import { Check, Star, Plus, X, Pencil, Loader2 } from 'lucide-react'
 import { AGENTS, PORTFOLIO, type Holding, type Portfolio } from '~/lib/atlas-data'
 import { requireSession } from '~/lib/session.server'
 import { createSupabaseAdminClient } from '~/lib/supabase.admin'
 import { readPortfolio } from '~/lib/sharesight.server'
+
+interface WatchRow {
+  id: string
+  sym: string
+  note: string
+}
 import {
   Reveal,
   RevealContext,
@@ -23,16 +29,55 @@ import {
 } from '~/components/atlas'
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const { session } = await requireSession(request)
+  const { session, supabase } = await requireSession(request)
   const admin = createSupabaseAdminClient()
   const { portfolio, live } = await readPortfolio(admin, session.user.id)
   const cashHolding = portfolio.holdings.find((h) => h.sym === 'CASH')
+  const { data: watch } = await supabase
+    .from('watchlist')
+    .select('id, sym, note')
+    .order('position', { ascending: true })
+    .order('created_at', { ascending: true })
   return {
     portfolio,
     cash: cashHolding?.val ?? 0,
     live,
+    watch: (watch ?? []) as WatchRow[],
     scout: AGENTS.find((a) => a.id === 'scout')!,
   }
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const { session, supabase, responseHeaders } = await requireSession(request)
+  const form = await request.formData()
+  const intent = form.get('intent')
+
+  if (intent === 'create') {
+    const sym = String(form.get('sym') || '').trim().toUpperCase()
+    if (sym) {
+      await supabase.from('watchlist').insert({
+        user_id: session.user.id,
+        sym,
+        note: String(form.get('note') || '').trim(),
+      })
+    }
+  }
+
+  if (intent === 'update') {
+    const sym = String(form.get('sym') || '').trim().toUpperCase()
+    if (sym) {
+      await supabase
+        .from('watchlist')
+        .update({ sym, note: String(form.get('note') || '').trim() })
+        .eq('id', String(form.get('id')))
+    }
+  }
+
+  if (intent === 'delete') {
+    await supabase.from('watchlist').delete().eq('id', String(form.get('id')))
+  }
+
+  return data({ ok: true }, { headers: responseHeaders })
 }
 
 /** Brief "Scout fetching…" skeleton on client mount; SSR + reduced-motion render loaded. */
@@ -130,7 +175,86 @@ function Allocation({ data }: { data: Portfolio }) {
   )
 }
 
-function Watchlist({ data }: { data: Portfolio }) {
+function WatchRowItem({ w, pending = false }: { w: WatchRow; pending?: boolean }) {
+  const [editing, setEditing] = useState(false)
+
+  if (pending) {
+    return (
+      <div className="flex items-center gap-3 rounded-lg px-1 py-2 opacity-50">
+        <span className="grid w-12 shrink-0 place-items-center rounded-md border border-border bg-muted/40 py-1 font-mono text-[11px] font-semibold text-foreground">{w.sym}</span>
+        <span className="flex-1 truncate text-[13px] text-muted-foreground">{w.note || '—'}</span>
+        <Loader2 size={13} className="shrink-0 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (editing) {
+    return (
+      <Form
+        method="post"
+        onSubmit={() => setEditing(false)}
+        className="flex items-center gap-2 rounded-lg px-1 py-1.5"
+      >
+        <input type="hidden" name="intent" value="update" />
+        <input type="hidden" name="id" value={w.id} />
+        <input
+          name="sym"
+          defaultValue={w.sym}
+          required
+          className="w-16 shrink-0 rounded-md border border-border bg-input px-2 py-1 font-mono text-[11px] uppercase text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+        <input
+          name="note"
+          defaultValue={w.note}
+          placeholder="Note"
+          className="min-w-0 flex-1 rounded-md border border-border bg-input px-2 py-1 text-[12px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+        <button type="submit" className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-chart-2 hover:bg-muted transition-colors cursor-pointer" aria-label="Save">
+          <Check size={13} />
+        </button>
+        <button type="button" onClick={() => setEditing(false)} className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-muted transition-colors cursor-pointer" aria-label="Cancel">
+          <X size={13} />
+        </button>
+      </Form>
+    )
+  }
+
+  return (
+    <div className="group flex items-center gap-3 rounded-lg px-1 py-2 hover:bg-muted/40 transition-colors">
+      <span className="grid w-12 shrink-0 place-items-center rounded-md border border-border bg-muted/40 py-1 font-mono text-[11px] font-semibold text-foreground">{w.sym}</span>
+      <span className="flex-1 truncate text-[13px] text-muted-foreground">{w.note || '—'}</span>
+      <button onClick={() => setEditing(true)} className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted hover:text-foreground transition-all cursor-pointer" aria-label={`Edit ${w.sym}`}>
+        <Pencil size={12} />
+      </button>
+      <Form method="post" className="shrink-0">
+        <input type="hidden" name="intent" value="delete" />
+        <input type="hidden" name="id" value={w.id} />
+        <button type="submit" className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted hover:text-destructive-foreground transition-all cursor-pointer" aria-label={`Remove ${w.sym}`}>
+          <X size={13} />
+        </button>
+      </Form>
+    </div>
+  )
+}
+
+function Watchlist({ watch }: { watch: WatchRow[] }) {
+  const fetcher = useFetcher()
+  const formRef = useRef<HTMLFormElement>(null)
+
+  // Optimistic: while a create is in flight, show the pending symbol immediately.
+  const creating = fetcher.state !== 'idle' && fetcher.formData?.get('intent') === 'create'
+  const pendingSym = creating ? String(fetcher.formData!.get('sym') || '').trim().toUpperCase() : null
+  const pendingNote = creating ? String(fetcher.formData!.get('note') || '').trim() : ''
+
+  const rows: WatchRow[] = pendingSym
+    ? [...watch, { id: `pending-${pendingSym}`, sym: pendingSym, note: pendingNote }]
+    : watch
+
+  function onSubmit() {
+    // clear the input right after submit so it feels instant
+    setTimeout(() => formRef.current?.reset(), 0)
+  }
+
   return (
     <Reveal delay={340}>
       <Card className="p-5">
@@ -138,13 +262,33 @@ function Watchlist({ data }: { data: Portfolio }) {
           <Label>Scout watchlist</Label>
           <Star size={14} className="text-muted-foreground" />
         </div>
-        <ul className="mt-3 space-y-1">
-          {data.watch.map((w, i) => (
-            <Reveal key={w.sym} delay={stag(i, 380, 70)} className="flex items-center gap-3 rounded-lg px-1 py-2 hover:bg-muted/40 transition-colors">
-              <span className="grid w-12 shrink-0 place-items-center rounded-md border border-border bg-muted/40 py-1 font-mono text-[11px] font-semibold text-foreground">{w.sym}</span>
-              <span className="flex-1 text-[13px] text-muted-foreground">{w.note}</span>
-              <Delta pct={w.pct} />
-            </Reveal>
+
+        <fetcher.Form method="post" ref={formRef} onSubmit={onSubmit} className="mt-3 flex items-center gap-2">
+          <input type="hidden" name="intent" value="create" />
+          <input
+            name="sym"
+            placeholder="SYM"
+            required
+            className="w-16 shrink-0 rounded-md border border-border bg-input px-2 py-1.5 font-mono text-[11px] uppercase text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <input
+            name="note"
+            placeholder="Note (optional)"
+            className="min-w-0 flex-1 rounded-md border border-border bg-input px-2 py-1.5 text-[12px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <button type="submit" disabled={creating} className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-70 cursor-pointer" aria-label="Add to watchlist">
+            {creating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+          </button>
+        </fetcher.Form>
+
+        <ul className="mt-2 space-y-0.5">
+          {rows.length === 0 && (
+            <li className="px-1 py-3 text-[12px] text-muted-foreground">Watchlist empty — add a symbol above.</li>
+          )}
+          {rows.map((w) => (
+            <li key={w.id}>
+              <WatchRowItem w={w} pending={w.id.startsWith('pending-')} />
+            </li>
           ))}
         </ul>
       </Card>
@@ -155,7 +299,7 @@ function Watchlist({ data }: { data: Portfolio }) {
 export const meta = () => [{ title: 'Atlas · Investments' }]
 
 export default function Investments() {
-  const { portfolio: p, cash, live, scout } = useLoaderData<typeof loader>()
+  const { portfolio: p, cash, live, watch, scout } = useLoaderData<typeof loader>()
 
   return (
     <RevealContext.Provider value={false}>
@@ -207,7 +351,7 @@ export default function Investments() {
           </div>
           <div className="space-y-4">
             <Allocation data={p} />
-            <Watchlist data={p} />
+            <Watchlist watch={watch} />
           </div>
         </div>
       </div>
