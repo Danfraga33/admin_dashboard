@@ -37,7 +37,7 @@ export async function getToken(deps: TokenDeps): Promise<string> {
   return json.access_token
 }
 
-const ALLOC_COLORS: ChartColor[] = ['chart-1', 'chart-4', 'chart-2', 'chart-5', 'chart-3']
+const ALLOC_COLORS: ChartColor[] = ['chart-1', 'chart-4', 'chart-2', 'chart-5', 'chart-3', 'chart-1']
 
 /** Deterministic placeholder sparkline seeded by symbol (history deferred, spec §2.5). */
 function sparkFor(sym: string): number[] {
@@ -68,9 +68,36 @@ interface SsValuationHolding {
   value: number
   quantity: number | null
 }
+interface SsCashAccount {
+  name: string
+  value: number
+  currency_code?: string
+}
 interface SsValuation {
   value: number
   holdings: SsValuationHolding[]
+  cash_accounts?: SsCashAccount[]
+}
+
+/**
+ * Theme/asset-class map for held symbols. Sharesight has no theme field, so we
+ * classify here. Unmapped symbols fall into "Other". Edit as the book changes.
+ */
+const THEME_BY_SYM: Record<string, string> = {
+  // Gold
+  GDX: 'Gold', GOLD: 'Gold', QAU: 'Gold', WPM: 'Gold',
+  // Silver
+  ETPMAG: 'Silver', AG: 'Silver',
+  // Uranium
+  NXE: 'Uranium', URA: 'Uranium',
+  // Defense
+  NOC: 'Defense',
+  // Rare Earths
+  HVY: 'Rare Earths', LSR: 'Rare Earths', RML: 'Rare Earths',
+}
+
+function themeOf(sym: string): string {
+  return THEME_BY_SYM[sym.toUpperCase()] ?? 'Other'
 }
 interface SsPerformance {
   total_gain_percent: number
@@ -105,11 +132,17 @@ export function normalizePortfolio(
     }
   })
 
-  const byClass = new Map<string, number>()
+  const cash = (valuation.cash_accounts ?? []).reduce((s, c) => s + (c.value ?? 0), 0)
+
+  // Asset allocation by theme (Gold, Silver, Uranium, …) plus a Cash slice.
+  const byTheme = new Map<string, number>()
   for (const h of valuation.holdings) {
-    byClass.set(h.grouping, (byClass.get(h.grouping) ?? 0) + h.value)
+    const theme = themeOf(h.symbol)
+    byTheme.set(theme, (byTheme.get(theme) ?? 0) + h.value)
   }
-  const allocation = [...byClass.entries()]
+  if (cash > 0) byTheme.set('Cash', cash)
+
+  const allocation = [...byTheme.entries()]
     .sort((a, b) => b[1] - a[1])
     .map(([label, value], i) => ({
       label,
@@ -119,6 +152,7 @@ export function normalizePortfolio(
 
   return {
     total,
+    cash,
     dayPct: day.total_gain_percent,
     dayAbs: day.total_gain,
     ytdPct: performance.total_gain_percent,
@@ -166,7 +200,7 @@ export async function fetchPortfolio(token: string, now: Date): Promise<Portfoli
   })
 }
 
-interface PortfolioRow { total: number; day_pct: number; day_abs: number; ytd_pct: number }
+interface PortfolioRow { total: number; cash: number; day_pct: number; day_abs: number; ytd_pct: number }
 interface HoldingRow {
   sym: string; name: string; val: number; pct: number
   shares: number | null; alloc: number; tone: string; note: string
@@ -180,6 +214,7 @@ export function buildPortfolioFromRows(
 ): Portfolio {
   return {
     total: pr.total,
+    cash: pr.cash ?? 0,
     dayPct: pr.day_pct,
     dayAbs: pr.day_abs,
     ytdPct: pr.ytd_pct,
@@ -213,7 +248,7 @@ export async function syncSharesight(admin: SupabaseClient, userId: string): Pro
     const p = await fetchPortfolio(token, new Date())
 
     await admin.from('sharesight_portfolio').upsert({
-      user_id: userId, total: p.total, day_pct: p.dayPct, day_abs: p.dayAbs,
+      user_id: userId, total: p.total, cash: p.cash, day_pct: p.dayPct, day_abs: p.dayAbs,
       ytd_pct: p.ytdPct, synced_at: new Date().toISOString(),
     })
     await admin.from('sharesight_holdings').delete().eq('user_id', userId)
