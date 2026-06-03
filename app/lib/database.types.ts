@@ -342,29 +342,35 @@ export type Database = {
       }
       fitness_meals: {
         Row: {
+          calories: number
           created_at: string
           id: string
           items: string | null
           name: string
           position: number
+          protein: number
           updated_at: string
           user_id: string
         }
         Insert: {
+          calories?: number
           created_at?: string
           id?: string
           items?: string | null
           name: string
           position?: number
+          protein?: number
           updated_at?: string
           user_id: string
         }
         Update: {
+          calories?: number
           created_at?: string
           id?: string
           items?: string | null
           name?: string
           position?: number
+          protein?: number
           updated_at?: string
           user_id?: string
         }
@@ -617,6 +623,147 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sharesight_allocation: {
+        Row: {
+          color: string
+          id: string
+          label: string
+          pct: number
+          position: number
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          id?: string
+          label: string
+          pct?: number
+          position?: number
+          user_id: string
+        }
+        Update: {
+          color?: string
+          id?: string
+          label?: string
+          pct?: number
+          position?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sharesight_holdings: {
+        Row: {
+          alloc: number
+          id: string
+          name: string
+          note: string
+          pct: number
+          position: number
+          shares: number | null
+          sym: string
+          tone: string
+          user_id: string
+          val: number
+        }
+        Insert: {
+          alloc?: number
+          id?: string
+          name?: string
+          note?: string
+          pct?: number
+          position?: number
+          shares?: number | null
+          sym: string
+          tone?: string
+          user_id: string
+          val?: number
+        }
+        Update: {
+          alloc?: number
+          id?: string
+          name?: string
+          note?: string
+          pct?: number
+          position?: number
+          shares?: number | null
+          sym?: string
+          tone?: string
+          user_id?: string
+          val?: number
+        }
+        Relationships: []
+      }
+      sharesight_oauth: {
+        Row: {
+          access_token: string
+          expires_at: string
+          id: number
+        }
+        Insert: {
+          access_token: string
+          expires_at: string
+          id?: number
+        }
+        Update: {
+          access_token?: string
+          expires_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
+      sharesight_portfolio: {
+        Row: {
+          cash: number
+          day_abs: number
+          day_pct: number
+          synced_at: string
+          total: number
+          user_id: string
+          ytd_pct: number
+        }
+        Insert: {
+          cash?: number
+          day_abs?: number
+          day_pct?: number
+          synced_at?: string
+          total?: number
+          user_id: string
+          ytd_pct?: number
+        }
+        Update: {
+          cash?: number
+          day_abs?: number
+          day_pct?: number
+          synced_at?: string
+          total?: number
+          user_id?: string
+          ytd_pct?: number
+        }
+        Relationships: []
+      }
+      sync_runs: {
+        Row: {
+          error: string | null
+          id: string
+          ok: boolean
+          ran_at: string
+          source: string
+        }
+        Insert: {
+          error?: string | null
+          id?: string
+          ok: boolean
+          ran_at?: string
+          source: string
+        }
+        Update: {
+          error?: string | null
+          id?: string
+          ok?: boolean
+          ran_at?: string
+          source?: string
+        }
+        Relationships: []
       }
       todos: {
         Row: {

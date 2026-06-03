@@ -11,7 +11,7 @@ import {
 type Day = { id: string; name: string; label: string | null; position: number }
 type Exercise = { id: string; day_id: string; name: string; sets: string | null; reps: string | null; position: number }
 type Cardio = { id: string; label: string; cadence: string | null; position: number }
-type Meal = { id: string; name: string; items: string | null; position: number }
+type Meal = { id: string; name: string; items: string | null; calories: number; protein: number; position: number }
 type Targets = {
   id: string; calorie_min: number; calorie_max: number; weight_kg: number; water_litres: string
 }
@@ -32,10 +32,10 @@ const SEED_CARDIO = [
   { label: 'Running / Walk', cadence: 'daily' },
 ]
 const SEED_MEALS = [
-  { name: 'Breakfast', items: '4 eggs\nToast' },
-  { name: 'Post-Workout Shake', items: 'Banana\nPeanut butter\n2 scoops whey\nMilk' },
-  { name: 'Lunch', items: '250g brown rice\n2 chicken thighs' },
-  { name: 'Dinner', items: '250g brown rice\n2 chicken thighs' },
+  { name: 'Breakfast', items: '4 eggs\n2 toast + butter\nSriracha\nMandarin', calories: 590, protein: 30 },
+  { name: 'Post-Workout Shake', items: '500ml whole milk\n1 cup oats\n2 tbsp peanut butter\nBanana\nChia / psyllium\n2 scoops WPI', calories: 750, protein: 50 },
+  { name: 'Lunch', items: '2 chicken thighs\n250g brown rice\nVegetables\nOlive oil drizzle', calories: 825, protein: 57 },
+  { name: 'Dinner', items: '2 chicken thighs\n250g brown rice\nVegetables\nOlive oil drizzle', calories: 825, protein: 57 },
 ]
 
 // ─── Loader ─────────────────────────────────────────────────────────────────────
@@ -149,13 +149,18 @@ export async function action({ request }: ActionFunctionArgs) {
         .select('position').order('position', { ascending: false }).limit(1).maybeSingle()
       await supabase.from('fitness_meals').insert({
         user_id: uid, name: str('name') || 'New Meal', items: opt('items'),
+        calories: Number(str('calories')) || 0, protein: Number(str('protein')) || 0,
         position: (last?.position ?? -1) + 1,
       })
       break
     }
     case 'update-meal':
       await supabase.from('fitness_meals')
-        .update({ name: str('name'), items: opt('items'), updated_at: new Date().toISOString() })
+        .update({
+          name: str('name'), items: opt('items'),
+          calories: Number(str('calories')) || 0, protein: Number(str('protein')) || 0,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', str('id'))
       break
     case 'delete-meal':
@@ -372,6 +377,14 @@ function MealCard({ meal }: { meal: Meal }) {
         <input name="name" defaultValue={meal.name} required className={`${inputCls} w-full font-semibold`} />
         <textarea name="items" defaultValue={meal.items ?? ''} rows={4} placeholder="One item per line" className={`${inputCls} w-full resize-none`} />
         <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <input name="calories" type="number" defaultValue={meal.calories} className={`${inputCls} w-20`} /> cal
+          </label>
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <input name="protein" type="number" defaultValue={meal.protein} className={`${inputCls} w-16`} /> g protein
+          </label>
+        </div>
+        <div className="flex items-center gap-2">
           <button type="submit" className="bg-primary text-primary-foreground rounded-md px-3 py-1 text-sm font-medium hover:opacity-90 cursor-pointer">Save</button>
           <button type="button" onClick={() => setEditing(false)} className={iconBtn}><X size={15} /></button>
         </div>
@@ -382,7 +395,13 @@ function MealCard({ meal }: { meal: Meal }) {
   return (
     <div className="group bg-card border border-border rounded-lg overflow-hidden">
       <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border">
-        <h3 className="flex-1 text-sm font-semibold text-foreground">{meal.name}</h3>
+        <h3 className="text-sm font-semibold text-foreground">{meal.name}</h3>
+        {(meal.calories > 0 || meal.protein > 0) && (
+          <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
+            {meal.calories} cal · {meal.protein}g
+          </span>
+        )}
+        <span className="flex-1" />
         <button onClick={() => setEditing(true)} className={`${iconBtn} opacity-0 group-hover:opacity-100`}><Pencil size={13} /></button>
         <fetcher.Form method="post" className="flex">
           <input type="hidden" name="intent" value="delete-meal" />
@@ -406,6 +425,9 @@ export default function Fitness() {
   const { days, exercises, cardio, meals, targets } = useLoaderData<typeof loader>()
   const addMeal = useFetcher()
   const exByDay = (id: string) => (exercises as Exercise[]).filter((e) => e.day_id === id)
+  const mealList = meals as Meal[]
+  const totalCal = mealList.reduce((s, m) => s + (m.calories || 0), 0)
+  const totalProtein = mealList.reduce((s, m) => s + (m.protein || 0), 0)
 
   return (
     <div className="space-y-10">
@@ -429,17 +451,19 @@ export default function Fitness() {
       </section>
 
       <section>
-        <SectionLabel>
-          Diet · {targets ? `${(targets as Targets).calorie_min}–${(targets as Targets).calorie_max} kcal` : ''}
-        </SectionLabel>
+        <p className="pb-2 px-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70">
+          Diet{(totalCal > 0 || totalProtein > 0) && ` · ${totalCal} cal · ${totalProtein}g protein`}
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {(meals as Meal[]).map((m) => (
+          {mealList.map((m) => (
             <MealCard key={m.id} meal={m} />
           ))}
         </div>
         <addMeal.Form method="post" className="mt-3 flex items-center gap-2">
           <input type="hidden" name="intent" value="add-meal" />
           <input name="name" placeholder="New meal name" required className={`${inputCls} w-48`} />
+          <input name="calories" type="number" placeholder="cal" className={`${inputCls} w-20`} />
+          <input name="protein" type="number" placeholder="protein" className={`${inputCls} w-20`} />
           <button type="submit" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
             <UtensilsCrossed size={14} /> Add meal
           </button>
