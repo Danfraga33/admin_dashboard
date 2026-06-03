@@ -72,58 +72,58 @@ Portfolio data via the **Sharesight User API** (cloud REST, OAuth 2.0). Feeds th
 
 > **All IBKR code was removed** (gateway transport, OAuth signer, sync runner, keep-alive, migration 007, workflow). The investments + home loaders are back on the `PORTFOLIO` mock until Sharesight is wired.
 
-**Architecture:** Node sync job (Vercel cron / Supabase Edge Function) → OAuth2 token → fetch holdings/valuation → write Supabase → route loader reads Supabase. Same cache pattern as JARVIS; nothing on the client.
+**Architecture:** loader-fallback — on read, `readPortfolio` serves the Supabase cache and, if older than 30 min, fires `syncSharesight` in the background (OAuth2 token → fetch holdings/valuation → write Supabase). No cron / always-on job. Nothing on the client.
 
 ```
-[Vercel cron / Edge Fn]                    [Vercel]
- OAuth2 token (30-min, refreshed)           dashboard UI
-   ↓ GET Sharesight holdings/valuation       ↑ reads
- sync job ──writes──► [Supabase] ◄──reads── /investments + /home
+[/investments + /home loader]                 [Vercel]
+   readPortfolio ──reads──► [Supabase]          dashboard UI
+        │ stale (>30m)?                            ↑ reads
+        └─ background syncSharesight ──writes──► [Supabase]
+              ↑ OAuth2 token (30-min, refreshed) + Sharesight API
 ```
 
 ### 2.1 Get Sharesight API access — DO THIS (the gating step)
 Docs: <https://portfolio.sharesight.com/api/3/configuring_oauth> · OAuth example: <https://portfolio.sharesight.com/api/2/authentication_flow>
-- [ ] Email **support@sharesight.com** to request an **API account** (not self-serve; allow a few days). Ask for **own-account / client-credentials** access.
-- [ ] Once enabled: **Account > Sharesight API** → copy **Client ID**, **Client Secret**, **Redirect URI**.
-- [ ] Confirm your user is **linked to the API consumer app** (required for the client-credentials grant).
-- [ ] Decide grant type: **client_credentials** (own account, headless — what we want) vs authorization_code (multi-user/SSO).
-- [ ] Pick API version: **V2 (stable/GA)** recommended over V3 (closed beta, may change without notice). Both share the OAuth2 auth.
+- [x] Email **support@sharesight.com** to request an **API account** (not self-serve; allow a few days). Ask for **own-account / client-credentials** access.
+- [x] Once enabled: **Account > Sharesight API** → copy **Client ID**, **Client Secret**, **Redirect URI**.
+- [x] Confirm your user is **linked to the API consumer app** (required for the client-credentials grant).
+- [x] Decide grant type: **client_credentials** (own account, headless — what we want) vs authorization_code (multi-user/SSO).
+- [x] Pick API version: **V2 (stable/GA)** recommended over V3 (closed beta, may change without notice). Both share the OAuth2 auth.
 
 ### 2.2 Confirm the endpoints — DO THIS (verify against your account)
 Target shape needed by [atlas-data.ts](app/lib/atlas-data.ts) `Portfolio`: `total`, `dayPct`/`dayAbs`, `ytdPct`, per-holding `{sym, name, val, pct, alloc, tone}`, allocation by class.
-- [ ] List portfolios: `GET {base}/portfolios`.
-- [ ] Holdings + value: `GET {base}/portfolios/:id/valuation?balance_date=YYYY-MM-DD` (holdings, market value, allocation).
-- [ ] Performance: `GET {base}/portfolios/:id/performance?start_date=&end_date=` (return %, capital gain — for `ytdPct`, `dayPct`).
-- [ ] Map currency (your base is AUD). Note Sharesight returns rich performance numbers IBKR didn't.
+- [x] List portfolios: `GET {base}/portfolios`. (portfolio id `1290289`, AUD)
+- [x] Holdings + value: `GET {base}/portfolios/:id/valuation?balance_date=YYYY-MM-DD` (flat response — no `allocation`/`sub_totals`; alloc derived).
+- [x] Performance: `GET {base}/portfolios/:id/performance?start_date=&end_date=` (holdings key on `symbol`; YTD = `total_gain_percent`).
+- [x] Map currency (your base is AUD). Note Sharesight returns rich performance numbers IBKR didn't.
 
 ### 2.3 Build the integration — CODE (after 2.1/2.2)
-- [ ] `app/lib/sharesight.server.ts`: OAuth2 client (cache token, refresh at 30-min expiry), `fetchPortfolio()` (valuation + performance → normalize to `Portfolio`), `syncSharesight(userId)` (upsert Supabase), `readPortfolio(sb, userId)` (loader read, mock fallback).
-- [ ] Supabase migration: `sharesight_portfolio` + `sharesight_holdings` + `sync_runs` (same RLS pattern as existing tables; mirror the old 007 shape).
-- [ ] Swap [routes/_protected.investments.tsx](app/routes/_protected.investments.tsx) + [routes/_protected.home.tsx](app/routes/_protected.home.tsx) loaders to read Supabase, mock fallback (revert the current mock-only loaders).
-- [ ] Trigger: Vercel cron or Supabase Edge Function on a schedule (every 15–30 min — Sharesight data is EOD/slow-moving, no need for tight cadence). Mind the **rate limits** (see usage-limits doc).
+- [x] `app/lib/sharesight.server.ts`: OAuth2 client (cache token, refresh at 30-min expiry), `fetchPortfolio()` (valuation + performance → normalize to `Portfolio`), `syncSharesight(userId)` (upsert Supabase), `readPortfolio(sb, userId)` (loader read, mock fallback).
+- [x] Supabase migration `008_sharesight.sql`: `sharesight_portfolio` + `sharesight_holdings` + `sharesight_allocation` + `sharesight_oauth` + `sync_runs` (RLS owner-only).
+- [x] Swap [routes/_protected.investments.tsx](app/routes/_protected.investments.tsx) + [routes/_protected.home.tsx](app/routes/_protected.home.tsx) loaders to read Supabase, mock fallback.
+- [x] Trigger: **loader-fallback** — `readPortfolio` serves cache and background-refreshes when older than 30 min. No cron needed (single-user, EOD data).
 
 ### 2.4 Env
-- [ ] Fill `.env.local` from [.env.example](.env.example): `SHARESIGHT_CLIENT_ID`, `SHARESIGHT_CLIENT_SECRET`, `SHARESIGHT_API_BASE`, `SHARESIGHT_OAUTH_BASE`, `SUPABASE_SERVICE_ROLE_KEY`.
-- [ ] Add the same to the cron/Edge-Function host secrets.
+- [x] Fill `.env.local` from [.env.example](.env.example): `SHARESIGHT_CLIENT_ID`, `SHARESIGHT_CLIENT_SECRET`, `SHARESIGHT_API_BASE`, `SHARESIGHT_OAUTH_BASE`, `SUPABASE_SERVICE_ROLE_KEY`. (also typed in `env.d.ts`)
 
 ### 2.5 Known follow-ups
 - [ ] `watch` (Scout watchlist) — user-curated, stays mock.
 - [ ] `scoutNote` (the AI read) — mock until an LLM summarizer runs over synced numbers.
 - [ ] Per-holding sparklines — Sharesight performance history can populate these later.
-- [ ] Token refresh: tokens expire every 30 min — client must refresh, not re-auth per call.
+- [x] Token refresh: tokens expire every 30 min — `getToken` caches + refreshes 5 min before expiry (no re-auth per call).
 
 ---
 
 ## Shared infrastructure (do once, both use it)
 
-- [ ] **Trigger layer:** one cron/Edge-Function host that runs `syncJarvis` + `syncSharesight`. Supabase Scheduled Edge Functions, or host cron hitting internal resource routes guarded by a secret.
-- [ ] **Env types:** extend [app/env.d.ts](app/env.d.ts) with all new keys.
-- [ ] **Secrets:** never in client bundle — all sync code is `*.server.ts` / resource routes only.
+- [ ] **Trigger layer (JARVIS only):** webhook or loader-fallback for `syncJarvis`. Sharesight uses loader-fallback (no cron). No always-on host required.
+- [x] **Env types:** extend [app/env.d.ts](app/env.d.ts) with all new keys. (Sharesight + service-role keys typed; JARVIS keys still pending)
+- [x] **Secrets:** never in client bundle — all sync code is `*.server.ts` / resource routes only.
 - [ ] **Sync status:** small `sync_runs(source, ok, error, ran_at)` table → surface "last synced" + failures in the agent rail (Scout/Forge `last` field).
 - [ ] **Migration discipline:** run new migrations in Supabase SQL editor (matches existing `supabase-migration.sql` workflow), keep numbered files in `supabase/migrations/`.
 
 ## Open decisions
 - [x] Portfolio source: **Sharesight API** (cloud OAuth2) — replaces the removed IBKR gateway approach.
-- [ ] Sharesight API version: V2 (stable, recommended) vs V3 (beta). Confirm when access is granted.
-- [ ] Sharesight grant: client_credentials (own account) vs authorization_code (multi-user/SSO).
+- [x] Sharesight API version: **V2** (stable) — confirmed against live account.
+- [x] Sharesight grant: **client_credentials** (own account, headless) — confirmed.
 - [ ] `scoutNote`/`forgeNote` AI summaries: wire an LLM pass over synced data, or keep static until later phase?
