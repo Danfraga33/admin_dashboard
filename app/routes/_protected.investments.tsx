@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Form, data, useFetcher, useLoaderData, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router'
+import { data, useFetcher, useLoaderData, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router'
 import { useReducedMotion } from 'framer-motion'
 import { Check, Star, Plus, X, Pencil, Loader2 } from 'lucide-react'
 import { AGENTS, PORTFOLIO, type Holding, type Portfolio } from '~/lib/atlas-data'
@@ -177,6 +177,25 @@ function Allocation({ data }: { data: Portfolio }) {
 
 function WatchRowItem({ w, pending = false }: { w: WatchRow; pending?: boolean }) {
   const [editing, setEditing] = useState(false)
+  const fetcher = useFetcher()
+  const busy = fetcher.state !== 'idle'
+  const intent = fetcher.formData?.get('intent')
+
+  // Delete in flight → remove the row immediately.
+  if (busy && intent === 'delete') return null
+
+  // Update in flight → show the submitted values immediately with a spinner.
+  if (busy && intent === 'update') {
+    const sym = String(fetcher.formData!.get('sym') || '').toUpperCase()
+    const note = String(fetcher.formData!.get('note') || '')
+    return (
+      <div className="flex items-center gap-3 rounded-lg px-1 py-2 opacity-50">
+        <span className="grid w-12 shrink-0 place-items-center rounded-md border border-border bg-muted/40 py-1 font-mono text-[11px] font-semibold text-foreground">{sym}</span>
+        <span className="flex-1 truncate text-[13px] text-muted-foreground">{note || '—'}</span>
+        <Loader2 size={13} className="shrink-0 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   if (pending) {
     return (
@@ -190,7 +209,7 @@ function WatchRowItem({ w, pending = false }: { w: WatchRow; pending?: boolean }
 
   if (editing) {
     return (
-      <Form
+      <fetcher.Form
         method="post"
         onSubmit={() => setEditing(false)}
         className="flex items-center gap-2 rounded-lg px-1 py-1.5"
@@ -215,7 +234,7 @@ function WatchRowItem({ w, pending = false }: { w: WatchRow; pending?: boolean }
         <button type="button" onClick={() => setEditing(false)} className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-muted transition-colors cursor-pointer" aria-label="Cancel">
           <X size={13} />
         </button>
-      </Form>
+      </fetcher.Form>
     )
   }
 
@@ -226,13 +245,13 @@ function WatchRowItem({ w, pending = false }: { w: WatchRow; pending?: boolean }
       <button onClick={() => setEditing(true)} className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted hover:text-foreground transition-all cursor-pointer" aria-label={`Edit ${w.sym}`}>
         <Pencil size={12} />
       </button>
-      <Form method="post" className="shrink-0">
+      <fetcher.Form method="post" className="shrink-0">
         <input type="hidden" name="intent" value="delete" />
         <input type="hidden" name="id" value={w.id} />
         <button type="submit" className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted hover:text-destructive-foreground transition-all cursor-pointer" aria-label={`Remove ${w.sym}`}>
           <X size={13} />
         </button>
-      </Form>
+      </fetcher.Form>
     </div>
   )
 }
