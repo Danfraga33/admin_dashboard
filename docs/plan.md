@@ -107,9 +107,11 @@ Target shape needed by [atlas-data.ts](app/lib/atlas-data.ts) `Portfolio`: `tota
 - [x] Fill `.env.local` from [.env.example](.env.example): `SHARESIGHT_CLIENT_ID`, `SHARESIGHT_CLIENT_SECRET`, `SHARESIGHT_API_BASE`, `SHARESIGHT_OAUTH_BASE`, `SUPABASE_SERVICE_ROLE_KEY`. (also typed in `env.d.ts`)
 
 ### 2.5 Known follow-ups
-- [ ] `watch` (Scout watchlist) — user-curated, stays mock.
+- [x] `watch` (Scout watchlist) — now Supabase-backed + editable (add/edit/remove, optimistic UI). Migration 010.
+- [x] Cash balance — sum Sharesight `cash_accounts` → `sharesight_portfolio.cash` (migration 011); Dry Powder tile reads it.
+- [x] Asset allocation — donut grouped by theme (Gold/Silver/Uranium/Defense/Rare Earths/Cash) via sym→theme map.
 - [ ] `scoutNote` (the AI read) — mock until an LLM summarizer runs over synced numbers.
-- [ ] Per-holding sparklines — Sharesight performance history can populate these later.
+- [ ] Per-holding sparklines — still deterministic placeholders; Sharesight performance history can populate these later.
 - [x] Token refresh: tokens expire every 30 min — `getToken` caches + refreshes 5 min before expiry (no re-auth per call).
 
 ---
@@ -120,7 +122,7 @@ Target shape needed by [atlas-data.ts](app/lib/atlas-data.ts) `Portfolio`: `tota
 - [x] **Env types:** extend [app/env.d.ts](app/env.d.ts) with all new keys. (Sharesight + service-role keys typed; JARVIS keys still pending)
 - [x] **Secrets:** never in client bundle — all sync code is `*.server.ts` / resource routes only.
 - [ ] **Sync status:** small `sync_runs(source, ok, error, ran_at)` table → surface "last synced" + failures in the agent rail (Scout/Forge `last` field).
-- [ ] **Migration discipline:** run new migrations in Supabase SQL editor (matches existing `supabase-migration.sql` workflow), keep numbered files in `supabase/migrations/`.
+- [x] **Migration discipline:** numbered files in `supabase/migrations/` (through 011), applied to the live project.
 
 ## Open decisions
 - [x] Portfolio source: **Sharesight API** (cloud OAuth2) — replaces the removed IBKR gateway approach.
