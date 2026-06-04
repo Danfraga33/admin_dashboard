@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { getToken } from './sharesight.server'
 import { normalizePortfolio } from './sharesight.server'
-import { buildPortfolioFromRows } from './sharesight.server'
+import { buildPortfolioFromRows, persistPortfolio } from './sharesight.server'
 
 const TOKEN_RESPONSE = { access_token: 'fresh-token', expires_in: 1800 }
 
@@ -119,5 +119,43 @@ describe('buildPortfolioFromRows', () => {
     expect(p.holdings[0].sym).toBe('GDX')
     expect(p.holdings[0].spark.length).toBeGreaterThan(0)
     expect(p.allocation[0].label).toBe('Gold')
+  })
+})
+
+describe('persistPortfolio', () => {
+  const sample = () =>
+    buildPortfolioFromRows(
+      { total: 100, cash: 10, day_pct: 1, day_abs: 1, ytd_pct: 5 },
+      [
+        { sym: 'GDX', name: 'Gold', val: 60, pct: 3, shares: 2, alloc: 60, tone: 'up', note: '' },
+        { sym: 'AG', name: 'Silver', val: 30, pct: -1, shares: 5, alloc: 30, tone: 'down', note: '' },
+      ],
+      [{ label: 'Gold', pct: 60, color: 'chart-1' }]
+    )
+
+  it('persists through one atomic rpc, never touching tables directly', async () => {
+    const rpc = vi.fn(async () => ({ error: null }))
+    const from = vi.fn(() => {
+      throw new Error('persistPortfolio must not delete/insert tables directly — use the atomic rpc')
+    })
+    const admin = { rpc, from } as any
+
+    await persistPortfolio(admin, 'user-1', sample())
+
+    expect(from).not.toHaveBeenCalled()
+    expect(rpc).toHaveBeenCalledOnce()
+    const [fnName, args] = rpc.mock.calls[0]
+    expect(fnName).toBe('sync_sharesight_data')
+    expect(args.p_user_id).toBe('user-1')
+    expect(args.p_portfolio).toMatchObject({ total: 100, cash: 10, day_pct: 1, day_abs: 1, ytd_pct: 5 })
+    expect(args.p_holdings).toHaveLength(2)
+    expect(args.p_holdings[0]).toMatchObject({ sym: 'GDX', val: 60, tone: 'up', position: 0 })
+    expect(args.p_holdings[1]).toMatchObject({ sym: 'AG', position: 1 })
+    expect(args.p_allocation).toEqual([{ label: 'Gold', pct: 60, color: 'chart-1', position: 0 }])
+  })
+
+  it('throws when the rpc returns an error', async () => {
+    const admin = { rpc: vi.fn(async () => ({ error: { message: 'deadlock detected' } })) } as any
+    await expect(persistPortfolio(admin, 'u', sample())).rejects.toThrow(/deadlock detected/)
   })
 })

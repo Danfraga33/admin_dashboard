@@ -232,6 +232,35 @@ export function buildPortfolioFromRows(
 
 const STALE_MS = 30 * 60 * 1000
 
+/**
+ * Persist a freshly-fetched portfolio in one atomic transaction.
+ *
+ * The whole portfolio/holdings/allocation swap runs inside a single Postgres
+ * function (`sync_sharesight_data`) guarded by an advisory lock, so concurrent
+ * syncs serialize instead of interleaving their delete+insert and leaving the
+ * holdings table empty or duplicated. See migration 013.
+ */
+export async function persistPortfolio(
+  admin: SupabaseClient,
+  userId: string,
+  p: Portfolio
+): Promise<void> {
+  const { error } = await admin.rpc('sync_sharesight_data', {
+    p_user_id: userId,
+    p_portfolio: {
+      total: p.total, cash: p.cash, day_pct: p.dayPct, day_abs: p.dayAbs, ytd_pct: p.ytdPct,
+    },
+    p_holdings: p.holdings.map((h, i) => ({
+      sym: h.sym, name: h.name, val: h.val, pct: h.pct,
+      shares: h.shares, alloc: h.alloc, tone: h.tone, note: h.note, position: i,
+    })),
+    p_allocation: p.allocation.map((a, i) => ({
+      label: a.label, pct: a.pct, color: a.color, position: i,
+    })),
+  })
+  if (error) throw new Error(`persistPortfolio failed: ${error.message}`)
+}
+
 export async function syncSharesight(admin: SupabaseClient, userId: string): Promise<void> {
   try {
     const token = await getToken({
@@ -246,24 +275,7 @@ export async function syncSharesight(admin: SupabaseClient, userId: string): Pro
       },
     })
     const p = await fetchPortfolio(token, new Date())
-
-    await admin.from('sharesight_portfolio').upsert({
-      user_id: userId, total: p.total, cash: p.cash, day_pct: p.dayPct, day_abs: p.dayAbs,
-      ytd_pct: p.ytdPct, synced_at: new Date().toISOString(),
-    })
-    await admin.from('sharesight_holdings').delete().eq('user_id', userId)
-    await admin.from('sharesight_holdings').insert(
-      p.holdings.map((h, i) => ({
-        user_id: userId, sym: h.sym, name: h.name, val: h.val, pct: h.pct,
-        shares: h.shares, alloc: h.alloc, tone: h.tone, note: h.note, position: i,
-      }))
-    )
-    await admin.from('sharesight_allocation').delete().eq('user_id', userId)
-    await admin.from('sharesight_allocation').insert(
-      p.allocation.map((a, i) => ({
-        user_id: userId, label: a.label, pct: a.pct, color: a.color, position: i,
-      }))
-    )
+    await persistPortfolio(admin, userId, p)
     await admin.from('sync_runs').insert({ source: 'sharesight', ok: true })
   } catch (err) {
     await admin.from('sync_runs').insert({
