@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate, useLoaderData, type LoaderFunctionArgs } from 'react-router'
+import { motion, useReducedMotion } from 'framer-motion'
 import { TrendingUp, TrendingDown, Dot, Check, ArrowUpRight, Sparkles, Hammer } from 'lucide-react'
 import {
   AGENTS,
@@ -31,6 +32,7 @@ import {
   Marquee,
   Num,
   stag,
+  useMounted,
 } from '~/components/atlas'
 import { useAgents } from '~/components/atlas/agents-context'
 
@@ -184,6 +186,86 @@ function SnapshotCard({
   )
 }
 
+/**
+ * Operating principle — Skiper-style per-word blur-rise cascade. Reuses the
+ * atlas entrance pattern: renders final state on the server / under reduced-motion
+ * (so it's visible without JS and respects a11y), then plays once on the live client.
+ * Tokens flagged `accent` land in chart-1 to make the phrase carry weight.
+ */
+const MANTRA: { text: string; accent?: boolean }[] = [
+  { text: 'The' },
+  { text: 'first' },
+  { text: 'pick' },
+  { text: 'barely', accent: true },
+  { text: 'matters.', accent: true },
+  { text: 'The' },
+  { text: 'hundredth', accent: true },
+  { text: 'ship', accent: true },
+  { text: 'does.' },
+  { text: 'Choose' },
+  { text: 'a' },
+  { text: 'space' },
+  { text: "you'd" },
+  { text: 'happily' },
+  { text: 'live' },
+  { text: 'in,' },
+  { text: 'build' },
+  { text: 'apps' },
+  { text: 'for' },
+  { text: 'real' },
+  { text: 'users,' },
+  { text: 'let' },
+  { text: 'each' },
+  { text: 'one' },
+  { text: 'show' },
+  { text: 'you' },
+  { text: 'the' },
+  { text: 'next' },
+  { text: 'problem' },
+  { text: '—' },
+  { text: 'and', accent: true },
+  { text: 'never', accent: true },
+  { text: 'break', accent: true },
+  { text: 'the', accent: true },
+  { text: 'chain.', accent: true },
+]
+
+const MANTRA_EASE = [0.22, 1, 0.36, 1] as const
+
+function Mantra() {
+  const mounted = useMounted()
+  const reduce = useReducedMotion()
+  const animate = mounted && !reduce
+  const words = useMemo(() => MANTRA, [])
+
+  return (
+    <Reveal delay={100} className="mt-7">
+      <div className="relative flex flex-col items-center text-center">
+        <Label className="block">Operating Principle</Label>
+        <p className="mt-3 max-w-3xl text-pretty text-xl font-medium leading-snug tracking-tight text-foreground md:text-[27px] md:leading-[1.32]">
+          {words.map((w, i) => (
+            <span key={i}>
+              <motion.span
+                className={cn('inline-block', w.accent && 'text-chart-1')}
+                initial={false}
+                animate={
+                  animate
+                    ? { opacity: [0, 1], y: [14, 0], filter: ['blur(8px)', 'blur(0px)'] }
+                    : { opacity: 1, y: 0, filter: 'blur(0px)' }
+                }
+                transition={{ duration: 0.5, ease: MANTRA_EASE, delay: 0.3 + i * 0.055 }}
+              >
+                {w.text}
+              </motion.span>
+              {i < words.length - 1 ? ' ' : ''}
+            </span>
+          ))}
+        </p>
+      </div>
+    </Reveal>
+  )
+}
+
 function Ticker({ agents }: { agents: Agent[] }) {
   return (
     <Reveal delay={140} className="mt-6">
@@ -246,6 +328,7 @@ export default function DailyUpdate() {
           </Reveal>
         </div>
 
+        <Mantra />
         <Ticker agents={agents} />
         <Briefing agents={agents} />
 
