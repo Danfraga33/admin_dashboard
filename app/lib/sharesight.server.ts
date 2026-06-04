@@ -300,7 +300,17 @@ export async function readPortfolio(
       portfolio: buildPortfolioFromRows(pr, (holdings ?? []) as HoldingRow[], (allocation ?? []) as AllocationRow[]),
       live: true,
     }
-  } catch {
+  } catch (err) {
+    console.error('[readPortfolio] fell back to sample data:', {
+      message: err instanceof Error ? err.message : String(err),
+      hasUrl: !!process.env.SUPABASE_URL,
+      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      hasClientId: !!process.env.SHARESIGHT_CLIENT_ID,
+      hasClientSecret: !!process.env.SHARESIGHT_CLIENT_SECRET,
+      hasApiBase: !!process.env.SHARESIGHT_API_BASE,
+      hasOauthBase: !!process.env.SHARESIGHT_OAUTH_BASE,
+      userId,
+    })
     return { portfolio: PORTFOLIO, live: false }
   }
 }
