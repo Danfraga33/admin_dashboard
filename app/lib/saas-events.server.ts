@@ -20,6 +20,10 @@ const CACHE_TTL_MS = 72 * 60 * 60 * 1000
 const MODEL = 'gemini-2.5-flash'
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`
 
+/** Per-region fetch ceiling. Grounded search is slow; abort a hung call rather than
+ *  letting it run into the serverless function wall (which severs the stream). */
+const REGION_TIMEOUT_MS = 45_000
+
 const THEMES = [
   // SaaS
   'SaaS conference',
@@ -169,6 +173,7 @@ export function validateEvents(raw: unknown[], now: Date): SaasEvent[] {
 async function callGeminiForRegion(deps: EventsDeps, label: string, region: Region): Promise<unknown[]> {
   const res = await deps.fetch(ENDPOINT, {
     method: 'POST',
+    signal: AbortSignal.timeout(REGION_TIMEOUT_MS),
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': deps.apiKey! },
     body: JSON.stringify({
       contents: [{ parts: [{ text: buildPrompt(deps.now(), label, region) }] }],
@@ -211,9 +216,15 @@ async function fetchAllRegions(deps: EventsDeps): Promise<SaasEvent[]> {
   return validateEvents(raw, deps.now())
 }
 
-/** Production wrapper using real clock, fetch and env key. */
+/** Production wrapper using real clock, fetch and env key.
+ *  Never rejects: a thrown promise here severs the React Router stream and surfaces
+ *  the opaque "Unexpected Server Error" on the client. Resolve stale instead. */
 export function getSaasEventsLive(): Promise<SaasEventsResult> {
-  return getSaasEvents({ now: () => new Date(), fetch, apiKey: process.env.GEMINI_API_KEY })
+  const now = () => new Date()
+  return getSaasEvents({ now, fetch, apiKey: process.env.GEMINI_API_KEY }).catch((err) => {
+    console.error('getSaasEventsLive fatal:', err)
+    return { events: [], fetchedAt: now().toISOString(), stale: true }
+  })
 }
 
 export async function getSaasEvents(deps: EventsDeps): Promise<SaasEventsResult> {
