@@ -9,6 +9,11 @@ import { addToMyEvents, removeFromMyEvents, hasMyEvent, type MyEvents } from '~/
 import { buildMonthGrid, monthLabel, addMonths, WEEKDAYS, isoDate } from '~/lib/calendar'
 import { cn } from '~/lib/utils'
 
+// Grounded Gemini search runs ~25-40s per region (4 in parallel). The default
+// serverless wall (10s on Hobby) kills every fetch → "all region fetches failed".
+// @vercel/react-router applies this per-route config to the emitted function.
+export const config = { maxDuration: 60 }
+
 export async function loader({ request }: LoaderFunctionArgs) {
   const { responseHeaders } = await requireSession(request)
   // Do NOT await — stream the slow Gemini fetch so the page renders immediately.
