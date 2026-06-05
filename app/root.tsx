@@ -11,6 +11,13 @@ import {
 import type { Route } from "./+types/root";
 import "./app.css";
 
+// Applied to every route via @vercel/react-router (children inherit the root
+// config). Set at the root so all routes share ONE server bundle — a per-route
+// config splits routes into separate Vercel functions and breaks client route
+// discovery (/__manifest 404s the split-off route). The /events grounded Gemini
+// search needs ~25-40s, well over the 10s default wall; 60s covers it.
+export const config = { maxDuration: 60 };
+
 export async function loader() {
   return {
     env: {
