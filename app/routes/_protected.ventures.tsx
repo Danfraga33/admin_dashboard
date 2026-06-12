@@ -139,6 +139,59 @@ function CapitalCard({ f }: { f: Finance }) {
   )
 }
 
+const PTY_REASONS: { title: string; desc: string }[] = [
+  {
+    title: 'Limited liability',
+    desc: 'A Pty Ltd is a separate legal entity — business debts and lawsuits stop at the company. A sole trader is personally liable without limit; your house is on the line.',
+  },
+  {
+    title: 'Flat 25% company tax',
+    desc: 'Base-rate entities pay 25%, versus personal marginal rates up to 47%. Profits can be retained inside the company at the lower rate to fund growth.',
+  },
+  {
+    title: 'Clean, sellable asset',
+    desc: 'Buyers acquire shares or assets of a discrete entity with its own contracts, IP and books. A sole-trader business is tangled with personal affairs and harder to exit.',
+  },
+  {
+    title: 'Investors, partners & ESOPs',
+    desc: 'Shares make outside capital, co-founders and employee equity possible. A sole trader has no equity to issue.',
+  },
+  {
+    title: 'Income flexibility',
+    desc: 'Choose between salary, franked dividends or retained earnings — timing and distribution options a sole trader never gets.',
+  },
+  {
+    title: 'Perpetual succession & credibility',
+    desc: 'The company outlives its owner, and enterprise customers, banks and acquirers take a Pty Ltd more seriously than an individual ABN.',
+  },
+]
+
+function StructurePlaybook() {
+  return (
+    <div className="mx-auto max-w-xl text-left">
+      <Card className="p-6">
+        <div className="flex items-center justify-between">
+          <Label>Structure playbook</Label>
+          <Target size={14} className="text-muted-foreground" />
+        </div>
+        <p className="mt-3 text-sm leading-relaxed text-foreground">
+          SaaS businesses are built on an ordinary ABN.{' '}
+          <span className="text-chart-2">Successful ideas are transferred to a Pty Ltd.</span>
+        </p>
+        <p className="mt-4 font-mono text-[11px] uppercase tracking-widest text-muted-foreground">Why Pty Ltd beats a sole-trader ABN</p>
+        <dl className="mt-2 divide-y divide-border">
+          {PTY_REASONS.map((r, i) => (
+            <Reveal key={r.title} delay={stag(i, 300, 60)} className="py-3">
+              <dt className="text-[13px] font-medium text-foreground">{r.title}</dt>
+              <dd className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{r.desc}</dd>
+            </Reveal>
+          ))}
+        </dl>
+      </Card>
+    </div>
+  )
+}
+
 export const meta = () => [{ title: 'Atlas · Fraga Ventures' }]
 
 export default function Ventures() {
@@ -150,7 +203,9 @@ export default function Ventures() {
   if (!show) {
     return (
       <RevealContext.Provider value={false}>
-        <InConstruction kicker="Fraga Ventures · Acquisitions" />
+        <InConstruction kicker="Fraga Ventures · Acquisitions">
+          <StructurePlaybook />
+        </InConstruction>
       </RevealContext.Provider>
     )
   }

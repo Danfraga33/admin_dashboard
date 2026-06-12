@@ -147,13 +147,15 @@ export function InConstruction({
   kicker,
   title = 'In Construction',
   sub = 'This page is being built. Check back soon.',
+  children,
 }: {
   kicker: string
   title?: string
   sub?: string
+  children?: React.ReactNode
 }) {
   return (
-    <div className="mx-auto flex min-h-[60vh] max-w-screen-2xl flex-col items-center justify-center text-center">
+    <div className="mx-auto flex min-h-[60vh] max-w-screen-2xl flex-col items-center justify-center py-10 text-center">
       <Reveal delay={0}>
         <span className="grid size-14 place-items-center rounded-2xl border border-border bg-card shadow-sm">
           <Hammer size={24} className="text-muted-foreground" />
@@ -168,6 +170,11 @@ export function InConstruction({
       <Reveal delay={180}>
         <p className="mt-3 max-w-sm text-sm text-muted-foreground">{sub}</p>
       </Reveal>
+      {children && (
+        <Reveal delay={240} className="mt-10 w-full">
+          {children}
+        </Reveal>
+      )}
     </div>
   )
 }
