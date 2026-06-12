@@ -6,8 +6,7 @@ import {
   AGENTS,
   BRIEFING,
   ACTIVITY,
-  PORTFOLIO,
-  VENTURES,
+  PROJECTS,
   type Agent,
   type Signal,
   type ChartColor,
@@ -35,19 +34,33 @@ import {
   useMounted,
 } from '~/components/atlas'
 import { useAgents } from '~/components/atlas/agents-context'
+import { usePrivacy } from '~/components/privacy-provider'
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { session } = await requireSession(request)
   const admin = createSupabaseAdminClient()
   const { portfolio } = await readPortfolio(admin, session.user.id)
+
+  const top = portfolio.holdings.filter((h) => h.sym !== 'CASH').sort((a, b) => b.alloc - a.alloc)[0]
+  const ytd = `YTD ${portfolio.ytdPct >= 0 ? '+' : ''}${portfolio.ytdPct}%`
+  const investInsight = top ? `${top.sym} leads the book at ${top.alloc}% · ${ytd}` : ytd
+
+  const active = PROJECTS.items.filter((p) => p.status !== 'Paused')
+  const ranked = [...active].sort((a, b) => b.progress - a.progress)
+  const lead = ranked[0]
+  const projects = {
+    count: active.length,
+    sub: `Active builds · led by ${lead.name}`,
+    insight: `${lead.name} at ${lead.progress}% — ${lead.activity}`,
+    bars: ranked.slice(0, 3).map((p) => ({ label: p.name, pct: p.progress, color: p.accent })),
+  }
+
   return {
-    AGENTS,
-    BRIEFING,
-    ACTIVITY,
-    PORTFOLIO: portfolio,
-    VENTURES,
     investTotal: portfolio.total,
     investDayPct: portfolio.dayPct,
+    investSpark: portfolio.spark,
+    investInsight,
+    projects,
     showVentures: process.env.SHOW_VENTURES === 'true',
   }
 }
@@ -112,6 +125,7 @@ function SnapshotCard({
   bars,
   onClick,
   construction = false,
+  privacy = false,
 }: {
   delay: number
   label: string
@@ -125,7 +139,11 @@ function SnapshotCard({
   bars?: BarData[]
   onClick: () => void
   construction?: boolean
+  privacy?: boolean
 }) {
+  const { hidden } = usePrivacy()
+  const masked = privacy && hidden
+  const maskCls = masked ? 'blur-[7px] select-none' : ''
   if (construction) {
     return (
       <Reveal delay={delay}>
@@ -142,7 +160,7 @@ function SnapshotCard({
               <Hammer size={18} className="text-muted-foreground" />
             </span>
             <p className="font-mono text-sm text-foreground">In Construction</p>
-            <p className="text-xs text-muted-foreground">Being built — check back soon.</p>
+            <p className="text-xs text-muted-foreground">This page is being built. Check back soon.</p>
           </div>
         </SpotlightCard>
       </Reveal>
@@ -158,12 +176,12 @@ function SnapshotCard({
           </div>
           <ArrowUpRight size={15} className="text-muted-foreground transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
         </div>
-        <div className="mt-4 flex items-end gap-2">
+        <div className={cn('mt-4 flex items-end gap-2 transition-[filter] duration-200', maskCls)}>
           <span className="font-mono text-3xl leading-none tracking-tight text-foreground">{metric}</span>
           {deltaPct != null && <Delta pct={deltaPct} className="mb-1" />}
         </div>
         {sub && <p className="mt-1 text-xs text-muted-foreground">{sub}</p>}
-        <div className="mt-4 h-10">
+        <div className={cn('mt-4 h-10 transition-[filter] duration-200', maskCls)}>
           {spark && <Sparkline data={spark} color={sparkColor} w={260} h={40} />}
           {bars && (
             <div className="space-y-2 pt-1">
@@ -179,7 +197,7 @@ function SnapshotCard({
         </div>
         <p className="mt-4 flex items-start gap-1.5 border-t border-border pt-3 text-xs text-muted-foreground">
           <Sparkles size={13} className="mt-0.5 shrink-0 text-chart-1" />
-          <span>{insight}</span>
+          <span className={cn('transition-[filter] duration-200', maskCls)}>{insight}</span>
         </p>
       </SpotlightCard>
     </Reveal>
@@ -295,9 +313,8 @@ export const meta = () => [{ title: 'Atlas · Daily Update' }]
 
 export default function DailyUpdate() {
   const navigate = useNavigate()
-  const { investTotal, investDayPct, showVentures } = useLoaderData<typeof loader>()
+  const { investTotal, investDayPct, investSpark, investInsight, projects, showVentures } = useLoaderData<typeof loader>()
   const { agents, running } = useAgents()
-  const v = VENTURES
   const liveCount = agents.filter((a) => a.state === 'running').length
 
   return (
@@ -340,35 +357,29 @@ export default function DailyUpdate() {
             metric={fmtCompact(investTotal)}
             deltaPct={investDayPct}
             sub="Portfolio value · today"
-            insight="AI basket +3.2% — rebalance window open"
-            spark={PORTFOLIO.spark}
+            insight={investInsight}
+            spark={investSpark}
             sparkColor="chart-1"
+            privacy
             onClick={() => navigate('/investments')}
           />
           <SnapshotCard
             delay={290}
             label="Projects"
             icon={Check}
-            metric="2"
-            sub="Shipping · 6 active builds"
-            insight="RAG agent passed evals, hit staging"
-            bars={[
-              { label: 'Agent Core', pct: 88, color: 'chart-2' },
-              { label: 'Orchestrator', pct: 70, color: 'chart-1' },
-              { label: 'Atlas', pct: 52, color: 'chart-4' },
-            ]}
+            metric={String(projects.count)}
+            sub={projects.sub}
+            insight={projects.insight}
+            bars={projects.bars}
             onClick={() => navigate('/projects')}
           />
           <SnapshotCard
             delay={360}
             label="Fraga Ventures"
             icon={ArrowUpRight}
-            metric="$4.24M"
-            deltaPct={v.finance.netWorthYtd}
-            sub="Net worth · YTD"
-            insight="2 acquisition targets in buy-box"
-            spark={v.finance.netWorthSpark}
-            sparkColor="chart-2"
+            metric="—"
+            sub="Acquisitions"
+            insight="Structure playbook drafted — ABN to Pty Ltd"
             construction={!showVentures}
             onClick={() => navigate('/ventures')}
           />
