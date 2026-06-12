@@ -4,11 +4,11 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { TrendingUp, TrendingDown, Dot, Check, ArrowUpRight, Sparkles, Hammer } from 'lucide-react'
 import {
   AGENTS,
-  BRIEFING,
   ACTIVITY,
   PROJECTS,
   type Agent,
   type Signal,
+  type Briefing as BriefingData,
   type ChartColor,
 } from '~/lib/atlas-data'
 import { cn, fmtCompact } from '~/lib/utils'
@@ -36,13 +36,19 @@ import {
 import { useAgents } from '~/components/atlas/agents-context'
 import { usePrivacy } from '~/components/privacy-provider'
 
+const TZ = 'Australia/Sydney'
+
+function signed(p: number): string {
+  return `${p >= 0 ? '+' : ''}${p}%`
+}
+
 export async function loader({ request }: LoaderFunctionArgs) {
   const { session } = await requireSession(request)
   const admin = createSupabaseAdminClient()
   const { portfolio } = await readPortfolio(admin, session.user.id)
 
   const top = portfolio.holdings.filter((h) => h.sym !== 'CASH').sort((a, b) => b.alloc - a.alloc)[0]
-  const ytd = `YTD ${portfolio.ytdPct >= 0 ? '+' : ''}${portfolio.ytdPct}%`
+  const ytd = `YTD ${signed(portfolio.ytdPct)}`
   const investInsight = top ? `${top.sym} leads the book at ${top.alloc}% · ${ytd}` : ytd
 
   const active = PROJECTS.items.filter((p) => p.status !== 'Paused')
@@ -55,7 +61,35 @@ export async function loader({ request }: LoaderFunctionArgs) {
     bars: ranked.slice(0, 3).map((p) => ({ label: p.name, pct: p.progress, color: p.accent })),
   }
 
+  const now = new Date()
+  const hour = Number(new Intl.DateTimeFormat('en-AU', { hour: 'numeric', hour12: false, timeZone: TZ }).format(now))
+  const part = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening'
+  const cashPct = portfolio.total > 0 ? Math.round((portfolio.cash / portfolio.total) * 100) : 0
+  const dir = portfolio.dayPct >= 0 ? 'up' : 'down'
+
+  const briefing: BriefingData = {
+    date: new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: TZ }).format(now),
+    greeting: `Good ${part}, Daniel.`,
+    synthLabel: 'Synthesized from Sharesight + active builds',
+    summary: [
+      `Portfolio is ${dir} ${Math.abs(portfolio.dayPct)}% on the day, ${ytd.toLowerCase()}`,
+      top ? ` — ${top.sym} is the largest position at ${top.alloc}% of the book, with cash at ${cashPct}% for dry powder.` : `, with cash at ${cashPct}% for dry powder.`,
+      ` On the build side, ${lead.name} leads ${active.length} active builds at ${lead.progress}%.`,
+      ` Fraga Ventures is still in construction — ideas prove out on the ABN, winners transfer to the Pty.`,
+      ` Your highest-leverage move today: ship ${lead.name}'s last ${100 - lead.progress}%.`,
+    ].join(''),
+    signals: [
+      ...(top
+        ? [{ agent: 'scout', tone: (top.pct > 0 ? 'up' : top.pct < 0 ? 'down' : 'flat') as Signal['tone'], text: `${top.sym} ${signed(top.pct)} today — ${top.alloc}% of the book` }]
+        : []),
+      { agent: 'forge', tone: 'up' as const, text: `${lead.name} at ${lead.progress}% — ${lead.activity}` },
+      { agent: 'ledger', tone: 'flat' as const, text: `Cash at ${cashPct}% of portfolio — dry powder for acquisitions` },
+      { agent: 'ledger', tone: 'flat' as const, text: 'Fraga Ventures in construction — ABN→Pty structure playbook drafted' },
+    ],
+  }
+
   return {
+    briefing,
     investTotal: portfolio.total,
     investDayPct: portfolio.dayPct,
     investSpark: portfolio.spark,
@@ -77,8 +111,7 @@ function SignalRow({ sig, agents, i }: { sig: Signal; agents: Agent[]; i: number
   )
 }
 
-function Briefing({ agents }: { agents: Agent[] }) {
-  const b = BRIEFING
+function Briefing({ agents, b }: { agents: Agent[]; b: BriefingData }) {
   return (
     <Reveal delay={180} className="mt-7">
       <SpotlightCard className="p-6 md:p-8" lift={false}>
@@ -313,7 +346,7 @@ export const meta = () => [{ title: 'Atlas · Daily Update' }]
 
 export default function DailyUpdate() {
   const navigate = useNavigate()
-  const { investTotal, investDayPct, investSpark, investInsight, projects, showVentures } = useLoaderData<typeof loader>()
+  const { briefing, investTotal, investDayPct, investSpark, investInsight, projects, showVentures } = useLoaderData<typeof loader>()
   const { agents, running } = useAgents()
   const liveCount = agents.filter((a) => a.state === 'running').length
 
@@ -326,7 +359,7 @@ export default function DailyUpdate() {
               <Kicker>Daily Update</Kicker>
             </Reveal>
             <Reveal delay={60}>
-              <h2 className="mt-4 text-4xl font-semibold tracking-tight text-foreground md:text-6xl leading-[0.95]">{BRIEFING.greeting}</h2>
+              <h2 className="mt-4 text-4xl font-semibold tracking-tight text-foreground md:text-6xl leading-[0.95]">{briefing.greeting}</h2>
             </Reveal>
             <Reveal delay={120}>
               <p className="mt-3 max-w-xl text-sm text-muted-foreground">
@@ -347,7 +380,7 @@ export default function DailyUpdate() {
 
         <Mantra />
         <Ticker agents={agents} />
-        <Briefing agents={agents} />
+        <Briefing agents={agents} b={briefing} />
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           <SnapshotCard
