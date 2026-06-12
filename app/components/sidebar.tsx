@@ -21,7 +21,7 @@ const NAV_MAIN: NavItem[] = [
 
 const NAV_WORK: NavItem[] = [
   { label: 'Content', icon: 'FileText', to: '/content' },
-  { label: 'Events', icon: 'CalendarDays', to: '/events' },
+  { label: 'Calendar', icon: 'CalendarDays', to: '/events' },
   { label: 'Notes', icon: 'StickyNote', to: '/notes' },
 ]
 
