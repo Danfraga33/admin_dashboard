@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Sparkles, ChevronRight, Search, Clock, RefreshCw, Bell, Sun, Moon, Layers } from 'lucide-react'
+import { Sparkles, ChevronRight, Search, Clock, RefreshCw, Bell, Sun, Moon, Layers, Eye, EyeOff } from 'lucide-react'
 import { cn } from '~/lib/utils'
 import { useTheme } from '~/components/theme-provider'
+import { usePrivacy } from '~/components/privacy-provider'
 import { useAgents } from './agents-context'
 
 function LiveClock() {
@@ -18,6 +19,7 @@ function LiveClock() {
 
 export function Topbar({ title, onMenu, onOpenPalette }: { title: string; onMenu: () => void; onOpenPalette: () => void }) {
   const { theme, setTheme } = useTheme()
+  const { hidden, toggle: togglePrivacy } = usePrivacy()
   const { running, runAgents } = useAgents()
 
   return (
@@ -56,6 +58,13 @@ export function Topbar({ title, onMenu, onOpenPalette }: { title: string; onMenu
           <button className="relative grid h-8 w-8 place-items-center rounded-md text-foreground hover:bg-muted transition-colors cursor-pointer">
             <Bell size={16} />
             <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-chart-1" />
+          </button>
+          <button
+            onClick={togglePrivacy}
+            aria-label={hidden ? 'Show private info' : 'Hide private info'}
+            className="grid h-8 w-8 place-items-center rounded-md text-foreground hover:bg-muted transition-colors cursor-pointer"
+          >
+            {hidden ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
           <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
