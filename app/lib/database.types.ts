@@ -580,6 +580,24 @@ export type Database = {
         }
         Relationships: []
       }
+      saas_events_cache: {
+        Row: {
+          events: Json
+          fetched_at: string
+          id: number
+        }
+        Insert: {
+          events?: Json
+          fetched_at?: string
+          id?: number
+        }
+        Update: {
+          events?: Json
+          fetched_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
       saas_metrics: {
         Row: {
           active_users: number | null

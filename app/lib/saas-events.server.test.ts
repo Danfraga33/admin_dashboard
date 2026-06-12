@@ -3,8 +3,11 @@ import {
   extractJsonArray,
   validateEvents,
   getSaasEvents,
+  refreshSaasEvents,
   __resetCache,
   type EventsDeps,
+  type EventsStore,
+  type SaasEvent,
 } from './saas-events.server'
 
 const NOW = new Date('2026-06-03T00:00:00Z')
@@ -111,20 +114,68 @@ describe('validateEvents', () => {
   })
 })
 
+function fakeEvent(over: Partial<SaasEvent> = {}): SaasEvent {
+  return {
+    id: 'x1',
+    name: 'Cached Conf',
+    date: '2026-08-01',
+    location: 'City',
+    region: 'USA',
+    domain: 'SaaS',
+    format: 'in-person',
+    url: 'https://cached.com',
+    category: 'Growth',
+    desc: 'd',
+    ...over,
+  }
+}
+
+function memStore(initial: { events: SaasEvent[]; fetchedAt: string } | null = null) {
+  let row = initial
+  const store: EventsStore = {
+    read: vi.fn(async () => row),
+    write: vi.fn(async (events: SaasEvent[], fetchedAt: string) => {
+      row = { events, fetchedAt }
+    }),
+  }
+  return { store, current: () => row }
+}
+
+const FRESH_AT = new Date(NOW.getTime() - 60 * 60 * 1000).toISOString() // 1h old
+const STALE_AT = new Date(NOW.getTime() - 100 * 60 * 60 * 1000).toISOString() // 100h old
+
 describe('getSaasEvents', () => {
   function deps(over: Partial<EventsDeps> = {}): EventsDeps {
     return { now: () => NOW, fetch: vi.fn(), apiKey: 'k', ...over }
   }
 
-  it('returns stale empty result with no api key', async () => {
+  it('returns stale empty result with no api key and empty store', async () => {
     const d = deps({ apiKey: undefined })
-    const r = await getSaasEvents(d)
+    const r = await getSaasEvents(d, memStore().store)
     expect(r.stale).toBe(true)
     expect(r.events).toEqual([])
     expect(d.fetch).not.toHaveBeenCalled()
   })
 
-  it('fetches every region, merges + dedups, and caches', async () => {
+  it('serves an expired row as stale when no api key', async () => {
+    const d = deps({ apiKey: undefined })
+    const { store } = memStore({ events: [fakeEvent()], fetchedAt: STALE_AT })
+    const r = await getSaasEvents(d, store)
+    expect(r.stale).toBe(true)
+    expect(r.events).toHaveLength(1)
+    expect(d.fetch).not.toHaveBeenCalled()
+  })
+
+  it('serves a fresh row without calling gemini', async () => {
+    const d = deps()
+    const { store } = memStore({ events: [fakeEvent()], fetchedAt: FRESH_AT })
+    const r = await getSaasEvents(d, store)
+    expect(r.stale).toBe(false)
+    expect(r.events).toHaveLength(1)
+    expect(d.fetch).not.toHaveBeenCalled()
+  })
+
+  it('fetches every region, merges + dedups, and persists on cold store', async () => {
     let n = 0
     const fetch = vi.fn(async () => {
       n++
@@ -134,13 +185,15 @@ describe('getSaasEvents', () => {
       )
     })
     const d = deps({ fetch: fetch as unknown as typeof globalThis.fetch })
-    const r1 = await getSaasEvents(d)
+    const { store, current } = memStore()
+    const r1 = await getSaasEvents(d, store)
     expect(r1.stale).toBe(false)
     expect(fetch).toHaveBeenCalledTimes(4) // one per region
     // 4 distinct + 1 shared (deduped across regions) = 5
     expect(r1.events).toHaveLength(5)
-    // second call hits cache, no extra fetch
-    await getSaasEvents(d)
+    expect(current()?.events).toHaveLength(5)
+    // second call hits the now-fresh row, no extra fetch
+    await getSaasEvents(d, store)
     expect(fetch).toHaveBeenCalledTimes(4)
   })
 
@@ -151,15 +204,55 @@ describe('getSaasEvents', () => {
       if (n <= 2) return new Response('err', { status: 500 })
       return geminiResponse(`[{"name":"E${n}","date":"2026-08-0${n}","url":"https://e${n}.com","format":"in-person","location":"City","category":"Product","desc":"d"}]`)
     })
-    const r = await getSaasEvents(deps({ fetch: fetch as unknown as typeof globalThis.fetch }))
+    const r = await getSaasEvents(deps({ fetch: fetch as unknown as typeof globalThis.fetch }), memStore().store)
     expect(r.stale).toBe(false)
     expect(r.events).toHaveLength(2) // 2 of 4 regions returned
   })
 
-  it('returns stale empty when all regions fail with cold cache', async () => {
+  it('returns stale empty when all regions fail with cold store', async () => {
     const fetch = vi.fn(async () => new Response('err', { status: 500 }))
-    const r = await getSaasEvents(deps({ fetch: fetch as unknown as typeof globalThis.fetch }))
+    const r = await getSaasEvents(deps({ fetch: fetch as unknown as typeof globalThis.fetch }), memStore().store)
     expect(r.stale).toBe(true)
     expect(r.events).toEqual([])
+  })
+
+  it('serves the old row as stale when refresh fails', async () => {
+    const fetch = vi.fn(async () => new Response('err', { status: 429 }))
+    const { store } = memStore({ events: [fakeEvent()], fetchedAt: STALE_AT })
+    const r = await getSaasEvents(deps({ fetch: fetch as unknown as typeof globalThis.fetch }), store)
+    expect(r.stale).toBe(true)
+    expect(r.events).toHaveLength(1)
+  })
+
+  it('dedupes concurrent refreshes into one gemini round', async () => {
+    const fetch = vi.fn(async () => geminiResponse('[]'))
+    const d = deps({ fetch: fetch as unknown as typeof globalThis.fetch })
+    const { store } = memStore()
+    await Promise.all([getSaasEvents(d, store), getSaasEvents(d, store)])
+    expect(fetch).toHaveBeenCalledTimes(4) // one round of 4 regions, not two
+  })
+})
+
+describe('refreshSaasEvents', () => {
+  it('refreshes even when the row is fresh', async () => {
+    const fetch = vi.fn(async () =>
+      geminiResponse('[{"name":"New","date":"2026-10-01","url":"https://new.com","format":"in-person","location":"City","category":"Growth","desc":"d"}]'),
+    )
+    const { store, current } = memStore({ events: [fakeEvent()], fetchedAt: FRESH_AT })
+    const r = await refreshSaasEvents({ now: () => NOW, fetch: fetch as unknown as typeof globalThis.fetch, apiKey: 'k' }, store)
+    expect(fetch).toHaveBeenCalledTimes(4)
+    expect(r.stale).toBe(false)
+    expect(current()?.events.map((e) => e.name)).toEqual(['New'])
+  })
+
+  it('rejects without an api key', async () => {
+    await expect(refreshSaasEvents({ now: () => NOW, fetch: vi.fn(), apiKey: undefined }, memStore().store)).rejects.toThrow('GEMINI_API_KEY')
+  })
+
+  it('rejects when all regions fail (no silent stale)', async () => {
+    const fetch = vi.fn(async () => new Response('err', { status: 429 }))
+    await expect(
+      refreshSaasEvents({ now: () => NOW, fetch: fetch as unknown as typeof globalThis.fetch, apiKey: 'k' }, memStore().store),
+    ).rejects.toThrow('all region fetches failed')
   })
 })
