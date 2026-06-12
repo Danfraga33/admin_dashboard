@@ -134,7 +134,7 @@ describe('persistPortfolio', () => {
     )
 
   it('persists through one atomic rpc, never touching tables directly', async () => {
-    const rpc = vi.fn(async () => ({ error: null }))
+    const rpc = vi.fn(async (_fnName: string, _args: any) => ({ error: null }))
     const from = vi.fn(() => {
       throw new Error('persistPortfolio must not delete/insert tables directly — use the atomic rpc')
     })
