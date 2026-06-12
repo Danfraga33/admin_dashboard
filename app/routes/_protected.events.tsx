@@ -15,7 +15,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return data({ result: getSaasEventsLive() }, { headers: responseHeaders })
 }
 
-export const meta = () => [{ title: 'Atlas · Events' }]
+export const meta = () => [{ title: 'Atlas · Calendar' }]
 
 function groupByDate(events: SaasEvent[]): Map<string, SaasEvent[]> {
   const map = new Map<string, SaasEvent[]>()
@@ -41,7 +41,7 @@ export default function Events() {
   return (
     <div>
       <div className="mb-1 flex items-end justify-between">
-        <h1 className="text-3xl font-semibold text-foreground">Events</h1>
+        <h1 className="text-3xl font-semibold text-foreground">Calendar</h1>
       </div>
       <p className="mb-8 text-sm text-muted-foreground">
         SaaS, Ecommerce & AI-coding events for the year ahead. Hit{' '}

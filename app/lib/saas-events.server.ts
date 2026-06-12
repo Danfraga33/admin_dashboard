@@ -1,4 +1,6 @@
 import { REGIONS_FILTER, DOMAINS_FILTER, type Region, type Domain, type SaasEvent, type SaasEventsResult } from './saas-events'
+import { createSupabaseAdminClient } from './supabase.admin'
+import type { Json } from './database.types'
 
 export { REGIONS_FILTER, DOMAINS_FILTER }
 export type { Region, Domain, SaasEvent, SaasEventsResult }
@@ -14,6 +16,14 @@ export interface EventsDeps {
   now: () => Date
   fetch: typeof fetch
   apiKey: string | undefined
+}
+
+/** Persistent cache row. DB-backed in production so the cache survives
+ *  serverless cold starts and dev restarts — each of which used to refire
+ *  4 grounded Gemini calls and exhaust the daily search-grounding quota. */
+export interface EventsStore {
+  read(): Promise<{ events: SaasEvent[]; fetchedAt: string } | null>
+  write(events: SaasEvent[], fetchedAt: string): Promise<void>
 }
 
 const CACHE_TTL_MS = 72 * 60 * 60 * 1000
@@ -54,11 +64,12 @@ const SEARCH_REGIONS: { label: string; region: Region }[] = [
   { label: 'Europe (UK, Germany, France, Spain, Netherlands, Nordics, etc.)', region: 'Europe' },
 ]
 
-let cache: { data: SaasEventsResult; at: number } | null = null
+/** Dedupe concurrent refreshes within one process (page loader + resource route). */
+let inflightRefresh: Promise<SaasEvent[]> | null = null
 
-/** Reset module cache. Test-only. */
+/** Reset in-flight refresh dedupe. Test-only. */
 export function __resetCache() {
-  cache = null
+  inflightRefresh = null
 }
 
 function buildPrompt(now: Date, regionLabel: string, regionValue: Region): string {
@@ -216,33 +227,90 @@ async function fetchAllRegions(deps: EventsDeps): Promise<SaasEvent[]> {
   return validateEvents(raw, deps.now())
 }
 
-/** Production wrapper using real clock, fetch and env key.
- *  Never rejects: a thrown promise here severs the React Router stream and surfaces
- *  the opaque "Unexpected Server Error" on the client. Resolve stale instead. */
-export function getSaasEventsLive(): Promise<SaasEventsResult> {
-  const now = () => new Date()
-  return getSaasEvents({ now, fetch, apiKey: process.env.GEMINI_API_KEY }).catch((err) => {
-    console.error('getSaasEventsLive fatal:', err)
-    return { events: [], fetchedAt: now().toISOString(), stale: true }
+/** Fetch from Gemini and persist; concurrent callers share one in-flight refresh. */
+async function refreshIntoStore(deps: EventsDeps, store: EventsStore): Promise<SaasEvent[]> {
+  if (inflightRefresh) return inflightRefresh
+  inflightRefresh = (async () => {
+    const events = await fetchAllRegions(deps)
+    await store.write(events, deps.now().toISOString())
+    return events
+  })().finally(() => {
+    inflightRefresh = null
   })
+  return inflightRefresh
 }
 
-export async function getSaasEvents(deps: EventsDeps): Promise<SaasEventsResult> {
-  const nowMs = deps.now().getTime()
-  if (cache && nowMs - cache.at < CACHE_TTL_MS) return cache.data
+/** Read the cache; refresh from Gemini only when the row is missing or past TTL.
+ *  On refresh failure, serve the stale row rather than nothing. */
+export async function getSaasEvents(deps: EventsDeps, store: EventsStore): Promise<SaasEventsResult> {
+  const row = await store.read().catch((err) => {
+    console.error('getSaasEvents store read error:', err)
+    return null
+  })
+  const fresh = row && deps.now().getTime() - Date.parse(row.fetchedAt) < CACHE_TTL_MS
+  if (row && fresh) return { events: row.events, fetchedAt: row.fetchedAt, stale: false }
 
   if (!deps.apiKey) {
+    if (row) return { events: row.events, fetchedAt: row.fetchedAt, stale: true }
     return { events: [], fetchedAt: deps.now().toISOString(), stale: true }
   }
 
   try {
-    const events = await fetchAllRegions(deps)
-    const data: SaasEventsResult = { events, fetchedAt: deps.now().toISOString(), stale: false }
-    cache = { data, at: nowMs }
-    return data
+    const events = await refreshIntoStore(deps, store)
+    return { events, fetchedAt: deps.now().toISOString(), stale: false }
   } catch (err) {
     console.error('getSaasEvents error:', err)
-    if (cache) return { ...cache.data, stale: true }
+    if (row) return { events: row.events, fetchedAt: row.fetchedAt, stale: true }
     return { events: [], fetchedAt: deps.now().toISOString(), stale: true }
   }
+}
+
+/** Force a refresh regardless of TTL. Cron-only — keeps the cache warm so
+ *  page loads never wait on the slow grounded search. */
+export async function refreshSaasEvents(deps: EventsDeps, store: EventsStore): Promise<SaasEventsResult> {
+  if (!deps.apiKey) throw new Error('GEMINI_API_KEY not set')
+  const events = await refreshIntoStore(deps, store)
+  return { events, fetchedAt: deps.now().toISOString(), stale: false }
+}
+
+function supabaseStore(): EventsStore {
+  const admin = createSupabaseAdminClient()
+  return {
+    async read() {
+      const { data, error } = await admin
+        .from('saas_events_cache')
+        .select('events, fetched_at')
+        .eq('id', 1)
+        .maybeSingle()
+      if (error) throw new Error(`saas_events_cache read: ${error.message}`)
+      if (!data) return null
+      const events = Array.isArray(data.events) ? (data.events as unknown as SaasEvent[]) : []
+      return { events, fetchedAt: data.fetched_at }
+    },
+    async write(events, fetchedAt) {
+      const { error } = await admin
+        .from('saas_events_cache')
+        .upsert({ id: 1, events: events as unknown as Json, fetched_at: fetchedAt })
+      if (error) throw new Error(`saas_events_cache write: ${error.message}`)
+    },
+  }
+}
+
+function liveDeps(): EventsDeps {
+  return { now: () => new Date(), fetch, apiKey: process.env.GEMINI_API_KEY }
+}
+
+/** Production wrapper using real clock, fetch, env key and the Supabase-backed store.
+ *  Never rejects: a thrown promise here severs the React Router stream and surfaces
+ *  the opaque "Unexpected Server Error" on the client. Resolve stale instead. */
+export function getSaasEventsLive(): Promise<SaasEventsResult> {
+  return getSaasEvents(liveDeps(), supabaseStore()).catch((err) => {
+    console.error('getSaasEventsLive fatal:', err)
+    return { events: [], fetchedAt: new Date().toISOString(), stale: true }
+  })
+}
+
+/** Cron entry point. Rejects on failure so the cron run reports an error. */
+export function refreshSaasEventsLive(): Promise<SaasEventsResult> {
+  return refreshSaasEvents(liveDeps(), supabaseStore())
 }

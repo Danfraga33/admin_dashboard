@@ -16,6 +16,8 @@ declare global {
       SHARESIGHT_CLIENT_SECRET: string
       SHARESIGHT_API_BASE: string
       SHARESIGHT_OAUTH_BASE: string
+      /** Set on Vercel; sent as Bearer token on cron requests. */
+      CRON_SECRET: string
     }
   }
 }
