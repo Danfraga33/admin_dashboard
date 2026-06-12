@@ -22,6 +22,7 @@ import {
   Delta,
   Label,
   AgentSummary,
+  InfoHint,
   PageHeader,
   StatTile,
   toneColor,
@@ -31,16 +32,20 @@ import {
 export async function loader({ request }: LoaderFunctionArgs) {
   const { session, supabase } = await requireSession(request)
   const admin = createSupabaseAdminClient()
-  const { portfolio, live } = await readPortfolio(admin, session.user.id)
+  const { portfolio, live, syncedAt } = await readPortfolio(admin, session.user.id)
   const { data: watch } = await supabase
     .from('watchlist')
     .select('id, sym, note')
     .order('position', { ascending: true })
     .order('created_at', { ascending: true })
+  const syncedLabel = syncedAt
+    ? new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Australia/Sydney' }).format(new Date(syncedAt))
+    : null
   return {
     portfolio,
     cash: portfolio.cash,
     live,
+    syncedLabel,
     watch: (watch ?? []) as WatchRow[],
     scout: AGENTS.find((a) => a.id === 'scout')!,
   }
@@ -114,16 +119,18 @@ function HoldingRow({ h, i }: { h: Holding; i: number }) {
         <p className="truncate text-sm font-medium text-foreground">{h.name}</p>
         <p className="truncate text-[11px] text-muted-foreground">{h.note}</p>
       </div>
-      <div className="hidden sm:block">
+      <div className="hidden sm:block" title="Illustrative trend — placeholder, not real price history">
         <Sparkline data={h.spark} color={toneColor(h.tone)} w={96} h={30} fill={false} delay={300 + i * 60} />
       </div>
       <div className="w-24 text-right">
-        <p className="font-mono text-sm text-foreground">
+        <p className="font-mono text-sm text-foreground" title="Market value at end-of-day prices">
           <Num value={h.val} prefix="$" />
         </p>
-        <Delta pct={h.pct} className="justify-end" />
+        <span title="Total return since 1 January (YTD)">
+          <Delta pct={h.pct} className="justify-end" />
+        </span>
       </div>
-      <div className="hidden w-12 text-right font-mono text-[11px] text-muted-foreground md:block">{h.alloc}%</div>
+      <div className="hidden w-12 text-right font-mono text-[11px] text-muted-foreground md:block" title="Share of total portfolio value">{h.alloc}%</div>
     </Reveal>
   )
 }
@@ -134,7 +141,10 @@ function Holdings({ data }: { data: Portfolio }) {
     <Reveal delay={260}>
       <Card className="overflow-hidden">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <Label>Holdings</Label>
+          <span className="flex items-center gap-1.5">
+            <Label>Holdings</Label>
+            <InfoHint text="Value is at end-of-day prices. The % under each value is total return since 1 January (YTD), not today's move. Sparklines are illustrative placeholders until price history is wired up." />
+          </span>
           <span className="font-mono text-[11px] text-muted-foreground">{loaded ? `${data.holdings.length} positions` : 'Scout fetching…'}</span>
         </div>
         <div className="divide-y divide-border">
@@ -149,12 +159,15 @@ function Allocation({ data }: { data: Portfolio }) {
   return (
     <Reveal delay={300}>
       <Card className="p-5">
-        <Label>Allocation</Label>
+        <span className="flex items-center gap-1.5">
+          <Label>Allocation</Label>
+          <InfoHint text="Holdings grouped by theme (gold, silver, uranium…) as a share of total portfolio value, including cash." />
+        </span>
         <div className="mt-4 flex items-center gap-5">
           <Donut segments={data.allocation} size={132} thickness={14}>
             <div>
               <p className="font-mono text-lg text-foreground">
-                <Num value={4} suffix=" cls" />
+                <Num value={data.allocation.length} suffix=" cls" />
               </p>
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground">classes</p>
             </div>
@@ -277,7 +290,10 @@ function Watchlist({ watch }: { watch: WatchRow[] }) {
     <Reveal delay={340}>
       <Card className="p-5">
         <div className="flex items-center justify-between">
-          <Label>Scout watchlist</Label>
+          <span className="flex items-center gap-1.5">
+            <Label>Scout watchlist</Label>
+            <InfoHint text="Symbols you're tracking for a possible entry — not held positions. Add, edit, or remove freely." />
+          </span>
           <Star size={14} className="text-muted-foreground" />
         </div>
 
@@ -317,7 +333,7 @@ function Watchlist({ watch }: { watch: WatchRow[] }) {
 export const meta = () => [{ title: 'Atlas · Investments' }]
 
 export default function Investments() {
-  const { portfolio: p, cash, live, watch, scout } = useLoaderData<typeof loader>()
+  const { portfolio: p, cash, live, syncedLabel, watch, scout } = useLoaderData<typeof loader>()
 
   return (
     <RevealContext.Provider value={false}>
@@ -336,8 +352,14 @@ export default function Investments() {
               <p className="mt-1.5 font-mono text-2xl tracking-tight text-foreground md:text-3xl">
                 <Num value={p.total} prefix="$" />
               </p>
-              <p className="mt-1 flex items-center gap-1.5 md:justify-end">
-                <Delta pct={p.dayPct} /> <span className="font-mono text-[11px] text-muted-foreground">+${(p.dayAbs / 1000).toFixed(1)}K</span>
+              <p className="mt-1 flex items-center gap-1.5 md:justify-end" title="Move since the previous market close">
+                <Delta pct={p.dayPct} />{' '}
+                <span className="font-mono text-[11px] text-muted-foreground">
+                  {p.dayAbs < 0 ? '-' : '+'}${(Math.abs(p.dayAbs) / 1000).toFixed(1)}K
+                </span>
+              </p>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground md:text-right">
+                {syncedLabel ? `EOD prices · synced ${syncedLabel}` : 'EOD prices · sample data'}
               </p>
             </div>
           }
@@ -357,10 +379,41 @@ export default function Investments() {
         </div>
 
         <div className="mt-6 grid auto-rows-fr gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatTile label="Total value" value={p.total} prefix="$" spark={p.spark} sparkColor="chart-1" delay={120} />
-          <StatTile label="Today" value={p.dayAbs} prefix="+$" delta={p.dayPct} sparkColor="chart-2" delay={180} />
-          <StatTile label="Return · YTD" value={p.ytdPct} suffix="%" decimals={1} delta={p.ytdPct} delay={240} />
-          <StatTile label="Dry powder · cash" value={cash} prefix="$" sparkColor="chart-2" delay={300} />
+          <StatTile
+            label="Total value"
+            value={p.total}
+            prefix="$"
+            spark={p.spark}
+            sparkColor="chart-1"
+            delay={120}
+            info="Market value of all holdings plus cash, at end-of-day (EOD) prices from Sharesight. Sparkline is an illustrative placeholder, not price history."
+          />
+          <StatTile
+            label="Today"
+            value={Math.abs(p.dayAbs)}
+            prefix={p.dayAbs < 0 ? '-$' : '+$'}
+            delta={p.dayPct}
+            sparkColor="chart-2"
+            delay={180}
+            info="Dollar and percent move since the previous market close (1-day Sharesight performance window)."
+          />
+          <StatTile
+            label="Return · YTD"
+            value={p.ytdPct}
+            suffix="%"
+            decimals={1}
+            delta={p.ytdPct}
+            delay={240}
+            info="Total return since 1 January, including currency moves (Sharesight total gain %)."
+          />
+          <StatTile
+            label="Dry powder · cash"
+            value={cash}
+            prefix="$"
+            sparkColor="chart-2"
+            delay={300}
+            info="Sum of cash account balances in the portfolio — funds available to deploy."
+          />
         </div>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-3">

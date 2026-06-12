@@ -288,7 +288,7 @@ export async function syncSharesight(admin: SupabaseClient, userId: string): Pro
 export async function readPortfolio(
   admin: SupabaseClient,
   userId: string
-): Promise<{ portfolio: Portfolio; live: boolean }> {
+): Promise<{ portfolio: Portfolio; live: boolean; syncedAt: string | null }> {
   try {
     let { data: pr } = await admin
       .from('sharesight_portfolio').select('*').eq('user_id', userId).maybeSingle()
@@ -298,7 +298,7 @@ export async function readPortfolio(
       await syncSharesight(admin, userId)
       const r = await admin.from('sharesight_portfolio').select('*').eq('user_id', userId).maybeSingle()
       pr = r.data
-      if (!pr) return { portfolio: PORTFOLIO, live: false }
+      if (!pr) return { portfolio: PORTFOLIO, live: false, syncedAt: null }
     } else if (Date.now() - new Date(pr.synced_at).getTime() > STALE_MS) {
       // Stale but present: serve stale now, refresh in background.
       void syncSharesight(admin, userId).catch(() => {})
@@ -311,6 +311,7 @@ export async function readPortfolio(
     return {
       portfolio: buildPortfolioFromRows(pr, (holdings ?? []) as HoldingRow[], (allocation ?? []) as AllocationRow[]),
       live: true,
+      syncedAt: pr.synced_at ?? null,
     }
   } catch (err) {
     console.error('[readPortfolio] fell back to sample data:', {
@@ -323,6 +324,6 @@ export async function readPortfolio(
       hasOauthBase: !!process.env.SHARESIGHT_OAUTH_BASE,
       userId,
     })
-    return { portfolio: PORTFOLIO, live: false }
+    return { portfolio: PORTFOLIO, live: false, syncedAt: null }
   }
 }

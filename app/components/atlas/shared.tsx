@@ -1,4 +1,5 @@
-import { Check, Hammer } from 'lucide-react'
+import { Check, Hammer, Info } from 'lucide-react'
+import { cn } from '~/lib/utils'
 import type { Agent, ChartColor } from '~/lib/atlas-data'
 import { Reveal, Num } from './motion'
 import { Card, SpotlightCard } from './cards'
@@ -40,6 +41,19 @@ export function PageHeader({
   )
 }
 
+/** Small "i" icon with a native tooltip explaining a metric. */
+export function InfoHint({ text, className }: { text: string; className?: string }) {
+  return (
+    <span
+      title={text}
+      aria-label={text}
+      className={cn('inline-flex shrink-0 cursor-help text-muted-foreground/60 transition-colors hover:text-muted-foreground', className)}
+    >
+      <Info size={12} />
+    </span>
+  )
+}
+
 export function StatTile({
   label,
   value,
@@ -51,6 +65,7 @@ export function StatTile({
   spark,
   sparkColor = 'chart-1',
   delay = 0,
+  info,
 }: {
   label: string
   value: number
@@ -62,12 +77,16 @@ export function StatTile({
   spark?: number[]
   sparkColor?: ChartColor
   delay?: number
+  info?: string
 }) {
   return (
     <Reveal delay={delay} className="h-full">
       <Card className="flex h-full flex-col p-5 transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-md">
         <div className="flex items-center justify-between">
-          <Label>{label}</Label>
+          <span className="flex items-center gap-1.5">
+            <Label>{label}</Label>
+            {info && <InfoHint text={info} />}
+          </span>
           {delta != null && <Delta pct={delta} />}
         </div>
         <div className="mt-3 flex items-end gap-1.5">
