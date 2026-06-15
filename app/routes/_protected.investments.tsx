@@ -388,7 +388,7 @@ export default function Investments() {
               dates={valueSeries.map((p) => p.date)}
               series={[
                 { label: 'Total', color: 'chart-1', values: valueSeries.map((p) => p.total) },
-                { label: 'Portfolio', color: 'chart-4', values: valueSeries.map((p) => p.total - p.cash) },
+                { label: 'Portfolio', color: 'chart-5', values: valueSeries.map((p) => p.total - p.cash) },
                 { label: 'Cash', color: 'chart-2', values: valueSeries.map((p) => p.cash) },
               ]}
             />
