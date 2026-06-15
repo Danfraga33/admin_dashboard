@@ -553,6 +553,54 @@ export type Database = {
         }
         Relationships: []
       }
+      projects: {
+        Row: {
+          accent: string
+          activity: string
+          created_at: string
+          id: string
+          metric: string
+          metric_label: string
+          name: string
+          position: number
+          progress: number
+          stack: string[]
+          status: string
+          tag: string
+          user_id: string
+        }
+        Insert: {
+          accent?: string
+          activity?: string
+          created_at?: string
+          id?: string
+          metric?: string
+          metric_label?: string
+          name: string
+          position?: number
+          progress?: number
+          stack?: string[]
+          status?: string
+          tag?: string
+          user_id: string
+        }
+        Update: {
+          accent?: string
+          activity?: string
+          created_at?: string
+          id?: string
+          metric?: string
+          metric_label?: string
+          name?: string
+          position?: number
+          progress?: number
+          stack?: string[]
+          status?: string
+          tag?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       routine_logs: {
         Row: {
           completed: boolean | null
