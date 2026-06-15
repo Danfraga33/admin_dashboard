@@ -174,6 +174,24 @@ function fmtDate(iso: string): string {
   return Number.isNaN(t) ? iso : FMT_DATE.format(new Date(t))
 }
 
+/** Smooth path through points via a Catmull-Rom spline converted to cubic béziers. */
+function smoothPath(pts: readonly (readonly [number, number])[]): string {
+  if (pts.length < 2) return ''
+  let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i === 0 ? 0 : i - 1]
+    const p1 = pts[i]
+    const p2 = pts[i + 1]
+    const p3 = pts[i + 2 < pts.length ? i + 2 : pts.length - 1]
+    const c1x = p1[0] + (p2[0] - p0[0]) / 6
+    const c1y = p1[1] + (p2[1] - p0[1]) / 6
+    const c2x = p2[0] - (p3[0] - p1[0]) / 6
+    const c2y = p2[1] - (p3[1] - p1[1]) / 6
+    d += ` C${c1x.toFixed(1)} ${c1y.toFixed(1)} ${c2x.toFixed(1)} ${c2y.toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`
+  }
+  return d
+}
+
 export interface ChartSeries {
   label: string
   color: ChartColor
@@ -195,6 +213,7 @@ export function ValueChart({
   className?: string
 }) {
   const animate = useAnimateDraw()
+  const gid = useId()
   const wrapRef = useRef<HTMLDivElement>(null)
   const [w, setW] = useState(800)
   const [active, setActive] = useState<number | null>(null)
@@ -220,10 +239,10 @@ export function ValueChart({
     const yAt = (v: number) => PAD + (1 - (v - min) / span) * (H - PAD * 2)
     const lines = series.map((s) => {
       const pts = s.values.map((v, i) => [xAt(i), yAt(v)] as const)
-      const d = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ')
+      const d = smoothPath(pts)
       let len = 0
       for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1])
-      return { ...s, pts, d, len }
+      return { ...s, pts, d, area: `${d} L${w.toFixed(1)} ${H} L0 ${H} Z`, len }
     })
     return { lines, xAt }
   }, [dates, series, w, H])
@@ -262,6 +281,26 @@ export function ValueChart({
       </div>
       <div ref={wrapRef} className="relative" onMouseMove={onMove} onMouseLeave={() => setActive(null)}>
         <svg width={w} height={H} viewBox={`0 0 ${w} ${H}`} className="block overflow-visible">
+          <defs>
+            {geom.lines.map((ln, li) => (
+              <linearGradient key={ln.label} id={`${gid}-${li}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={`var(--${ln.color})`} stopOpacity="0.18" />
+                <stop offset="100%" stopColor={`var(--${ln.color})`} stopOpacity="0" />
+              </linearGradient>
+            ))}
+          </defs>
+          {geom.lines.map((ln, li) => (
+            <path
+              key={`area-${ln.label}`}
+              d={ln.area}
+              fill={`url(#${gid}-${li})`}
+              stroke="none"
+              style={{
+                opacity: animate ? 0 : 1,
+                animation: animate ? `atlasFadeIn 700ms ease ${400 + li * 120}ms forwards` : undefined,
+              }}
+            />
+          ))}
           {active != null && <line x1={guideX} y1={0} x2={guideX} y2={H} stroke="var(--border)" strokeWidth={1} />}
           {geom.lines.map((ln, li) => (
             <path
@@ -291,7 +330,7 @@ export function ValueChart({
                 strokeWidth={2}
               />
             ))}
-          <style>{`@keyframes atlasDraw{to{stroke-dashoffset:0}}`}</style>
+          <style>{`@keyframes atlasDraw{to{stroke-dashoffset:0}}@keyframes atlasFadeIn{to{opacity:1}}`}</style>
         </svg>
         {active != null && (
           <div
