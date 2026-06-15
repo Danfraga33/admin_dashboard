@@ -363,7 +363,7 @@ export default function DailyUpdate() {
             </Reveal>
             <Reveal delay={120}>
               <p className="mt-3 max-w-xl text-sm text-muted-foreground">
-                Everything across investments, projects and ventures — synthesized by your agents while you slept.
+                North Star: Get to $20M ARR. The exit math does the rest — a clean multiple turns eight figures of revenue into nine figures of net worth in a single event.
               </p>
             </Reveal>
           </div>
