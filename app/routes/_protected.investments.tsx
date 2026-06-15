@@ -3,6 +3,8 @@ import { data, useFetcher, useLoaderData, type LoaderFunctionArgs, type ActionFu
 import { useReducedMotion } from 'framer-motion'
 import { Check, Star, Plus, X, Pencil, Loader2 } from 'lucide-react'
 import { AGENTS, type Holding, type Portfolio } from '~/lib/atlas-data'
+import { cn } from '~/lib/utils'
+import { usePrivacy } from '~/components/privacy-provider'
 import { requireSession } from '~/lib/session.server'
 import { createSupabaseAdminClient } from '~/lib/supabase.admin'
 import { readPortfolio } from '~/lib/sharesight.server'
@@ -114,7 +116,8 @@ function HoldingSkeleton() {
   )
 }
 
-function HoldingRow({ h, i }: { h: Holding; i: number }) {
+function HoldingRow({ h, i, mask }: { h: Holding; i: number; mask: boolean }) {
+  const maskCls = mask ? 'blur-[7px] select-none' : ''
   return (
     <Reveal delay={stag(i, 0, 60)} className="group flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-muted/40">
       <span className="grid w-12 shrink-0 place-items-center rounded-md border border-border bg-muted/40 py-1 font-mono text-[11px] font-semibold text-foreground">{h.sym}</span>
@@ -122,7 +125,7 @@ function HoldingRow({ h, i }: { h: Holding; i: number }) {
         <p className="truncate text-sm font-medium text-foreground">{h.name}</p>
         <p className="truncate text-[11px] text-muted-foreground">{h.note}</p>
       </div>
-      <div className="w-24 text-right">
+      <div className={cn('w-24 text-right transition-[filter] duration-200', maskCls)}>
         <p className="font-mono text-sm text-foreground" title="Market value at end-of-day prices">
           <Num value={h.val} prefix="$" />
         </p>
@@ -130,12 +133,12 @@ function HoldingRow({ h, i }: { h: Holding; i: number }) {
           <Delta pct={h.pct} className="justify-end" />
         </span>
       </div>
-      <div className="hidden w-12 text-right font-mono text-[11px] text-muted-foreground md:block" title="Share of total portfolio value">{h.alloc}%</div>
+      <div className={cn('hidden w-12 text-right font-mono text-[11px] text-muted-foreground md:block transition-[filter] duration-200', maskCls)} title="Share of total portfolio value">{h.alloc}%</div>
     </Reveal>
   )
 }
 
-function Holdings({ data }: { data: Portfolio }) {
+function Holdings({ data, mask }: { data: Portfolio; mask: boolean }) {
   const loaded = useFetch(820)
   return (
     <Reveal delay={260}>
@@ -148,14 +151,15 @@ function Holdings({ data }: { data: Portfolio }) {
           <span className="font-mono text-[11px] text-muted-foreground">{loaded ? `${data.holdings.length} positions` : 'Scout fetching…'}</span>
         </div>
         <div className="divide-y divide-border">
-          {loaded ? data.holdings.map((h, i) => <HoldingRow key={h.sym} h={h} i={i} />) : Array.from({ length: 5 }).map((_, i) => <HoldingSkeleton key={i} />)}
+          {loaded ? data.holdings.map((h, i) => <HoldingRow key={h.sym} h={h} i={i} mask={mask} />) : Array.from({ length: 5 }).map((_, i) => <HoldingSkeleton key={i} />)}
         </div>
       </Card>
     </Reveal>
   )
 }
 
-function Allocation({ data }: { data: Portfolio }) {
+function Allocation({ data, mask }: { data: Portfolio; mask: boolean }) {
+  const maskCls = mask ? 'blur-[7px] select-none' : ''
   return (
     <Reveal delay={300}>
       <Card className="p-5">
@@ -164,7 +168,7 @@ function Allocation({ data }: { data: Portfolio }) {
           <InfoHint text="Holdings grouped by theme (gold, silver, uranium…) as a share of total portfolio value, including cash." />
         </span>
         <div className="mt-4 flex items-center gap-5">
-          <Donut segments={data.allocation} size={132} thickness={14}>
+          <Donut segments={data.allocation} size={132} thickness={14} mask={mask}>
             <div>
               <p className="font-mono text-lg text-foreground">
                 <Num value={data.allocation.length} suffix=" cls" />
@@ -177,7 +181,7 @@ function Allocation({ data }: { data: Portfolio }) {
               <Reveal key={s.label} delay={stag(i, 360, 70)} className="flex items-center gap-2.5">
                 <span className="h-2.5 w-2.5 rounded-sm" style={{ background: `var(--${s.color})` }} />
                 <span className="flex-1 text-[13px] text-foreground">{s.label}</span>
-                <span className="font-mono text-[12px] text-muted-foreground">{s.pct}%</span>
+                <span className={cn('font-mono text-[12px] text-muted-foreground transition-[filter] duration-200', maskCls)}>{s.pct}%</span>
               </Reveal>
             ))}
           </ul>
@@ -334,6 +338,8 @@ export const meta = () => [{ title: 'Atlas · Investments' }]
 
 export default function Investments() {
   const { portfolio: p, cash, live, syncedLabel, valueSeries, scoutNote, watch, scout } = useLoaderData<typeof loader>()
+  const { hidden: mask } = usePrivacy()
+  const maskCls = mask ? 'blur-[7px] select-none' : ''
 
   return (
     <RevealContext.Provider value={false}>
@@ -349,10 +355,10 @@ export default function Investments() {
           right={
             <div className="md:text-right">
               <Label>Total value · today</Label>
-              <p className="mt-1.5 font-mono text-2xl tracking-tight text-foreground md:text-3xl">
+              <p className={cn('mt-1.5 font-mono text-2xl tracking-tight text-foreground md:text-3xl transition-[filter] duration-200', maskCls)}>
                 <Num value={p.total} prefix="$" />
               </p>
-              <p className="mt-1 flex items-center gap-1.5 md:justify-end" title="Move since the previous market close">
+              <p className={cn('mt-1 flex items-center gap-1.5 md:justify-end transition-[filter] duration-200', maskCls)} title="Move since the previous market close">
                 <Delta pct={p.dayPct} />{' '}
                 <span className="font-mono text-[11px] text-muted-foreground">
                   {p.dayAbs < 0 ? '-' : '+'}${(Math.abs(p.dayAbs) / 1000).toFixed(1)}K
@@ -373,10 +379,10 @@ export default function Investments() {
                 <InfoHint text="Real portfolio value over time from Sharesight end-of-day valuations. Hover any point for the date and value." />
               </span>
               <div className="text-right">
-                <p className="font-mono text-2xl tracking-tight text-foreground md:text-3xl">
+                <p className={cn('font-mono text-2xl tracking-tight text-foreground md:text-3xl transition-[filter] duration-200', maskCls)}>
                   <Num value={p.total} prefix="$" />
                 </p>
-                <p className="mt-0.5 flex items-center gap-1.5 md:justify-end">
+                <p className={cn('mt-0.5 flex items-center gap-1.5 md:justify-end transition-[filter] duration-200', maskCls)}>
                   <Delta pct={p.ytdPct} />
                   <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">YTD</span>
                 </p>
@@ -385,6 +391,7 @@ export default function Investments() {
             <ValueChart
               className="mt-5"
               height={240}
+              mask={mask}
               dates={valueSeries.map((p) => p.date)}
               series={[
                 { label: 'Total', color: 'chart-1', values: valueSeries.map((p) => p.total) },
@@ -414,6 +421,7 @@ export default function Investments() {
             value={p.total}
             prefix="$"
             delay={120}
+            mask={mask}
             info="Market value of all holdings plus cash, at end-of-day (EOD) prices from Sharesight."
           />
           <StatTile
@@ -423,6 +431,7 @@ export default function Investments() {
             delta={p.dayPct}
             sparkColor="chart-2"
             delay={180}
+            mask={mask}
             info="Dollar and percent move since the previous market close (1-day Sharesight performance window)."
           />
           <StatTile
@@ -432,6 +441,7 @@ export default function Investments() {
             decimals={1}
             delta={p.ytdPct}
             delay={240}
+            mask={mask}
             info="Total return since 1 January, including currency moves (Sharesight total gain %)."
           />
           <StatTile
@@ -440,16 +450,17 @@ export default function Investments() {
             prefix="$"
             sparkColor="chart-2"
             delay={300}
+            mask={mask}
             info="Sum of cash account balances in the portfolio — funds available to deploy."
           />
         </div>
 
         <div className="mt-4 grid gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <Holdings data={p} />
+            <Holdings data={p} mask={mask} />
           </div>
           <div className="space-y-4">
-            <Allocation data={p} />
+            <Allocation data={p} mask={mask} />
             <Watchlist watch={watch} />
           </div>
         </div>

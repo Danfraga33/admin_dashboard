@@ -66,6 +66,7 @@ export function StatTile({
   sparkColor = 'chart-1',
   delay = 0,
   info,
+  mask = false,
 }: {
   label: string
   value: number
@@ -78,7 +79,9 @@ export function StatTile({
   sparkColor?: ChartColor
   delay?: number
   info?: string
+  mask?: boolean
 }) {
+  const maskCls = mask ? 'blur-[7px] select-none' : ''
   return (
     <Reveal delay={delay} className="h-full">
       <Card className="flex h-full flex-col p-5 transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-md">
@@ -87,13 +90,13 @@ export function StatTile({
             <Label>{label}</Label>
             {info && <InfoHint text={info} />}
           </span>
-          {delta != null && <Delta pct={delta} />}
+          {delta != null && <Delta pct={delta} className={cn('transition-[filter] duration-200', maskCls)} />}
         </div>
-        <div className="mt-3 flex items-end gap-1.5">
+        <div className={cn('mt-3 flex items-end gap-1.5 transition-[filter] duration-200', maskCls)}>
           <Num value={value} prefix={prefix} suffix={suffix} decimals={decimals} className="text-2xl text-foreground md:text-3xl leading-none" />
           {unit && <span className="mb-0.5 text-sm text-muted-foreground">{unit}</span>}
         </div>
-        <div className="mt-3 flex h-[34px] items-end">
+        <div className={cn('mt-3 flex h-[34px] items-end transition-[filter] duration-200', maskCls)}>
           {spark && <Sparkline data={spark} color={sparkColor} w={240} h={34} />}
         </div>
       </Card>

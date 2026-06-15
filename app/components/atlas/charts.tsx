@@ -85,11 +85,13 @@ export function Donut({
   size = 168,
   thickness = 16,
   children,
+  mask = false,
 }: {
   segments: AllocationSlice[]
   size?: number
   thickness?: number
   children?: React.ReactNode
+  mask?: boolean
 }) {
   const animate = useAnimateDraw()
   const r = (size - thickness) / 2
@@ -97,7 +99,10 @@ export function Donut({
   let acc = 0
 
   return (
-    <div className="relative inline-grid place-items-center" style={{ width: size, height: size }}>
+    <div
+      className={cn('relative inline-grid place-items-center transition-[filter] duration-200', mask && 'blur-[7px] select-none')}
+      style={{ width: size, height: size }}
+    >
       <svg width={size} height={size} className="-rotate-90">
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--muted)" strokeWidth={thickness} />
         {segments.map((s, i) => {
@@ -206,11 +211,13 @@ export function ValueChart({
   series,
   height = 220,
   className,
+  mask = false,
 }: {
   dates: string[]
   series: ChartSeries[]
   height?: number
   className?: string
+  mask?: boolean
 }) {
   const animate = useAnimateDraw()
   const gid = useId()
@@ -279,7 +286,12 @@ export function ValueChart({
           </span>
         ))}
       </div>
-      <div ref={wrapRef} className="relative" onMouseMove={onMove} onMouseLeave={() => setActive(null)}>
+      <div
+        ref={wrapRef}
+        className={cn('relative transition-[filter] duration-200', mask && 'blur-[7px] select-none')}
+        onMouseMove={mask ? undefined : onMove}
+        onMouseLeave={() => setActive(null)}
+      >
         <svg width={w} height={H} viewBox={`0 0 ${w} ${H}`} className="block overflow-visible">
           <defs>
             {geom.lines.map((ln, li) => (
