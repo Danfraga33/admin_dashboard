@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { data, useFetcher, useLoaderData, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router'
 import { useReducedMotion } from 'framer-motion'
 import { Check, Star, Plus, X, Pencil, Loader2 } from 'lucide-react'
-import { AGENTS, type Holding, type Portfolio } from '~/lib/atlas-data'
+import { AGENTS, type Holding, type Portfolio, type ChartColor } from '~/lib/atlas-data'
 import { cn } from '~/lib/utils'
 import { usePrivacy } from '~/components/privacy-provider'
 import { requireSession } from '~/lib/session.server'
@@ -31,6 +31,15 @@ const COMPANY: Record<string, string> = {
   UUUU: 'Energy Fuels',
   LEU: 'Centrus Energy',
 }
+
+interface ThemeRow {
+  id: string
+  name: string
+  color: ChartColor
+}
+
+/** Selectable dot colors for a theme — the chart palette. */
+const THEME_COLORS: ChartColor[] = ['chart-1', 'chart-2', 'chart-3', 'chart-4', 'chart-5']
 import {
   Reveal,
   RevealContext,
@@ -57,6 +66,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .select('id, sym, note')
     .order('position', { ascending: true })
     .order('created_at', { ascending: true })
+  const { data: themes } = await supabase
+    .from('investment_themes')
+    .select('id, name, color')
+    .order('position', { ascending: true })
+    .order('created_at', { ascending: true })
   const syncedLabel = syncedAt
     ? new Intl.DateTimeFormat('en-AU', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Australia/Sydney' }).format(new Date(syncedAt))
     : null
@@ -68,6 +82,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     valueSeries,
     scoutNote,
     watch: (watch ?? []) as WatchRow[],
+    themes: (themes ?? []) as ThemeRow[],
     scout: AGENTS.find((a) => a.id === 'scout')!,
   }
 }
@@ -102,7 +117,38 @@ export async function action({ request }: ActionFunctionArgs) {
     await supabase.from('watchlist').delete().eq('id', String(form.get('id')))
   }
 
+  if (intent === 'theme-create') {
+    const name = String(form.get('name') || '').trim()
+    if (name) {
+      await supabase.from('investment_themes').insert({
+        user_id: session.user.id,
+        name,
+        color: themeColor(form.get('color')),
+      })
+    }
+  }
+
+  if (intent === 'theme-update') {
+    const name = String(form.get('name') || '').trim()
+    if (name) {
+      await supabase
+        .from('investment_themes')
+        .update({ name, color: themeColor(form.get('color')) })
+        .eq('id', String(form.get('id')))
+    }
+  }
+
+  if (intent === 'theme-delete') {
+    await supabase.from('investment_themes').delete().eq('id', String(form.get('id')))
+  }
+
   return data({ ok: true }, { headers: responseHeaders })
+}
+
+/** Coerce a submitted color to a valid palette key, falling back to chart-1. */
+function themeColor(raw: FormDataEntryValue | null): ChartColor {
+  const c = String(raw || '')
+  return (THEME_COLORS as string[]).includes(c) ? (c as ChartColor) : 'chart-1'
 }
 
 /** Brief "Scout fetching…" skeleton on client mount; SSR + reduced-motion render loaded. */
@@ -351,10 +397,153 @@ function Watchlist({ watch }: { watch: WatchRow[] }) {
   )
 }
 
+/** Radio-style row of palette swatches for picking a theme's dot color. */
+function ColorDots({ name, value }: { name: string; value: ChartColor }) {
+  const [picked, setPicked] = useState<ChartColor>(value)
+  return (
+    <div className="flex shrink-0 items-center gap-1">
+      {THEME_COLORS.map((c) => (
+        <label key={c} className="cursor-pointer">
+          <input type="radio" name={name} value={c} checked={picked === c} onChange={() => setPicked(c)} className="peer sr-only" />
+          <span
+            className="block h-4 w-4 rounded-sm ring-offset-1 ring-offset-card transition-all peer-checked:ring-2 peer-checked:ring-ring hover:scale-110"
+            style={{ background: `var(--${c})` }}
+          />
+        </label>
+      ))}
+    </div>
+  )
+}
+
+function ThemeRowItem({ t, pending = false }: { t: ThemeRow; pending?: boolean }) {
+  const [editing, setEditing] = useState(false)
+  const fetcher = useFetcher()
+  const busy = fetcher.state !== 'idle'
+  const intent = fetcher.formData?.get('intent')
+
+  if (busy && intent === 'theme-delete') return null
+
+  if (busy && intent === 'theme-update') {
+    const name = String(fetcher.formData!.get('name') || '')
+    const color = themeColor(fetcher.formData!.get('color'))
+    return (
+      <div className="flex items-center gap-2.5 rounded-lg px-1 py-2 opacity-50">
+        <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: `var(--${color})` }} />
+        <span className="flex-1 truncate text-[13px] text-foreground">{name}</span>
+        <Loader2 size={13} className="shrink-0 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (pending) {
+    return (
+      <div className="flex items-center gap-2.5 rounded-lg px-1 py-2 opacity-50">
+        <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: `var(--${t.color})` }} />
+        <span className="flex-1 truncate text-[13px] text-foreground">{t.name}</span>
+        <Loader2 size={13} className="shrink-0 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (editing) {
+    return (
+      <fetcher.Form method="post" onSubmit={() => setEditing(false)} className="flex items-center gap-2 rounded-lg px-1 py-1.5">
+        <input type="hidden" name="intent" value="theme-update" />
+        <input type="hidden" name="id" value={t.id} />
+        <ColorDots name="color" value={t.color} />
+        <input
+          name="name"
+          defaultValue={t.name}
+          required
+          className="min-w-0 flex-1 rounded-md border border-border bg-input px-2 py-1 text-[12px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+        <button type="submit" className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-chart-2 hover:bg-muted transition-colors cursor-pointer" aria-label="Save">
+          <Check size={13} />
+        </button>
+        <button type="button" onClick={() => setEditing(false)} className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-muted transition-colors cursor-pointer" aria-label="Cancel">
+          <X size={13} />
+        </button>
+      </fetcher.Form>
+    )
+  }
+
+  return (
+    <div className="group flex items-center gap-2.5 rounded-lg px-1 py-2 hover:bg-muted/40 transition-colors">
+      <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: `var(--${t.color})` }} />
+      <span className="flex-1 truncate text-[13px] text-foreground">{t.name}</span>
+      <button onClick={() => setEditing(true)} className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted hover:text-foreground transition-all cursor-pointer" aria-label={`Edit ${t.name}`}>
+        <Pencil size={12} />
+      </button>
+      <fetcher.Form method="post" className="shrink-0">
+        <input type="hidden" name="intent" value="theme-delete" />
+        <input type="hidden" name="id" value={t.id} />
+        <button type="submit" className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted hover:text-destructive-foreground transition-all cursor-pointer" aria-label={`Remove ${t.name}`}>
+          <X size={13} />
+        </button>
+      </fetcher.Form>
+    </div>
+  )
+}
+
+function Themes({ themes }: { themes: ThemeRow[] }) {
+  const fetcher = useFetcher()
+  const formRef = useRef<HTMLFormElement>(null)
+
+  const creating = fetcher.state !== 'idle' && fetcher.formData?.get('intent') === 'theme-create'
+  const pendingName = creating ? String(fetcher.formData!.get('name') || '').trim() : null
+  const pendingColor = creating ? themeColor(fetcher.formData!.get('color')) : 'chart-1'
+
+  const rows: ThemeRow[] = pendingName
+    ? [...themes, { id: `pending-${pendingName}`, name: pendingName, color: pendingColor }]
+    : themes
+
+  function onSubmit() {
+    setTimeout(() => formRef.current?.reset(), 0)
+  }
+
+  return (
+    <Reveal delay={380}>
+      <Card className="p-5">
+        <div className="flex items-center justify-between">
+          <span className="flex items-center gap-1.5">
+            <Label>Investment themes</Label>
+            <InfoHint text="Structural macro theses Scout tracks for positioning — the sectors behind the watchlist and holdings." />
+          </span>
+        </div>
+
+        <fetcher.Form method="post" ref={formRef} onSubmit={onSubmit} className="mt-3 flex items-center gap-2">
+          <input type="hidden" name="intent" value="theme-create" />
+          <ColorDots name="color" value="chart-1" />
+          <input
+            name="name"
+            placeholder="New theme"
+            required
+            className="min-w-0 flex-1 rounded-md border border-border bg-input px-2 py-1.5 text-[12px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <button type="submit" disabled={creating} className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-70 cursor-pointer" aria-label="Add theme">
+            {creating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+          </button>
+        </fetcher.Form>
+
+        <ul className="mt-2 space-y-0.5">
+          {rows.length === 0 && (
+            <li className="px-1 py-3 text-[12px] text-muted-foreground">No themes yet — add one above.</li>
+          )}
+          {rows.map((t) => (
+            <li key={t.id}>
+              <ThemeRowItem t={t} pending={t.id.startsWith('pending-')} />
+            </li>
+          ))}
+        </ul>
+      </Card>
+    </Reveal>
+  )
+}
+
 export const meta = () => [{ title: 'Atlas · Investments' }]
 
 export default function Investments() {
-  const { portfolio: p, cash, live, syncedLabel, valueSeries, scoutNote, watch, scout } = useLoaderData<typeof loader>()
+  const { portfolio: p, cash, live, syncedLabel, valueSeries, scoutNote, watch, themes, scout } = useLoaderData<typeof loader>()
   const { hidden: mask } = usePrivacy()
   const maskCls = mask ? 'blur-[7px] select-none' : ''
 
@@ -479,6 +668,7 @@ export default function Investments() {
           <div className="space-y-4">
             <Allocation data={p} mask={mask} />
             <Watchlist watch={watch} />
+            <Themes themes={themes} />
           </div>
         </div>
       </div>

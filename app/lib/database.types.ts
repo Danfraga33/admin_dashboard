@@ -409,6 +409,33 @@ export type Database = {
         }
         Relationships: []
       }
+      investment_themes: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+          position: number
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+          position?: number
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+          position?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       lenders: {
         Row: {
           created_at: string
@@ -956,7 +983,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      sync_sharesight_data: {
+        Args: {
+          p_allocation: Json
+          p_holdings: Json
+          p_portfolio: Json
+          p_user_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
