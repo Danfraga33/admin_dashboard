@@ -15,6 +15,22 @@ interface WatchRow {
   sym: string
   note: string
 }
+
+/** Ticker → company name, resolved client-side (watchlist DB only stores the symbol). */
+const COMPANY: Record<string, string> = {
+  PWR: 'Quanta Services',
+  POWL: 'Powell Industries',
+  ETN: 'Eaton',
+  VRT: 'Vertiv',
+  WIRE: 'Global X Copper Miners ETF',
+  SYM: 'Symbotic',
+  NVT: 'nVent Electric',
+  LDOS: 'Leidos',
+  RTX: 'RTX',
+  ATI: 'ATI',
+  UUUU: 'Energy Fuels',
+  LEU: 'Centrus Energy',
+}
 import {
   Reveal,
   RevealContext,
@@ -254,10 +270,11 @@ function WatchRowItem({ w, pending = false }: { w: WatchRow; pending?: boolean }
     )
   }
 
+  const name = COMPANY[w.sym] || w.note
   return (
     <div className="group flex items-center gap-3 rounded-lg px-1 py-2 hover:bg-muted/40 transition-colors">
       <span className="grid w-12 shrink-0 place-items-center rounded-md border border-border bg-muted/40 py-1 font-mono text-[11px] font-semibold text-foreground">{w.sym}</span>
-      <span className="flex-1 truncate text-[13px] text-muted-foreground">{w.note || '—'}</span>
+      <span className="flex-1 truncate text-[13px] text-muted-foreground">{name || '—'}</span>
       <button onClick={() => setEditing(true)} className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted hover:text-foreground transition-all cursor-pointer" aria-label={`Edit ${w.sym}`}>
         <Pencil size={12} />
       </button>
