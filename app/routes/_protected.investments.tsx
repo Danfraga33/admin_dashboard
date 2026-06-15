@@ -16,7 +16,6 @@ import {
   Reveal,
   RevealContext,
   Card,
-  Sparkline,
   Donut,
   Num,
   Delta,
@@ -25,7 +24,6 @@ import {
   InfoHint,
   PageHeader,
   StatTile,
-  toneColor,
   stag,
 } from '~/components/atlas'
 
@@ -119,9 +117,6 @@ function HoldingRow({ h, i }: { h: Holding; i: number }) {
         <p className="truncate text-sm font-medium text-foreground">{h.name}</p>
         <p className="truncate text-[11px] text-muted-foreground">{h.note}</p>
       </div>
-      <div className="hidden sm:block" title="Illustrative trend — placeholder, not real price history">
-        <Sparkline data={h.spark} color={toneColor(h.tone)} w={96} h={30} fill={false} delay={300 + i * 60} />
-      </div>
       <div className="w-24 text-right">
         <p className="font-mono text-sm text-foreground" title="Market value at end-of-day prices">
           <Num value={h.val} prefix="$" />
@@ -143,7 +138,7 @@ function Holdings({ data }: { data: Portfolio }) {
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <span className="flex items-center gap-1.5">
             <Label>Holdings</Label>
-            <InfoHint text="Value is at end-of-day prices. The % under each value is total return since 1 January (YTD), not today's move. Sparklines are illustrative placeholders until price history is wired up." />
+            <InfoHint text="Value is at end-of-day prices. The % under each value is total return since 1 January (YTD), not today's move." />
           </span>
           <span className="font-mono text-[11px] text-muted-foreground">{loaded ? `${data.holdings.length} positions` : 'Scout fetching…'}</span>
         </div>
@@ -383,10 +378,8 @@ export default function Investments() {
             label="Total value"
             value={p.total}
             prefix="$"
-            spark={p.spark}
-            sparkColor="chart-1"
             delay={120}
-            info="Market value of all holdings plus cash, at end-of-day (EOD) prices from Sharesight. Sparkline is an illustrative placeholder, not price history."
+            info="Market value of all holdings plus cash, at end-of-day (EOD) prices from Sharesight."
           />
           <StatTile
             label="Today"
