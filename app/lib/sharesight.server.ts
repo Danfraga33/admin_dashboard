@@ -210,7 +210,8 @@ interface AllocationRow { label: string; pct: number; color: string }
 export function buildPortfolioFromRows(
   pr: PortfolioRow,
   holdings: HoldingRow[],
-  allocation: AllocationRow[]
+  allocation: AllocationRow[],
+  valueHistory: number[] = []
 ): Portfolio {
   return {
     total: pr.total,
@@ -218,7 +219,7 @@ export function buildPortfolioFromRows(
     dayPct: pr.day_pct,
     dayAbs: pr.day_abs,
     ytdPct: pr.ytd_pct,
-    spark: sparkFor('PORTFOLIO'),
+    spark: valueHistory.length >= 2 ? valueHistory : sparkFor('PORTFOLIO'),
     scoutNote: PORTFOLIO.scoutNote,
     holdings: holdings.map((h) => ({
       sym: h.sym, name: h.name, val: h.val, pct: h.pct,
@@ -261,21 +262,71 @@ export async function persistPortfolio(
   if (error) throw new Error(`persistPortfolio failed: ${error.message}`)
 }
 
+/** TokenDeps backed by the admin client's sharesight_oauth cache row. */
+function adminTokenDeps(admin: SupabaseClient): TokenDeps {
+  return {
+    now: () => new Date(),
+    fetch,
+    oauthGet: async () => {
+      const { data } = await admin.from('sharesight_oauth').select('access_token, expires_at').eq('id', 1).maybeSingle()
+      return data as OauthRow | null
+    },
+    oauthSet: async (row) => {
+      await admin.from('sharesight_oauth').upsert({ id: 1, ...row })
+    },
+  }
+}
+
+/** Append today's portfolio value to the history series (idempotent per day). */
+async function appendValuePoint(admin: SupabaseClient, userId: string, total: number, on: Date): Promise<void> {
+  await admin
+    .from('sharesight_value_history')
+    .upsert({ user_id: userId, as_of: ymd(on), total }, { onConflict: 'user_id,as_of' })
+}
+
+/**
+ * Seed real value history from Sharesight's valuation endpoint, which accepts any
+ * historical balance_date. Walks back `points` samples spaced `stepDays` apart
+ * (default: weekly for ~6 months). Idempotent — safe to re-run. Returns rows written.
+ */
+export async function backfillValueHistory(
+  admin: SupabaseClient,
+  userId: string,
+  opts: { points?: number; stepDays?: number } = {}
+): Promise<number> {
+  const points = opts.points ?? 24
+  const stepDays = opts.stepDays ?? 7
+  const token = await getToken(adminTokenDeps(admin))
+  const { portfolios } = await ssGet('/portfolios', token)
+  if (!portfolios?.length) throw new Error('Sharesight returned no portfolios')
+  const id = portfolios[0].id
+  const now = new Date()
+  const rows: { user_id: string; as_of: string; total: number }[] = []
+  for (let i = 0; i < points; i++) {
+    const date = ymd(new Date(now.getTime() - i * stepDays * 24 * 60 * 60 * 1000))
+    try {
+      const v = (await ssGet(`/portfolios/${id}/valuation?balance_date=${date}`, token)) as SsValuation
+      if (typeof v?.value === 'number') rows.push({ user_id: userId, as_of: date, total: v.value })
+    } catch {
+      // Skip dates Sharesight can't value (pre-inception, etc.).
+    }
+  }
+  if (rows.length) {
+    const { error } = await admin
+      .from('sharesight_value_history')
+      .upsert(rows, { onConflict: 'user_id,as_of' })
+    if (error) throw new Error(`backfillValueHistory upsert failed: ${error.message}`)
+  }
+  return rows.length
+}
+
 export async function syncSharesight(admin: SupabaseClient, userId: string): Promise<void> {
   try {
-    const token = await getToken({
-      now: () => new Date(),
-      fetch,
-      oauthGet: async () => {
-        const { data } = await admin.from('sharesight_oauth').select('access_token, expires_at').eq('id', 1).maybeSingle()
-        return data as OauthRow | null
-      },
-      oauthSet: async (row) => {
-        await admin.from('sharesight_oauth').upsert({ id: 1, ...row })
-      },
-    })
-    const p = await fetchPortfolio(token, new Date())
+    const token = await getToken(adminTokenDeps(admin))
+    const now = new Date()
+    const p = await fetchPortfolio(token, now)
     await persistPortfolio(admin, userId, p)
+    await appendValuePoint(admin, userId, p.total, now)
     await admin.from('sync_runs').insert({ source: 'sharesight', ok: true })
   } catch (err) {
     await admin.from('sync_runs').insert({
@@ -304,12 +355,14 @@ export async function readPortfolio(
       void syncSharesight(admin, userId).catch(() => {})
     }
 
-    const [{ data: holdings }, { data: allocation }] = await Promise.all([
+    const [{ data: holdings }, { data: allocation }, { data: history }] = await Promise.all([
       admin.from('sharesight_holdings').select('*').eq('user_id', userId).order('position'),
       admin.from('sharesight_allocation').select('*').eq('user_id', userId).order('position'),
+      admin.from('sharesight_value_history').select('total').eq('user_id', userId).order('as_of', { ascending: true }),
     ])
+    const valueHistory = ((history ?? []) as { total: number }[]).map((r) => Number(r.total))
     return {
-      portfolio: buildPortfolioFromRows(pr, (holdings ?? []) as HoldingRow[], (allocation ?? []) as AllocationRow[]),
+      portfolio: buildPortfolioFromRows(pr, (holdings ?? []) as HoldingRow[], (allocation ?? []) as AllocationRow[], valueHistory),
       live: true,
       syncedAt: pr.synced_at ?? null,
     }

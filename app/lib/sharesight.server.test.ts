@@ -120,6 +120,28 @@ describe('buildPortfolioFromRows', () => {
     expect(p.holdings[0].spark.length).toBeGreaterThan(0)
     expect(p.allocation[0].label).toBe('Gold')
   })
+
+  it('uses real value history for the portfolio spark when available', () => {
+    const history = [100, 110, 120, 130]
+    const p = buildPortfolioFromRows(
+      { total: 130, cash: 0, day_pct: 0, day_abs: 0, ytd_pct: 0 },
+      [],
+      [],
+      history
+    )
+    expect(p.spark).toEqual(history)
+  })
+
+  it('falls back to the placeholder spark with fewer than two history points', () => {
+    const p = buildPortfolioFromRows(
+      { total: 130, cash: 0, day_pct: 0, day_abs: 0, ytd_pct: 0 },
+      [],
+      [],
+      [130]
+    )
+    expect(p.spark).not.toEqual([130])
+    expect(p.spark.length).toBeGreaterThan(1)
+  })
 })
 
 describe('persistPortfolio', () => {
