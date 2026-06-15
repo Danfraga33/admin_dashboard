@@ -119,11 +119,24 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
   body {
     @apply bg-background text-foreground;
   }
   ::selection {
     background: color-mix(in oklch, var(--chart-1) 28%, transparent);
+  }
+}
+
+/* Scrollable but no visible scrollbar (sidebar nav) — keeps the shell to one bar. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
   }
 }
 

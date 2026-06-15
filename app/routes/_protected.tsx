@@ -76,7 +76,7 @@ export default function ProtectedLayout() {
               onSelect={(item) => pushRecent(item.to)}
             />
 
-            <div className="flex min-w-0 flex-1 flex-col">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               {/* instant nav feedback: indeterminate top progress bar while a route loads */}
               {isNavigating && (
                 <div className="pointer-events-none fixed inset-x-0 top-0 z-50 h-0.5 overflow-hidden">
@@ -84,7 +84,7 @@ export default function ProtectedLayout() {
                 </div>
               )}
               <Topbar title={title} onMenu={() => setDrawer(true)} onOpenPalette={() => palette.setOpen(true)} />
-              <div ref={scrollRef} className="flex-1 overflow-y-auto">
+              <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
                 <div className={cn('px-3 py-6 transition-opacity duration-150 md:px-4 md:py-9', isNavigating && 'opacity-60')}>
                   <Outlet />
                   <div className="h-10" />
