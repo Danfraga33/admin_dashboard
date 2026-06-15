@@ -6,6 +6,7 @@ import { AGENTS, type Holding, type Portfolio } from '~/lib/atlas-data'
 import { requireSession } from '~/lib/session.server'
 import { createSupabaseAdminClient } from '~/lib/supabase.admin'
 import { readPortfolio } from '~/lib/sharesight.server'
+import { getScoutNoteLive } from '~/lib/scout.server'
 
 interface WatchRow {
   id: string
@@ -24,13 +25,15 @@ import {
   InfoHint,
   PageHeader,
   StatTile,
+  ValueChart,
   stag,
 } from '~/components/atlas'
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const { session, supabase } = await requireSession(request)
   const admin = createSupabaseAdminClient()
-  const { portfolio, live, syncedAt } = await readPortfolio(admin, session.user.id)
+  const { portfolio, live, syncedAt, valueSeries } = await readPortfolio(admin, session.user.id)
+  const scoutNote = await getScoutNoteLive(session.user.id, portfolio, valueSeries)
   const { data: watch } = await supabase
     .from('watchlist')
     .select('id, sym, note')
@@ -44,6 +47,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     cash: portfolio.cash,
     live,
     syncedLabel,
+    valueSeries,
+    scoutNote,
     watch: (watch ?? []) as WatchRow[],
     scout: AGENTS.find((a) => a.id === 'scout')!,
   }
@@ -328,7 +333,7 @@ function Watchlist({ watch }: { watch: WatchRow[] }) {
 export const meta = () => [{ title: 'Atlas · Investments' }]
 
 export default function Investments() {
-  const { portfolio: p, cash, live, syncedLabel, watch, scout } = useLoaderData<typeof loader>()
+  const { portfolio: p, cash, live, syncedLabel, valueSeries, scoutNote, watch, scout } = useLoaderData<typeof loader>()
 
   return (
     <RevealContext.Provider value={false}>
@@ -360,11 +365,32 @@ export default function Investments() {
           }
         />
 
-        <div className="mt-7">
+        <div className="mt-6">
+          <Card className="p-5">
+            <div className="flex items-end justify-between">
+              <span className="flex items-center gap-1.5">
+                <Label>Total Portfolio Value</Label>
+                <InfoHint text="Real portfolio value over time from Sharesight end-of-day valuations. Hover any point for the date and value." />
+              </span>
+              <div className="text-right">
+                <p className="font-mono text-2xl tracking-tight text-foreground md:text-3xl">
+                  <Num value={p.total} prefix="$" />
+                </p>
+                <p className="mt-0.5 flex items-center gap-1.5 md:justify-end">
+                  <Delta pct={p.ytdPct} />
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">YTD</span>
+                </p>
+              </div>
+            </div>
+            <ValueChart data={valueSeries} color="chart-1" height={220} className="mt-5" />
+          </Card>
+        </div>
+
+        <div className="mt-4">
           <AgentSummary
             agent={scout}
-            label={live ? 'Portfolio & market read · live from Sharesight' : 'Portfolio & market read · sample data'}
-            text={p.scoutNote}
+            label={live ? 'Scout · weekly portfolio read, live from Sharesight' : 'Scout · weekly read, sample data'}
+            text={scoutNote}
             footer={
               <>
                 <Check size={13} className="text-chart-2" /> {live ? `Fetched ${p.holdings.length} holdings from Sharesight` : 'Connect Sharesight to replace sample data'}

@@ -734,6 +734,8 @@ export type Database = {
           cash: number
           day_abs: number
           day_pct: number
+          scout_note: string | null
+          scout_note_at: string | null
           synced_at: string
           total: number
           user_id: string
@@ -743,6 +745,8 @@ export type Database = {
           cash?: number
           day_abs?: number
           day_pct?: number
+          scout_note?: string | null
+          scout_note_at?: string | null
           synced_at?: string
           total?: number
           user_id: string
@@ -752,10 +756,30 @@ export type Database = {
           cash?: number
           day_abs?: number
           day_pct?: number
+          scout_note?: string | null
+          scout_note_at?: string | null
           synced_at?: string
           total?: number
           user_id?: string
           ytd_pct?: number
+        }
+        Relationships: []
+      }
+      sharesight_value_history: {
+        Row: {
+          as_of: string
+          total: number
+          user_id: string
+        }
+        Insert: {
+          as_of: string
+          total: number
+          user_id: string
+        }
+        Update: {
+          as_of?: string
+          total?: number
+          user_id?: string
         }
         Relationships: []
       }

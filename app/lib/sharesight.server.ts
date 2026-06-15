@@ -336,10 +336,15 @@ export async function syncSharesight(admin: SupabaseClient, userId: string): Pro
   }
 }
 
+export interface ValuePoint {
+  date: string
+  total: number
+}
+
 export async function readPortfolio(
   admin: SupabaseClient,
   userId: string
-): Promise<{ portfolio: Portfolio; live: boolean; syncedAt: string | null }> {
+): Promise<{ portfolio: Portfolio; live: boolean; syncedAt: string | null; valueSeries: ValuePoint[] }> {
   try {
     let { data: pr } = await admin
       .from('sharesight_portfolio').select('*').eq('user_id', userId).maybeSingle()
@@ -349,7 +354,7 @@ export async function readPortfolio(
       await syncSharesight(admin, userId)
       const r = await admin.from('sharesight_portfolio').select('*').eq('user_id', userId).maybeSingle()
       pr = r.data
-      if (!pr) return { portfolio: PORTFOLIO, live: false, syncedAt: null }
+      if (!pr) return { portfolio: PORTFOLIO, live: false, syncedAt: null, valueSeries: [] }
     } else if (Date.now() - new Date(pr.synced_at).getTime() > STALE_MS) {
       // Stale but present: serve stale now, refresh in background.
       void syncSharesight(admin, userId).catch(() => {})
@@ -358,13 +363,17 @@ export async function readPortfolio(
     const [{ data: holdings }, { data: allocation }, { data: history }] = await Promise.all([
       admin.from('sharesight_holdings').select('*').eq('user_id', userId).order('position'),
       admin.from('sharesight_allocation').select('*').eq('user_id', userId).order('position'),
-      admin.from('sharesight_value_history').select('total').eq('user_id', userId).order('as_of', { ascending: true }),
+      admin.from('sharesight_value_history').select('as_of, total').eq('user_id', userId).order('as_of', { ascending: true }),
     ])
-    const valueHistory = ((history ?? []) as { total: number }[]).map((r) => Number(r.total))
+    const valueSeries: ValuePoint[] = ((history ?? []) as { as_of: string; total: number }[]).map((r) => ({
+      date: r.as_of,
+      total: Number(r.total),
+    }))
     return {
-      portfolio: buildPortfolioFromRows(pr, (holdings ?? []) as HoldingRow[], (allocation ?? []) as AllocationRow[], valueHistory),
+      portfolio: buildPortfolioFromRows(pr, (holdings ?? []) as HoldingRow[], (allocation ?? []) as AllocationRow[], valueSeries.map((p) => p.total)),
       live: true,
       syncedAt: pr.synced_at ?? null,
+      valueSeries,
     }
   } catch (err) {
     console.error('[readPortfolio] fell back to sample data:', {
@@ -377,6 +386,6 @@ export async function readPortfolio(
       hasOauthBase: !!process.env.SHARESIGHT_OAUTH_BASE,
       userId,
     })
-    return { portfolio: PORTFOLIO, live: false, syncedAt: null }
+    return { portfolio: PORTFOLIO, live: false, syncedAt: null, valueSeries: [] }
   }
 }
