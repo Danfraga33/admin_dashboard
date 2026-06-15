@@ -30,9 +30,9 @@ const PORTFOLIO: Portfolio = {
 }
 
 const SERIES = [
-  { date: '2026-06-01', total: 900 },
-  { date: '2026-06-08', total: 950 },
-  { date: '2026-06-15', total: 1000 },
+  { date: '2026-06-01', total: 900, cash: 90 },
+  { date: '2026-06-08', total: 950, cash: 95 },
+  { date: '2026-06-15', total: 1000, cash: 100 },
 ]
 
 describe('computeScoutFacts', () => {
@@ -49,7 +49,7 @@ describe('computeScoutFacts', () => {
   })
 
   it('zeroes the weekly move with fewer than two points', () => {
-    const f = computeScoutFacts(PORTFOLIO, [{ date: '2026-06-15', total: 1000 }])
+    const f = computeScoutFacts(PORTFOLIO, [{ date: '2026-06-15', total: 1000, cash: 100 }])
     expect(f.weeklyAbs).toBe(0)
     expect(f.weeklyPct).toBe(0)
   })

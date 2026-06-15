@@ -161,11 +161,6 @@ export function Bar({
   )
 }
 
-export interface ValuePoint {
-  date: string
-  total: number
-}
-
 function fmtMoney(n: number): string {
   const abs = Math.abs(n)
   const sign = n < 0 ? '-' : ''
@@ -179,21 +174,27 @@ function fmtDate(iso: string): string {
   return Number.isNaN(t) ? iso : FMT_DATE.format(new Date(t))
 }
 
-/** Full-width area+line chart with a hover tooltip (date · value). Measures its
- *  container so the line never distorts; renders an empty-state under 2 points. */
+export interface ChartSeries {
+  label: string
+  color: ChartColor
+  values: number[]
+}
+
+/** Multi-line time chart on a shared y-scale with a hover tooltip listing every
+ *  series at the hovered date. Measures its container so lines never distort;
+ *  renders an empty-state under 2 points. */
 export function ValueChart({
-  data,
-  color = 'chart-1',
-  height = 200,
+  dates,
+  series,
+  height = 220,
   className,
 }: {
-  data: ValuePoint[]
-  color?: ChartColor
+  dates: string[]
+  series: ChartSeries[]
   height?: number
   className?: string
 }) {
   const animate = useAnimateDraw()
-  const id = useId()
   const wrapRef = useRef<HTMLDivElement>(null)
   const [w, setW] = useState(800)
   const [active, setActive] = useState<number | null>(null)
@@ -210,21 +211,22 @@ export function ValueChart({
   const H = height
   const PAD = 10
   const geom = useMemo(() => {
-    if (data.length < 2) return null
-    const vals = data.map((d) => d.total)
-    const min = Math.min(...vals)
-    const max = Math.max(...vals)
+    if (dates.length < 2 || series.length === 0) return null
+    const all = series.flatMap((s) => s.values)
+    const min = Math.min(...all)
+    const max = Math.max(...all)
     const span = max - min || 1
-    const pts = data.map((d, i) => {
-      const x = (i / (data.length - 1)) * w
-      const y = PAD + (1 - (d.total - min) / span) * (H - PAD * 2)
-      return [x, y] as const
+    const xAt = (i: number) => (i / (dates.length - 1)) * w
+    const yAt = (v: number) => PAD + (1 - (v - min) / span) * (H - PAD * 2)
+    const lines = series.map((s) => {
+      const pts = s.values.map((v, i) => [xAt(i), yAt(v)] as const)
+      const d = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ')
+      let len = 0
+      for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1])
+      return { ...s, pts, d, len }
     })
-    const line = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ')
-    let len = 0
-    for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1])
-    return { pts, line, area: `${line} L${w} ${H} L0 ${H} Z`, len }
-  }, [data, w, H])
+    return { lines, xAt }
+  }, [dates, series, w, H])
 
   if (!geom) {
     return (
@@ -232,7 +234,7 @@ export function ValueChart({
         className={cn('flex items-center justify-center text-[12px] text-muted-foreground', className)}
         style={{ height: H }}
       >
-        History building — real chart appears once a few days of data accrue.
+        History building — chart appears once a few days of data accrue.
       </div>
     )
   }
@@ -242,53 +244,71 @@ export function ValueChart({
     if (!el) return
     const rect = el.getBoundingClientRect()
     const rel = (e.clientX - rect.left) / rect.width
-    setActive(Math.max(0, Math.min(data.length - 1, Math.round(rel * (data.length - 1)))))
+    setActive(Math.max(0, Math.min(dates.length - 1, Math.round(rel * (dates.length - 1)))))
   }
 
-  const ap = active != null ? geom.pts[active] : null
-  const ad = active != null ? data[active] : null
-  const leftPct = active != null ? (active / (data.length - 1)) * 100 : 0
+  const guideX = active != null ? geom.xAt(active) : 0
+  const leftPct = active != null ? (active / (dates.length - 1)) * 100 : 0
 
   return (
-    <div ref={wrapRef} className={cn('relative', className)} onMouseMove={onMove} onMouseLeave={() => setActive(null)}>
-      <svg width={w} height={H} viewBox={`0 0 ${w} ${H}`} className="block overflow-visible">
-        <defs>
-          <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={`var(--${color})`} stopOpacity="0.20" />
-            <stop offset="100%" stopColor={`var(--${color})`} stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path d={geom.area} fill={`url(#${id})`} stroke="none" />
-        <path
-          d={geom.line}
-          fill="none"
-          stroke={`var(--${color})`}
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{
-            strokeDasharray: geom.len,
-            strokeDashoffset: animate ? geom.len : 0,
-            animation: animate ? `atlasDraw 1100ms ${EASE} 200ms forwards` : undefined,
-          }}
-        />
-        {ap && (
-          <>
-            <line x1={ap[0]} y1={0} x2={ap[0]} y2={H} stroke="var(--border)" strokeWidth={1} />
-            <circle cx={ap[0]} cy={ap[1]} r={4} fill={`var(--${color})`} stroke="var(--background)" strokeWidth={2} />
-          </>
+    <div className={cn('relative', className)}>
+      <div className="mb-3 flex flex-wrap gap-x-4 gap-y-1">
+        {series.map((s) => (
+          <span key={s.label} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <span className="h-2 w-2.5 rounded-full" style={{ background: `var(--${s.color})` }} />
+            {s.label}
+          </span>
+        ))}
+      </div>
+      <div ref={wrapRef} className="relative" onMouseMove={onMove} onMouseLeave={() => setActive(null)}>
+        <svg width={w} height={H} viewBox={`0 0 ${w} ${H}`} className="block overflow-visible">
+          {active != null && <line x1={guideX} y1={0} x2={guideX} y2={H} stroke="var(--border)" strokeWidth={1} />}
+          {geom.lines.map((ln, li) => (
+            <path
+              key={ln.label}
+              d={ln.d}
+              fill="none"
+              stroke={`var(--${ln.color})`}
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{
+                strokeDasharray: ln.len,
+                strokeDashoffset: animate ? ln.len : 0,
+                animation: animate ? `atlasDraw 1100ms ${EASE} ${200 + li * 120}ms forwards` : undefined,
+              }}
+            />
+          ))}
+          {active != null &&
+            geom.lines.map((ln) => (
+              <circle
+                key={ln.label}
+                cx={ln.pts[active][0]}
+                cy={ln.pts[active][1]}
+                r={3.5}
+                fill={`var(--${ln.color})`}
+                stroke="var(--background)"
+                strokeWidth={2}
+              />
+            ))}
+          <style>{`@keyframes atlasDraw{to{stroke-dashoffset:0}}`}</style>
+        </svg>
+        {active != null && (
+          <div
+            className="pointer-events-none absolute top-0 z-10 -translate-x-1/2 whitespace-nowrap rounded-md border border-border bg-popover px-2.5 py-1.5 shadow-sm"
+            style={{ left: `${leftPct}%` }}
+          >
+            <div className="mb-1 text-[10px] text-muted-foreground">{fmtDate(dates[active])}</div>
+            {geom.lines.map((ln) => (
+              <div key={ln.label} className="flex items-center gap-2 text-[11px]">
+                <span className="h-2 w-2 rounded-full" style={{ background: `var(--${ln.color})` }} />
+                <span className="text-muted-foreground">{ln.label}</span>
+                <span className="ml-auto font-mono text-foreground">{fmtMoney(ln.values[active])}</span>
+              </div>
+            ))}
+          </div>
         )}
-        <style>{`@keyframes atlasDraw{to{stroke-dashoffset:0}}`}</style>
-      </svg>
-      {ad && (
-        <div
-          className="pointer-events-none absolute top-0 z-10 -translate-x-1/2 whitespace-nowrap rounded-md border border-border bg-popover px-2 py-1 shadow-sm"
-          style={{ left: `${leftPct}%` }}
-        >
-          <div className="font-mono text-[12px] text-foreground">{fmtMoney(ad.total)}</div>
-          <div className="text-[10px] text-muted-foreground">{fmtDate(ad.date)}</div>
-        </div>
-      )}
+      </div>
     </div>
   )
 }

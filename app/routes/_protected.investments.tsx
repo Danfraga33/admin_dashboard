@@ -382,7 +382,16 @@ export default function Investments() {
                 </p>
               </div>
             </div>
-            <ValueChart data={valueSeries} color="chart-1" height={220} className="mt-5" />
+            <ValueChart
+              className="mt-5"
+              height={240}
+              dates={valueSeries.map((p) => p.date)}
+              series={[
+                { label: 'Total', color: 'chart-1', values: valueSeries.map((p) => p.total) },
+                { label: 'Portfolio', color: 'chart-4', values: valueSeries.map((p) => p.total - p.cash) },
+                { label: 'Cash', color: 'chart-2', values: valueSeries.map((p) => p.cash) },
+              ]}
+            />
           </Card>
         </div>
 

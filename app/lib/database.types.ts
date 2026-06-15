@@ -768,16 +768,19 @@ export type Database = {
       sharesight_value_history: {
         Row: {
           as_of: string
+          cash: number
           total: number
           user_id: string
         }
         Insert: {
           as_of: string
+          cash?: number
           total: number
           user_id: string
         }
         Update: {
           as_of?: string
+          cash?: number
           total?: number
           user_id?: string
         }

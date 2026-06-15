@@ -277,11 +277,11 @@ function adminTokenDeps(admin: SupabaseClient): TokenDeps {
   }
 }
 
-/** Append today's portfolio value to the history series (idempotent per day). */
-async function appendValuePoint(admin: SupabaseClient, userId: string, total: number, on: Date): Promise<void> {
+/** Append today's portfolio value + cash to the history series (idempotent per day). */
+async function appendValuePoint(admin: SupabaseClient, userId: string, total: number, cash: number, on: Date): Promise<void> {
   await admin
     .from('sharesight_value_history')
-    .upsert({ user_id: userId, as_of: ymd(on), total }, { onConflict: 'user_id,as_of' })
+    .upsert({ user_id: userId, as_of: ymd(on), total, cash }, { onConflict: 'user_id,as_of' })
 }
 
 /**
@@ -301,12 +301,15 @@ export async function backfillValueHistory(
   if (!portfolios?.length) throw new Error('Sharesight returned no portfolios')
   const id = portfolios[0].id
   const now = new Date()
-  const rows: { user_id: string; as_of: string; total: number }[] = []
+  const rows: { user_id: string; as_of: string; total: number; cash: number }[] = []
   for (let i = 0; i < points; i++) {
     const date = ymd(new Date(now.getTime() - i * stepDays * 24 * 60 * 60 * 1000))
     try {
       const v = (await ssGet(`/portfolios/${id}/valuation?balance_date=${date}`, token)) as SsValuation
-      if (typeof v?.value === 'number') rows.push({ user_id: userId, as_of: date, total: v.value })
+      if (typeof v?.value === 'number') {
+        const cash = (v.cash_accounts ?? []).reduce((s, c) => s + (c.value ?? 0), 0)
+        rows.push({ user_id: userId, as_of: date, total: v.value, cash })
+      }
     } catch {
       // Skip dates Sharesight can't value (pre-inception, etc.).
     }
@@ -326,7 +329,7 @@ export async function syncSharesight(admin: SupabaseClient, userId: string): Pro
     const now = new Date()
     const p = await fetchPortfolio(token, now)
     await persistPortfolio(admin, userId, p)
-    await appendValuePoint(admin, userId, p.total, now)
+    await appendValuePoint(admin, userId, p.total, p.cash, now)
     await admin.from('sync_runs').insert({ source: 'sharesight', ok: true })
   } catch (err) {
     await admin.from('sync_runs').insert({
@@ -339,6 +342,7 @@ export async function syncSharesight(admin: SupabaseClient, userId: string): Pro
 export interface ValuePoint {
   date: string
   total: number
+  cash: number
 }
 
 export async function readPortfolio(
@@ -363,11 +367,12 @@ export async function readPortfolio(
     const [{ data: holdings }, { data: allocation }, { data: history }] = await Promise.all([
       admin.from('sharesight_holdings').select('*').eq('user_id', userId).order('position'),
       admin.from('sharesight_allocation').select('*').eq('user_id', userId).order('position'),
-      admin.from('sharesight_value_history').select('as_of, total').eq('user_id', userId).order('as_of', { ascending: true }),
+      admin.from('sharesight_value_history').select('as_of, total, cash').eq('user_id', userId).order('as_of', { ascending: true }),
     ])
-    const valueSeries: ValuePoint[] = ((history ?? []) as { as_of: string; total: number }[]).map((r) => ({
+    const valueSeries: ValuePoint[] = ((history ?? []) as { as_of: string; total: number; cash: number }[]).map((r) => ({
       date: r.as_of,
       total: Number(r.total),
+      cash: Number(r.cash),
     }))
     return {
       portfolio: buildPortfolioFromRows(pr, (holdings ?? []) as HoldingRow[], (allocation ?? []) as AllocationRow[], valueSeries.map((p) => p.total)),
