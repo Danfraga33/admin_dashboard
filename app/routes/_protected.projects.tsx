@@ -54,14 +54,21 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export async function action({ request }: ActionFunctionArgs) {
   const { session, supabase, responseHeaders } = await requireSession(request)
   const form = await request.formData()
+  const intent = form.get('intent')
+  const id = String(form.get('id') || '')
+  const persistable = id && !id.startsWith('static-')
 
-  if (form.get('intent') === 'update-progress') {
-    const id = String(form.get('id') || '')
+  if (intent === 'update-progress' && persistable) {
     const raw = Number(form.get('progress'))
-    if (id && !id.startsWith('static-') && Number.isFinite(raw)) {
+    if (Number.isFinite(raw)) {
       const progress = Math.max(0, Math.min(100, Math.round(raw)))
       await supabase.from('projects').update({ progress }).eq('id', id).eq('user_id', session.user.id)
     }
+  }
+
+  if (intent === 'update-tag' && persistable) {
+    const tag = String(form.get('tag') || '').trim().slice(0, 80)
+    await supabase.from('projects').update({ tag }).eq('id', id).eq('user_id', session.user.id)
   }
 
   return data({ ok: true }, { headers: responseHeaders })
@@ -72,7 +79,19 @@ function StackChip({ children }: { children: React.ReactNode }) {
 }
 
 /** Editable progress: click/drag the bar or use −/+ to set %, persisted on commit. */
-function ProgressControl({ id, value, accent, editable }: { id: string; value: number; accent: ProjectItem['accent']; editable: boolean }) {
+function ProgressControl({
+  id,
+  value,
+  accent,
+  editable,
+  onChange,
+}: {
+  id: string
+  value: number
+  accent: ProjectItem['accent']
+  editable: boolean
+  onChange?: (pct: number) => void
+}) {
   const fetcher = useFetcher()
   const trackRef = useRef<HTMLDivElement>(null)
   const [pct, setPct] = useState(value)
@@ -83,6 +102,9 @@ function ProgressControl({ id, value, accent, editable }: { id: string; value: n
   useEffect(() => {
     if (!dragging.current && fetcher.state === 'idle') setPct(value)
   }, [value, fetcher.state])
+
+  // Report current value up so the header average reflects edits instantly.
+  useEffect(() => { onChange?.(pct) }, [pct, onChange])
 
   useEffect(() => () => { if (debounce.current) clearTimeout(debounce.current) }, [])
 
@@ -196,7 +218,60 @@ function ProgressControl({ id, value, accent, editable }: { id: string; value: n
   )
 }
 
-function ProjectCard({ p, i }: { p: ProjectRow; i: number }) {
+/** Inline-editable project tag (the subtitle). Click to edit, Enter/blur to save, Esc to cancel. */
+function TagControl({ id, value, editable }: { id: string; value: string; editable: boolean }) {
+  const fetcher = useFetcher()
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!editing && fetcher.state === 'idle') setDraft(value)
+  }, [value, editing, fetcher.state])
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus()
+  }, [editing])
+
+  function commit() {
+    setEditing(false)
+    const next = draft.trim()
+    if (next !== value) fetcher.submit({ intent: 'update-tag', id, tag: next }, { method: 'post' })
+  }
+
+  if (!editable) return <p className="mt-1 text-[13px] text-muted-foreground">{value}</p>
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); commit() }
+          else if (e.key === 'Escape') { e.preventDefault(); setDraft(value); setEditing(false) }
+        }}
+        maxLength={80}
+        placeholder="Add a tag…"
+        className="mt-1 w-full rounded-sm border border-border bg-muted/40 px-1.5 py-0.5 text-[13px] text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+      />
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setEditing(true)}
+      className="mt-1 -ml-1 block rounded-sm px-1 py-0.5 text-left text-[13px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
+      title="Edit tag"
+    >
+      {value || <span className="italic opacity-60">Add a tag…</span>}
+    </button>
+  )
+}
+
+function ProjectCard({ p, i, onProgress }: { p: ProjectRow; i: number; onProgress?: (pct: number) => void }) {
   const editable = !p.id.startsWith('static-')
   return (
     <Reveal delay={stag(i, 120, 70)}>
@@ -207,13 +282,13 @@ function ProjectCard({ p, i }: { p: ProjectRow; i: number }) {
               <span className="h-2 w-2 rounded-full" style={{ background: `var(--${p.accent})` }} />
               <h3 className="text-base font-semibold tracking-tight text-foreground">{p.name}</h3>
             </div>
-            <p className="mt-1 text-[13px] text-muted-foreground">{p.tag}</p>
+            <TagControl id={p.id} value={p.tag} editable={editable} />
           </div>
           <StatusBadge status={p.status} />
         </div>
 
         <div className="mt-5">
-          <ProgressControl id={p.id} value={p.progress} accent={p.accent} editable={editable} />
+          <ProgressControl id={p.id} value={p.progress} accent={p.accent} editable={editable} onChange={onProgress} />
         </div>
 
         <div className="mt-4 flex items-end justify-between">
@@ -241,7 +316,16 @@ export const meta = () => [{ title: 'Atlas · Projects' }]
 export default function Projects() {
   const { items, forgeNote, forge } = useLoaderData<typeof loader>()
   const building = items.filter((p) => p.status === 'Building').length
-  const avg = items.length ? Math.round(items.reduce((s, p) => s + p.progress, 0) / items.length) : 0
+
+  // Overlay in-progress edits so the header average updates as you drag/nudge.
+  const [live, setLive] = useState<Record<string, number>>({})
+  const reportProgress = useCallback(
+    (id: string, pct: number) => setLive((m) => (m[id] === pct ? m : { ...m, [id]: pct })),
+    [],
+  )
+  const avg = items.length
+    ? Math.round(items.reduce((s, p) => s + (live[p.id] ?? p.progress), 0) / items.length)
+    : 0
 
   return (
     <RevealContext.Provider value={false}>
@@ -283,7 +367,7 @@ export default function Projects() {
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {items.map((p, i) => (
-            <ProjectCard key={p.id} p={p} i={i} />
+            <ProjectCard key={p.id} p={p} i={i} onProgress={(pct) => reportProgress(p.id, pct)} />
           ))}
         </div>
       </div>
