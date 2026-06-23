@@ -1,0 +1,1027 @@
+/* ============================================================
+   PAIN RADAR — scoped styles
+   Everything lives under .pain-radar so the radar subtree owns
+   its design tokens + components without colliding with the host
+   app's Tailwind theme / :root tokens.
+   - No `@import "tailwindcss"` (host already imports it).
+   - No `@theme inline` block (would register global utilities).
+   - Generic @keyframes are prefixed `pr-` to avoid collisions.
+   ============================================================ */
+
+/* ============================================================
+   DESIGN TOKENS — scoped to .pain-radar
+   (font, motion, density, light/dark surfaces & ink)
+   ============================================================ */
+.pain-radar {
+  --font-sans: "Geist", system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", monospace;
+
+  /* accent (fixed — pain-radar "heat" orange) */
+  --accent: #e0590b;
+  --accent-ink: #ffffff;
+  --accent-soft: color-mix(in oklch, var(--accent) 12%, transparent);
+  --accent-line: color-mix(in oklch, var(--accent) 26%, transparent);
+
+  /* status (independent of accent) */
+  --ok: #15935f;
+  --warn: #c2790b;
+  --bad: #d4493f;
+  --info: #2f6df0;
+  --ok-soft: color-mix(in oklch, var(--ok) 13%, transparent);
+  --warn-soft: color-mix(in oklch, var(--warn) 15%, transparent);
+  --bad-soft: color-mix(in oklch, var(--bad) 13%, transparent);
+  --info-soft: color-mix(in oklch, var(--info) 13%, transparent);
+
+  /* motion */
+  --mo: 0.8;
+  --t-fast: calc(0.18s * var(--mo) + 0.02s);
+  --t-base: calc(0.42s * var(--mo) + 0.02s);
+  --t-slow: calc(0.7s * var(--mo) + 0.02s);
+  --ease: cubic-bezier(.22, .61, .36, 1);
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+
+  /* density (regular) */
+  --u: 8px;
+  --pad-card: 22px;
+  --gap: 20px;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --row-h: 46px;
+  --fs-base: 14px;
+
+  /* LIGHT (default) surfaces & ink */
+  --bg: #fcfcfc;
+  --canvas: #f4f4f3;
+  --surface: #ffffff;
+  --surface-2: #f8f8f7;
+  --surface-3: #f1f1f0;
+  --border: #ececeb;
+  --border-2: #e3e3e1;
+  --text: #0c0c0c;
+  --text-2: #5b5b59;
+  --text-3: #9a9a97;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, .04);
+  --shadow-pop: 0 12px 40px rgba(0, 0, 0, .12), 0 2px 8px rgba(0, 0, 0, .06);
+  --grid-line: rgba(0, 0, 0, .035);
+  color-scheme: light;
+
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  color: var(--text);
+}
+
+/* density variants (scoped) */
+.pain-radar[data-density="compact"],
+.pain-radar [data-density="compact"] { --pad-card: 16px; --gap: 14px; --row-h: 40px; --fs-base: 13px; --radius: 12px; }
+.pain-radar[data-density="comfy"],
+.pain-radar [data-density="comfy"]   { --pad-card: 28px; --gap: 26px; --row-h: 54px; --fs-base: 15px; --radius: 16px; }
+
+/* explicit light marker (parity with source) */
+.pain-radar[data-theme="light"],
+[data-theme="light"] .pain-radar {
+  --bg: #fcfcfc;
+  --canvas: #f4f4f3;
+  --surface: #ffffff;
+  --surface-2: #f8f8f7;
+  --surface-3: #f1f1f0;
+  --border: #ececeb;
+  --border-2: #e3e3e1;
+  --text: #0c0c0c;
+  --text-2: #5b5b59;
+  --text-3: #9a9a97;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, .04);
+  --shadow-pop: 0 12px 40px rgba(0, 0, 0, .12), 0 2px 8px rgba(0, 0, 0, .06);
+  --grid-line: rgba(0, 0, 0, .035);
+  color-scheme: light;
+}
+
+/* DARK — match radar's own attr, or any dark ancestor (host toggles
+   theme via [data-theme="dark"] or a `.dark` class on a parent). */
+.pain-radar[data-theme="dark"],
+[data-theme="dark"] .pain-radar,
+.dark .pain-radar {
+  --bg: #080808;
+  --canvas: #050505;
+  --surface: #0f0f0f;
+  --surface-2: #151515;
+  --surface-3: #1b1b1b;
+  --border: #202020;
+  --border-2: #2a2a2a;
+  --text: #f4f4f3;
+  --text-2: #a0a09c;
+  --text-3: #696965;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, .4);
+  --shadow-pop: 0 16px 50px rgba(0, 0, 0, .6), 0 2px 8px rgba(0, 0, 0, .4);
+  --grid-line: rgba(255, 255, 255, .04);
+  --accent-ink: #ffffff;
+  --ok: #34c47e;
+  --warn: #e0a02a;
+  --bad: #f0635a;
+  --info: #5b8cf5;
+  color-scheme: dark;
+}
+
+/* When animations are disabled (.no-anim ancestor or reduced motion),
+   resolve everything to its resting state — content never stays hidden. */
+.no-anim .pain-radar *,
+.no-anim .pain-radar *::before,
+.no-anim .pain-radar *::after,
+.pain-radar.no-anim *,
+.pain-radar.no-anim *::before,
+.pain-radar.no-anim *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pain-radar *, .pain-radar *::before, .pain-radar *::after {
+    animation-duration: .001ms !important;
+    transition-duration: .001ms !important;
+  }
+}
+
+/* ============================================================
+   COMPONENTS
+   ============================================================ */
+
+/* ---- App shell ---- */
+.pain-radar .app-root {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+/* ---- Sidebar ---- */
+.pain-radar .sidebar {
+  width: 248px;
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 18px 14px;
+  transition: width var(--t-base) var(--ease);
+  position: relative;
+  z-index: 30;
+  min-height: 0;
+}
+.pain-radar .sidebar.collapsed { width: 72px; }
+.pain-radar .brand { display: flex; align-items: center; gap: 11px; padding: 6px 8px 4px; min-height: 38px; }
+.pain-radar .brand-mark {
+  width: 30px; height: 30px; border-radius: 9px; flex: none;
+  background: var(--accent); color: var(--accent-ink);
+  display: grid; place-items: center; font-weight: 700; font-size: 15px;
+  position: relative; overflow: hidden;
+}
+.pain-radar .brand-mark::after { content: ""; position: absolute; inset: 0; background: linear-gradient(140deg, rgba(255, 255, 255, .35), transparent 55%); }
+.pain-radar .brand-name { font-weight: 600; font-size: 15.5px; letter-spacing: -0.01em; white-space: nowrap; }
+.pain-radar .brand-name span { color: var(--text-3); font-weight: 500; }
+.pain-radar .collapsed .brand { justify-content: center; }
+.pain-radar .collapsed .brand-name { display: none; }
+
+.pain-radar .nav { display: flex; flex-direction: column; gap: 2px; margin-top: 22px; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.pain-radar .nav-label { font-size: 10.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--text-3); padding: 0 10px 8px; white-space: nowrap; }
+.pain-radar .collapsed .nav-label { display: none; }
+.pain-radar .nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 10px; border-radius: var(--radius-sm);
+  color: var(--text-2); background: transparent; border: 0;
+  cursor: pointer; width: 100%; text-align: left;
+  font-size: 13.5px; font-weight: 500; white-space: nowrap;
+  position: relative; text-decoration: none;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.pain-radar .nav-item svg { width: 18px; height: 18px; flex: none; }
+.pain-radar .nav-item:hover { background: var(--surface-2); color: var(--text); }
+.pain-radar .nav-item.active { background: var(--surface-2); color: var(--text); }
+.pain-radar .nav-item.active::before {
+  content: ""; position: absolute; left: -14px; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 18px; border-radius: 0 3px 3px 0; background: var(--accent);
+}
+.pain-radar .nav-item .nav-txt { transition: opacity var(--t-fast) var(--ease); }
+.pain-radar .collapsed .nav-txt { display: none; }
+.pain-radar .nav-item .badge-dot { margin-left: auto; }
+.pain-radar .collapsed .nav-item { justify-content: center; }
+.pain-radar .collapsed .nav-item .badge-dot { display: none; }
+.pain-radar .collapsed .nav-item.active::before { display: none; }
+
+/* ---- Accordion nav groups ---- */
+.pain-radar .nav-group { display: flex; flex-direction: column; }
+.pain-radar .nav-group-head {
+  display: flex; align-items: center; gap: 11px;
+  padding: 9px 10px; width: 100%; text-align: left;
+  border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: 13.5px; font-weight: 600;
+  color: var(--text-2); border-radius: 9px;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.pain-radar .nav-group-head:hover { background: var(--surface-2); color: var(--text); }
+.pain-radar .nav-group-head:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-soft); }
+.pain-radar .nav-group-body .nav-item.active::before { left: 0; border-radius: 0 3px 3px 0; }
+.pain-radar .nav-group-head svg { flex: none; }
+.pain-radar .nav-chev { margin-left: auto; transition: transform var(--t-fast) var(--ease); }
+.pain-radar .nav-group.open .nav-chev { transform: rotate(90deg); }
+.pain-radar .nav-group-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows var(--t-fast) var(--ease); }
+.pain-radar .nav-group.open .nav-group-body { grid-template-rows: 1fr; }
+.pain-radar .nav-group-body > div { overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
+.pain-radar .nav-group-body .nav-item { padding-left: 24px; }
+
+/* Rail state: hide group heads, show all leaf items flat */
+.pain-radar .collapsed .nav-group-head { display: none; }
+.pain-radar .collapsed .nav-group-body { display: flex; }
+.pain-radar .collapsed .nav-group-body > div { overflow: visible; }
+
+.pain-radar .sidebar-foot { margin-top: auto; padding-top: 14px; display: flex; flex-direction: column; gap: 4px; }
+.pain-radar .nav-foot { margin-top: 0; margin-bottom: 12px; overflow: visible; }
+.pain-radar .upgrade-card {
+  padding: 14px; border-radius: var(--radius-sm);
+  background: var(--surface-2); border: 1px solid var(--border);
+  overflow: hidden; white-space: nowrap;
+}
+.pain-radar .collapsed .upgrade-card { display: none; }
+.pain-radar .upgrade-card .uc-title { font-size: 12.5px; font-weight: 600; }
+.pain-radar .upgrade-card .uc-sub { font-size: 11.5px; color: var(--text-2); margin: 3px 0 10px; white-space: normal; }
+.pain-radar .uc-bar { height: 5px; border-radius: 3px; background: var(--surface-3); overflow: hidden; }
+.pain-radar .uc-bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+
+/* ---- Main column ---- */
+.pain-radar .main { display: flex; flex-direction: column; min-width: 0; height: 100vh; height: 100dvh; }
+
+.pain-radar .topbar {
+  height: 60px; flex: none;
+  display: flex; align-items: center; gap: 14px;
+  padding: 0 26px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklch, var(--bg) 80%, transparent);
+  backdrop-filter: blur(10px);
+  position: relative; z-index: 20;
+}
+.pain-radar .org-switch {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 10px 6px 7px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface);
+  cursor: pointer; transition: background var(--t-fast) var(--ease), border-color var(--t-fast);
+}
+.pain-radar .org-switch:hover { background: var(--surface-2); border-color: var(--border-2); }
+.pain-radar .org-logo { width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center; font-weight: 700; font-size: 12px; color: #fff; flex: none; }
+.pain-radar .org-meta { display: flex; flex-direction: column; line-height: 1.15; }
+.pain-radar .org-meta b { font-size: 13px; font-weight: 600; }
+.pain-radar .org-meta small { font-size: 10.5px; color: var(--text-3); }
+.pain-radar .topbar-search {
+  flex: 1; max-width: 420px; height: 38px;
+  display: flex; align-items: center; gap: 9px;
+  padding: 0 12px; border-radius: 10px;
+  background: var(--surface-2); border: 1px solid transparent;
+  color: var(--text-3); cursor: pointer; appearance: none; font: inherit; text-align: left;
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+.pain-radar .topbar-search:hover { border-color: var(--border); background: var(--surface-3); }
+.pain-radar .topbar-search-ph { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: var(--text-3); }
+.pain-radar .topbar-search kbd { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-3); background: var(--surface); border: 1px solid var(--border); border-radius: 5px; padding: 2px 6px; flex: none; }
+.pain-radar .topbar .search-btn { display: none; }
+
+/* command palette */
+.pain-radar .cmdk-scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, .4); z-index: 100; display: flex; align-items: flex-start; justify-content: center; padding: 13vh 16px 16px; animation: pr-fade var(--t-fast) ease both; }
+.pain-radar .cmdk { width: 100%; max-width: 560px; background: var(--surface); border: 1px solid var(--border-2); border-radius: 14px; box-shadow: var(--shadow-pop); overflow: hidden; animation: pr-popIn var(--t-fast) var(--ease-out) both; }
+.pain-radar .cmdk-top { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border); color: var(--text-3); }
+.pain-radar .cmdk-input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; font: inherit; font-size: 15px; color: var(--text); }
+.pain-radar .cmdk-top kbd { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-3); background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 2px 6px; flex: none; }
+.pain-radar .cmdk-list { max-height: 340px; overflow-y: auto; padding: 6px; scrollbar-width: thin; }
+.pain-radar .cmdk-empty { padding: 22px; text-align: center; color: var(--text-3); font-size: 13px; }
+.pain-radar .cmdk-item { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border: 0; background: transparent; cursor: pointer; padding: 10px 12px; border-radius: 9px; color: var(--text); font: inherit; font-size: 13.5px; }
+.pain-radar .cmdk-item.active { background: var(--surface-2); }
+.pain-radar .cmdk-ic { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; background: var(--surface-2); color: var(--text-2); flex: none; }
+.pain-radar .cmdk-item.active .cmdk-ic { background: var(--accent-soft); color: var(--accent); }
+.pain-radar .cmdk-label { flex: 1; min-width: 0; }
+.pain-radar .cmdk-hint { font-size: 11.5px; color: var(--text-3); flex: none; }
+.pain-radar .topbar-spacer { flex: 1; }
+.pain-radar .icon-btn {
+  width: 38px; height: 38px; border-radius: 10px; flex: none;
+  display: grid; place-items: center; cursor: pointer;
+  background: transparent; border: 1px solid transparent; color: var(--text-2);
+  position: relative; transition: background var(--t-fast), color var(--t-fast);
+}
+.pain-radar .icon-btn:hover { background: var(--surface-2); color: var(--text); }
+.pain-radar .icon-btn .dot { position: absolute; top: 8px; right: 9px; width: 7px; height: 7px; border-radius: 50%; background: var(--bad); border: 2px solid var(--bg); }
+.pain-radar .avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 600; font-size: 12.5px; color: #fff; cursor: pointer; flex: none; }
+
+/* scroll region */
+.pain-radar .canvas {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  background: var(--bg);
+  scrollbar-width: thin; scrollbar-color: var(--border-2) transparent;
+}
+.pain-radar .canvas::-webkit-scrollbar { width: 11px; }
+.pain-radar .canvas::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 6px; border: 3px solid var(--bg); }
+.pain-radar.screen { max-width: 1440px; margin: 0 auto; padding: 30px 36px 80px; }
+
+/* drawer scrim (mobile only) */
+.pain-radar .drawer-scrim { display: none; }
+
+/* page transition — gated by .anim-on so content is visible if JS/anim off */
+.pain-radar .anim-on .screen-anim { animation: pr-screenIn var(--t-fast) var(--ease-out) both; }
+@keyframes pr-screenIn {
+  from { opacity: 0; transform: translateY(calc(8px * var(--mo))); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---- Page header ---- */
+.pain-radar .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 26px; flex-wrap: wrap; }
+.pain-radar .page-head > div:first-child { min-width: 0; }
+.pain-radar .page-title { font-size: 25px; font-weight: 600; letter-spacing: -0.02em; margin: 0; }
+.pain-radar .page-sub { font-size: 13.5px; color: var(--text-2); margin: 5px 0 0; }
+.pain-radar .page-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+/* ---- Primitives ---- */
+.pain-radar .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: var(--pad-card); }
+.pain-radar .card-pad-0 { padding: 0; }
+
+.pain-radar .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 38px; padding: 0 16px; border-radius: 10px;
+  font-size: 13.5px; font-weight: 550; cursor: pointer;
+  border: 1px solid transparent; white-space: nowrap;
+  transition: transform var(--t-fast) var(--ease), background var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.pain-radar .btn:active { transform: scale(.97); }
+.pain-radar .btn svg { width: 16px; height: 16px; }
+.pain-radar .btn-primary { background: var(--accent); color: var(--accent-ink); }
+.pain-radar .btn-primary:hover { box-shadow: 0 4px 16px var(--accent-soft); }
+.pain-radar .btn-ghost { background: var(--surface); border-color: var(--border); color: var(--text); }
+.pain-radar .btn-ghost:hover { background: var(--surface-2); border-color: var(--border-2); }
+.pain-radar .btn-subtle { background: var(--surface-2); color: var(--text); }
+.pain-radar .btn-subtle:hover { background: var(--surface-3); }
+.pain-radar .btn-sm { height: 32px; padding: 0 12px; font-size: 12.5px; border-radius: 8px; }
+
+.pain-radar .badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 24px; padding: 0 9px; border-radius: 999px;
+  font-size: 11.5px; font-weight: 550; white-space: nowrap;
+  border: 1px solid transparent;
+}
+.pain-radar .badge svg { width: 12px; height: 12px; }
+.pain-radar .badge .b-dot { width: 6px; height: 6px; border-radius: 50%; }
+.pain-radar .badge.ok { background: var(--ok-soft); color: var(--ok); }
+.pain-radar .badge.warn { background: var(--warn-soft); color: var(--warn); }
+.pain-radar .badge.bad { background: var(--bad-soft); color: var(--bad); }
+.pain-radar .badge.info { background: var(--info-soft); color: var(--info); }
+.pain-radar .badge.neutral { background: var(--surface-2); color: var(--text-2); border-color: var(--border); }
+.pain-radar .badge.accent { background: var(--accent-soft); color: var(--accent); }
+.pain-radar .badge.ok .b-dot { background: var(--ok); } .pain-radar .badge.warn .b-dot { background: var(--warn); }
+.pain-radar .badge.bad .b-dot { background: var(--bad); } .pain-radar .badge.info .b-dot { background: var(--info); }
+.pain-radar .badge.neutral .b-dot { background: var(--text-3); } .pain-radar .badge.accent .b-dot { background: var(--accent); }
+.pain-radar .badge-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+
+.pain-radar .live-dot { position: relative; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
+.pain-radar .live-dot::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1.5px solid var(--ok); opacity: .5; animation: pr-livePulse 1.8s ease-out infinite; }
+@keyframes pr-livePulse { 0% { transform: scale(.6); opacity: .7; } 100% { transform: scale(1.6); opacity: 0; } }
+
+.pain-radar .chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 30px; padding: 0 6px 0 11px; border-radius: 999px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  font-size: 12.5px; color: var(--text); font-weight: 500;
+}
+.pain-radar .chip button { width: 18px; height: 18px; border: 0; background: transparent; color: var(--text-3); cursor: pointer; border-radius: 50%; display: grid; place-items: center; }
+.pain-radar .chip button:hover { background: var(--surface-3); color: var(--text); }
+.pain-radar .chip.add { border-style: dashed; color: var(--text-2); cursor: pointer; padding: 0 12px; }
+.pain-radar .chip.add:hover { border-color: var(--accent); color: var(--accent); }
+
+/* tables */
+.pain-radar .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.pain-radar .tbl th { text-align: left; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-3); padding: 0 14px 12px; }
+.pain-radar .tbl th.num, .pain-radar .tbl td.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+.pain-radar .tbl td { padding: 13px 14px; border-top: 1px solid var(--border); }
+.pain-radar .tbl tbody tr { transition: background var(--t-fast); }
+.pain-radar .tbl tbody tr:hover { background: var(--surface-2); }
+.pain-radar .tbl .ch-name { display: flex; align-items: center; gap: 11px; font-weight: 550; }
+
+.pain-radar .minibar { display: flex; align-items: flex-end; gap: 2px; height: 22px; }
+.pain-radar .minibar i { width: 3px; border-radius: 2px; background: var(--accent-line); }
+
+.pain-radar .meter { height: 7px; border-radius: 4px; background: var(--surface-3); overflow: hidden; }
+.pain-radar .meter i { display: block; height: 100%; border-radius: 4px; background: var(--accent); transition: width var(--t-slow) var(--ease-out); }
+
+.pain-radar .metric { display: flex; flex-direction: column; gap: 0; position: relative; overflow: hidden; }
+.pain-radar .metric .m-top { display: flex; align-items: center; justify-content: space-between; }
+.pain-radar .metric .m-icon { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; background: var(--surface-2); color: var(--text-2); }
+.pain-radar .metric .m-label { font-size: 12.5px; color: var(--text-2); font-weight: 500; margin-top: 16px; }
+.pain-radar .metric .m-value { font-size: 30px; font-weight: 650; letter-spacing: -0.02em; margin-top: 5px; font-variant-numeric: tabular-nums; }
+.pain-radar .metric .m-delta { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; margin-top: 8px; }
+.pain-radar .metric .m-delta.up { color: var(--ok); }
+.pain-radar .metric .m-delta.down { color: var(--bad); }
+.pain-radar .metric .m-delta span { color: var(--text-3); font-weight: 500; }
+
+/* grids */
+.pain-radar .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gap); }
+.pain-radar .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); }
+.pain-radar .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--gap); }
+.pain-radar .span-2 { grid-column: span 2; }
+.pain-radar .row { display: flex; gap: var(--gap); }
+.pain-radar .stack { display: flex; flex-direction: column; gap: var(--gap); }
+/* let wide children (tables, long tokens) scroll inside instead of blowing out the track */
+.pain-radar .grid-2 > *, .pain-radar .grid-3 > *, .pain-radar .grid-4 > *, .pain-radar .row > *, .pain-radar .stack > *, .pain-radar.dash .ed-split > * { min-width: 0; }
+.pain-radar .section-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.pain-radar .section-sub { font-size: 12.5px; color: var(--text-2); margin: 3px 0 0; }
+.pain-radar .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; gap: 12px; }
+
+/* ---- Traction loop strip (legacy/shared) ---- */
+.pain-radar .loop { display: flex; align-items: stretch; gap: 0; }
+.pain-radar .loop-step { flex: 1; display: flex; align-items: center; gap: 13px; padding: 4px 0; position: relative; }
+.pain-radar .loop-node {
+  width: 38px; height: 38px; border-radius: 11px; flex: none; display: grid; place-items: center;
+  border: 1px solid var(--border-2); background: var(--surface); color: var(--text-3);
+  transition: all var(--t-base) var(--ease);
+}
+.pain-radar .loop-step.done .loop-node { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.pain-radar .loop-step.active .loop-node { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.pain-radar .loop-txt b { display: block; font-size: 13px; font-weight: 600; }
+.pain-radar .loop-txt small { font-size: 11.5px; color: var(--text-3); }
+
+/* ---- Activity feed + marquee ---- */
+.pain-radar .feed { display: flex; flex-direction: column; }
+.pain-radar .feed-item { display: flex; gap: 13px; padding: 13px 0; border-top: 1px solid var(--border); }
+.pain-radar .feed-item:first-child { border-top: 0; }
+.pain-radar .feed-ic { width: 32px; height: 32px; border-radius: 9px; flex: none; display: grid; place-items: center; }
+.pain-radar .feed-body { flex: 1; min-width: 0; }
+.pain-radar .feed-body p { margin: 0; font-size: 13px; line-height: 1.45; }
+.pain-radar .feed-body p b { font-weight: 600; }
+.pain-radar .feed-time { font-size: 11.5px; color: var(--text-3); margin-top: 3px; font-family: var(--font-mono); }
+
+.pain-radar .marquee { position: relative; overflow: hidden; -webkit-mask: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.pain-radar .marquee-track { display: flex; gap: 12px; width: max-content; animation: pr-marq calc(var(--marq-dur, 36s) / (var(--mo) + .25)) linear infinite; }
+.pain-radar .marquee:hover .marquee-track { animation-play-state: paused; }
+@keyframes pr-marq { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.pain-radar .marq-pill { display: flex; align-items: center; gap: 9px; padding: 8px 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); font-size: 12.5px; white-space: nowrap; }
+.pain-radar .marq-pill .live-dot { width: 7px; height: 7px; }
+
+/* ---- Gauge / Funnel ---- */
+.pain-radar .gauge-wrap { position: relative; display: grid; place-items: center; }
+.pain-radar .gauge-val { position: absolute; text-align: center; }
+.pain-radar .gauge-val b { font-size: 38px; font-weight: 680; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; display: block; line-height: 1; }
+.pain-radar .gauge-val small { font-size: 11.5px; color: var(--text-2); }
+.pain-radar .gauge-arc { transition: stroke-dashoffset var(--t-slow) var(--ease-out); }
+
+.pain-radar .funnel { display: flex; flex-direction: column; gap: 12px; }
+.pain-radar .funnel-row { display: grid; grid-template-columns: 150px 1fr; align-items: center; gap: 16px; }
+.pain-radar .funnel-meta { display: flex; flex-direction: column; min-width: 0; }
+.pain-radar .funnel-meta b { font-size: 13px; font-weight: 600; }
+.pain-radar .funnel-meta small { font-size: 11px; color: var(--text-3); }
+.pain-radar .funnel-bar-wrap { position: relative; height: 44px; border-radius: 10px; background: var(--surface-2); overflow: hidden; }
+.pain-radar .funnel-bar { height: 100%; border-radius: 10px; display: flex; align-items: center; padding: 0 14px; color: #fff; font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums; width: 0; transition: width var(--t-slow) var(--ease-out); }
+
+/* ---- ICP / persona ---- */
+.pain-radar .field { display: flex; flex-direction: column; gap: 7px; }
+.pain-radar .field label { font-size: 12px; font-weight: 600; color: var(--text-2); }
+.pain-radar .input, .pain-radar .select {
+  height: var(--row-h); padding: 0 13px; border-radius: 10px;
+  border: 1px solid var(--border-2); background: var(--surface-2);
+  color: var(--text); font: inherit; font-size: 13.5px; outline: none; width: 100%;
+  transition: border-color var(--t-fast), background var(--t-fast), box-shadow var(--t-fast);
+}
+.pain-radar .input:focus, .pain-radar .select:focus { border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 3px var(--accent-soft); }
+.pain-radar textarea.input { height: auto; padding: 11px 13px; resize: vertical; line-height: 1.5; }
+
+.pain-radar .persona-card { position: relative; overflow: hidden; }
+.pain-radar .persona-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.pain-radar .persona-av { width: 46px; height: 46px; border-radius: 13px; flex: none; display: grid; place-items: center; font-weight: 650; color: #fff; font-size: 16px; }
+.pain-radar .persona-rows { display: flex; flex-direction: column; gap: 1px; }
+.pain-radar .persona-attr { display: grid; grid-template-columns: 130px 1fr; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border); font-size: 13px; }
+.pain-radar .persona-attr:first-child { border-top: 0; }
+.pain-radar .persona-attr .pa-k { color: var(--text-3); display: flex; align-items: center; gap: 8px; }
+.pain-radar .persona-attr .pa-v { font-weight: 500; }
+
+.pain-radar .stackcards { position: relative; height: 300px; }
+.pain-radar .stackcard {
+  position: absolute; inset: 0; border-radius: var(--radius);
+  background: var(--surface); border: 1px solid var(--border-2);
+  padding: 22px; box-shadow: var(--shadow-1);
+  transition: transform var(--t-base) var(--ease), opacity var(--t-base) var(--ease);
+  cursor: grab; user-select: none; touch-action: none;
+}
+.pain-radar .stackcard:active { cursor: grabbing; }
+
+/* ---- Channels ---- */
+.pain-radar .filter-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 22px; }
+.pain-radar .filter-pill {
+  height: 34px; padding: 0 14px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface);
+  font-size: 12.5px; font-weight: 500; color: var(--text-2);
+  display: inline-flex; align-items: center; gap: 7px;
+  transition: all var(--t-fast) var(--ease);
+}
+.pain-radar .filter-pill:hover { border-color: var(--border-2); color: var(--text); }
+.pain-radar .filter-pill.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+.pain-radar .channel-card { display: flex; flex-direction: column; gap: 14px; cursor: pointer; transition: transform var(--t-fast) var(--ease), border-color var(--t-fast), box-shadow var(--t-fast); }
+.pain-radar .channel-card:hover { transform: translateY(-3px); border-color: var(--border-2); box-shadow: var(--shadow-pop); }
+.pain-radar .channel-top { display: flex; align-items: flex-start; gap: 12px; }
+.pain-radar .channel-logo { width: 42px; height: 42px; border-radius: 11px; flex: none; display: grid; place-items: center; color: #fff; font-weight: 700; }
+.pain-radar .channel-name b { font-size: 14.5px; font-weight: 600; display: block; }
+.pain-radar .channel-name small { font-size: 11.5px; color: var(--text-3); }
+.pain-radar .density-stat { display: flex; flex-direction: column; gap: 6px; }
+.pain-radar .density-stat .ds-top { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--text-2); }
+.pain-radar .density-stat .ds-top b { color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* ---- Email sequence ---- */
+.pain-radar .seq { display: flex; flex-direction: column; align-items: stretch; }
+.pain-radar .seq-step { display: flex; gap: 18px; }
+.pain-radar .seq-rail { display: flex; flex-direction: column; align-items: center; width: 40px; flex: none; }
+.pain-radar .seq-num { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); font-weight: 650; font-size: 13px; flex: none; z-index: 1; }
+.pain-radar .seq-line { width: 2px; flex: 1; background: repeating-linear-gradient(var(--border-2) 0 5px, transparent 5px 11px); position: relative; min-height: 26px; }
+.pain-radar .seq-line::after { content: ""; position: absolute; left: -1px; right: -1px; top: 0; height: 0; background: var(--accent); animation: pr-seqDraw var(--t-slow) var(--ease-out) forwards; }
+.pain-radar .no-anim .seq-line::after { display: none; }
+@keyframes pr-seqDraw { to { height: 100%; } }
+.pain-radar .seq-card { flex: 1; min-width: 0; margin-bottom: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; transition: border-color var(--t-fast), box-shadow var(--t-fast); }
+.pain-radar .seq-card:hover { border-color: var(--border-2); box-shadow: var(--shadow-1); }
+.pain-radar .seq-card .sc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 10px; }
+.pain-radar .seq-card .sc-stage { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); }
+.pain-radar .seq-card .sc-subj { font-size: 14px; font-weight: 600; }
+.pain-radar .seq-card .sc-prev { font-size: 12.5px; color: var(--text-2); margin-top: 4px; line-height: 1.45; }
+.pain-radar .seq-add { display: flex; align-items: center; gap: 10px; padding: 11px 18px; border: 1px dashed var(--border-2); border-radius: var(--radius); color: var(--text-2); cursor: pointer; font-size: 13px; font-weight: 500; transition: border-color var(--t-fast), color var(--t-fast); }
+.pain-radar .seq-add:hover { border-color: var(--accent); color: var(--accent); }
+
+.pain-radar .check-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid var(--border); gap: 12px; }
+.pain-radar .check-row:first-child { border-top: 0; }
+.pain-radar .check-row .cr-name { display: flex; align-items: center; gap: 11px; font-size: 13.5px; font-weight: 500; min-width: 0; }
+.pain-radar .check-ic { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; flex: none; }
+
+.pain-radar .switch { position: relative; width: 40px; height: 23px; border: 0; border-radius: 999px; background: var(--border-2); cursor: pointer; padding: 0; flex: none; transition: background var(--t-fast); }
+.pain-radar .switch[data-on="1"] { background: var(--accent); }
+.pain-radar .switch i { position: absolute; top: 2.5px; left: 2.5px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .3); transition: transform var(--t-fast) var(--ease); }
+.pain-radar .switch[data-on="1"] i { transform: translateX(17px); }
+
+/* ---- Content calendar ---- */
+.pain-radar .cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+.pain-radar .cal-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.pain-radar .cal-day { text-align: center; padding: 8px 0; border-radius: 9px; background: var(--surface-2); }
+.pain-radar .cal-day b { font-size: 16px; font-weight: 650; display: block; }
+.pain-radar .cal-day small { font-size: 10.5px; color: var(--text-3); text-transform: uppercase; letter-spacing: .04em; }
+.pain-radar .cal-day.today { background: var(--accent-soft); }
+.pain-radar .cal-day.today b { color: var(--accent); }
+.pain-radar .cal-item { padding: 9px 11px; border-radius: 9px; font-size: 11.5px; line-height: 1.35; cursor: pointer; border-left: 3px solid; background: var(--surface-2); transition: transform var(--t-fast); }
+.pain-radar .cal-item:hover { transform: scale(1.03); }
+.pain-radar .cal-item b { font-weight: 600; display: block; }
+.pain-radar .cal-item small { color: var(--text-3); }
+
+.pain-radar .repurpose-out { display: flex; flex-direction: column; gap: 9px; }
+.pain-radar .repurpose-pill { display: flex; align-items: center; gap: 11px; padding: 11px 13px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); font-size: 12.5px; }
+
+.pain-radar .matrix { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.pain-radar .matrix th { padding: 10px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-3); font-weight: 600; text-align: center; }
+.pain-radar .matrix th:first-child { text-align: left; }
+.pain-radar .matrix td { padding: 10px; text-align: center; border-top: 1px solid var(--border); }
+.pain-radar .matrix td:first-child { text-align: left; font-weight: 600; }
+.pain-radar .mx-cell { width: 26px; height: 26px; border-radius: 7px; display: inline-grid; place-items: center; }
+
+/* ---- Settings ---- */
+.pain-radar .connector-row { display: flex; align-items: center; gap: 14px; padding: 16px 0; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.pain-radar .connector-row:first-child { border-top: 0; }
+.pain-radar .connector-logo { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 13px; flex: none; }
+.pain-radar .connector-meta { flex: 1; min-width: 140px; }
+.pain-radar .connector-meta b { font-size: 14px; font-weight: 600; display: block; }
+.pain-radar .connector-meta small { font-size: 12px; color: var(--text-2); }
+.pain-radar .member-row { display: flex; align-items: center; gap: 13px; padding: 14px 0; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.pain-radar .member-row:first-child { border-top: 0; }
+.pain-radar .key-field { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 12.5px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 13px; }
+.pain-radar .key-field code { flex: 1; min-width: 0; color: var(--text-2); letter-spacing: .04em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.pain-radar .ph {
+  border-radius: var(--radius); border: 1px dashed var(--border-2);
+  background-image: repeating-linear-gradient(45deg, var(--grid-line) 0 10px, transparent 10px 20px);
+  display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: 11.5px; color: var(--text-3);
+}
+
+/* ---- utility ---- */
+.pain-radar .muted { color: var(--text-2); }
+.pain-radar .faint { color: var(--text-3); }
+.pain-radar .mono { font-family: var(--font-mono); }
+.pain-radar .tnum { font-variant-numeric: tabular-nums; }
+.pain-radar .divider { height: 1px; background: var(--border); margin: 4px 0; }
+.pain-radar .scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, .18); z-index: 40; animation: pr-fade var(--t-fast) ease both; }
+@keyframes pr-fade { from { opacity: 0; } to { opacity: 1; } }
+.pain-radar .pop {
+  position: absolute; z-index: 50; background: var(--surface);
+  border: 1px solid var(--border-2); border-radius: 13px;
+  box-shadow: var(--shadow-pop); padding: 7px; min-width: 230px;
+  animation: pr-popIn var(--t-fast) var(--ease-out) both;
+}
+@keyframes pr-popIn { from { opacity: 0; transform: translateY(-6px) scale(.97); } to { opacity: 1; transform: none; } }
+.pain-radar .pop-item { display: flex; align-items: center; gap: 11px; padding: 9px 10px; border-radius: 9px; cursor: pointer; font-size: 13px; }
+.pain-radar .pop-item:hover { background: var(--surface-2); }
+.pain-radar .pop-item.active { background: var(--surface-2); }
+
+.pain-radar .anim-on .rise { animation: pr-rise var(--t-base) var(--ease-out) both; }
+@keyframes pr-rise { from { opacity: 0; transform: translateY(calc(14px * var(--mo))); } to { opacity: 1; transform: none; } }
+
+/* range input accent */
+.pain-radar .twk-slider { appearance: none; -webkit-appearance: none; width: 100%; height: 5px; border-radius: 999px; background: var(--surface-3); outline: none; accent-color: var(--accent); }
+.pain-radar .twk-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; }
+.pain-radar .twk-slider::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 50%; background: var(--accent); cursor: pointer; }
+
+/* ============================================================
+   EDITORIAL DASHBOARD (AskPhill / Amsterdam-studio)
+   Scoped to .pain-radar.dash; token-driven so dark mode keeps working.
+   ============================================================ */
+.pain-radar.dash {
+  --ed-font: "Inter Tight", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --r: 4px;
+  --paper: #fafaf8;
+  --ink: #16150e;
+  --ink-2: #56544a;
+  --hair: #e3e0d4;
+  --hair-strong: #d3cfc0;
+
+  --blk-green: oklch(0.86 0.16 142); --ink-green: oklch(0.33 0.07 150);
+  --blk-clay: oklch(0.83 0.10 62); --ink-clay: oklch(0.35 0.06 55);
+  --blk-sky: oklch(0.85 0.075 240); --ink-sky: oklch(0.36 0.07 250);
+  --blk-cream: #efe9da; --ink-cream: #2a2620;
+  --blk-ink: #16150e; --ink-onink: #f3f0e5;
+
+  font-family: var(--ed-font);
+  letter-spacing: -0.01em;
+}
+.pain-radar[data-theme="dark"] .dash,
+[data-theme="dark"] .pain-radar.dash,
+.dark .pain-radar.dash {
+  --paper: #0b0b09;
+  --ink: #f2efe4;
+  --ink-2: #9a978b;
+  --hair: #24221b;
+  --hair-strong: #322f26;
+  --blk-green: oklch(0.80 0.17 144); --ink-green: oklch(0.22 0.06 150);
+  --blk-clay: oklch(0.78 0.11 58); --ink-clay: oklch(0.22 0.05 50);
+  --blk-sky: oklch(0.80 0.09 242); --ink-sky: oklch(0.22 0.05 250);
+  --blk-cream: #1b1a14; --ink-cream: #e7e2d4;
+  --blk-ink: #f2efe4; --ink-onink: #0b0b09;
+}
+
+.pain-radar.dash .ed-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; padding: 6px 0 30px; margin-bottom: 30px; border-bottom: 1.5px solid var(--ink); flex-wrap: wrap; }
+.pain-radar.dash .ed-head > div:first-child { flex: 1 1 320px; min-width: 0; }
+.pain-radar.dash .ed-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2); }
+.pain-radar.dash .ed-headline { font-family: var(--ed-font); font-size: clamp(32px, 4.4vw, 56px); font-weight: 600; letter-spacing: -0.035em; line-height: 0.98; margin: 14px 0 0; color: var(--ink); }
+.pain-radar.dash .ed-headline em { font-style: normal; color: var(--accent); }
+.pain-radar.dash .ed-subline { font-size: 14px; color: var(--ink-2); margin: 14px 0 0; max-width: 52ch; line-height: 1.5; }
+.pain-radar.dash .ed-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.pain-radar.dash .ed-btn { display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: var(--r); font-family: var(--ed-font); font-size: 13.5px; font-weight: 600; letter-spacing: -0.01em; cursor: pointer; border: 1.5px solid var(--ink); background: transparent; color: var(--ink); white-space: nowrap; transition: transform var(--t-fast) var(--ease), background var(--t-fast); }
+.pain-radar.dash .ed-btn svg { width: 16px; height: 16px; }
+.pain-radar.dash .ed-btn:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); }
+.pain-radar.dash .ed-btn.solid { background: var(--ink); color: var(--paper); }
+.pain-radar.dash .ed-btn.solid:hover { transform: translateY(-2px); background: var(--ink); }
+.pain-radar.dash .ed-btn:active { transform: scale(.97); }
+
+.pain-radar.dash .ed-bento { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 1fr; gap: 14px; }
+.pain-radar.dash .ed-card { border-radius: var(--r); padding: 24px; position: relative; overflow: hidden; display: flex; flex-direction: column; transition: transform var(--t-fast) var(--ease-out), box-shadow var(--t-fast) var(--ease-out); }
+.pain-radar.dash .ed-card:hover { transform: translateY(-4px); }
+
+.pain-radar.dash .blk-green { --blk: var(--blk-green); --blkink: var(--ink-green); background: var(--blk); color: var(--blkink); }
+.pain-radar.dash .blk-clay { --blk: var(--blk-clay); --blkink: var(--ink-clay); background: var(--blk); color: var(--blkink); }
+.pain-radar.dash .blk-sky { --blk: var(--blk-sky); --blkink: var(--ink-sky); background: var(--blk); color: var(--blkink); }
+.pain-radar.dash .blk-cream { --blk: var(--blk-cream); --blkink: var(--ink-cream); background: var(--blk); color: var(--blkink); }
+.pain-radar.dash .blk-ink { --blk: var(--blk-ink); --blkink: var(--ink-onink); background: var(--blk); color: var(--blkink); }
+
+.pain-radar.dash .ed-hero { grid-column: span 2; grid-row: span 2; padding: 30px; }
+.pain-radar.dash .ed-hero .ed-c-eyebrow { font-size: 12px; }
+.pain-radar.dash .ed-hero .ed-c-value { font-size: clamp(64px, 8vw, 104px); }
+.pain-radar.dash .ed-hero .ed-hero-foot { margin-top: auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding-top: 24px; flex-wrap: wrap; }
+
+.pain-radar.dash .ed-wide { grid-column: span 2; }
+
+.pain-radar.dash .ed-c-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pain-radar.dash .ed-c-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; opacity: .72; }
+.pain-radar.dash .ed-c-ic { width: 32px; height: 32px; border-radius: 999px; display: grid; place-items: center; border: 1.5px solid currentColor; opacity: .85; flex: none; }
+.pain-radar.dash .ed-c-value { font-family: var(--ed-font); font-weight: 600; letter-spacing: -0.035em; line-height: 0.86; font-variant-numeric: tabular-nums; font-size: clamp(46px, 4.4vw, 62px); margin-top: 10px; }
+.pain-radar.dash .ed-c-mid { flex: 1; }
+.pain-radar.dash .ed-c-foot { margin-top: 18px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pain-radar.dash .ed-delta { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 650; font-variant-numeric: tabular-nums; padding: 4px 9px; border-radius: 999px; background: color-mix(in srgb, currentColor 14%, transparent); }
+.pain-radar.dash .ed-delta svg { width: 13px; height: 13px; }
+.pain-radar.dash .ed-c-cap { font-size: 12px; font-weight: 500; opacity: .7; }
+
+.pain-radar.dash .ed-spark { display: flex; align-items: flex-end; gap: 3px; height: 38px; }
+.pain-radar.dash .ed-hero .ed-spark { height: 60px; gap: 5px; }
+.pain-radar.dash .ed-spark i { flex: 1; border-radius: 1px; background: color-mix(in srgb, currentColor 32%, transparent); }
+.pain-radar.dash .ed-spark i.hot { background: currentColor; }
+
+.pain-radar.dash .ed-zone { margin-top: 38px; }
+.pain-radar.dash .ed-zone-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding-bottom: 16px; margin-bottom: 18px; border-bottom: 1px solid var(--hair-strong); flex-wrap: wrap; }
+.pain-radar.dash .ed-zone-title { font-family: var(--ed-font); font-size: 21px; font-weight: 600; letter-spacing: -0.025em; color: var(--ink); margin: 0; }
+.pain-radar.dash .ed-zone-num { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2); }
+
+.pain-radar.dash .ed-loop { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; }
+.pain-radar.dash .ed-lstep { position: relative; padding: 0 18px 0 0; }
+.pain-radar.dash .ed-lstep-rule { display: flex; align-items: center; gap: 0; margin-bottom: 18px; }
+.pain-radar.dash .ed-lnum { font-family: var(--ed-font); font-size: 16px; font-weight: 650; letter-spacing: -0.02em; width: 46px; height: 46px; border-radius: 999px; display: grid; place-items: center; flex: none; font-variant-numeric: tabular-nums; border: 1.5px solid var(--hair-strong); color: var(--ink-2); background: transparent; }
+.pain-radar.dash .ed-lstep.done .ed-lnum { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.pain-radar.dash .ed-lstep.active .ed-lnum { border-color: var(--accent); color: var(--accent); border-width: 2px; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent); }
+.pain-radar.dash .ed-lbar { flex: 1; height: 2px; background: var(--hair-strong); }
+.pain-radar.dash .ed-lstep.done .ed-lbar { background: var(--ink); }
+.pain-radar.dash .ed-lstep:last-child .ed-lbar { display: none; }
+.pain-radar.dash .ed-lstep-label { font-family: var(--ed-font); font-size: 15px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
+.pain-radar.dash .ed-lstep.pending .ed-lstep-label { color: var(--ink-2); }
+.pain-radar.dash .ed-lstep-sub { font-size: 12px; color: var(--ink-2); margin-top: 4px; }
+.pain-radar.dash .ed-lstep-tag { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 9px; display: inline-block; }
+.pain-radar.dash .ed-lstep.done .ed-lstep-tag { color: var(--accent); }
+.pain-radar.dash .ed-lstep.active .ed-lstep-tag { color: var(--accent); }
+.pain-radar.dash .ed-lstep.pending .ed-lstep-tag { color: var(--ink-2); opacity: .7; }
+
+.pain-radar.dash .ed-ticker { border-top: 1px solid var(--hair-strong); border-bottom: 1px solid var(--hair-strong); padding: 13px 0; margin-top: 26px; }
+.pain-radar.dash .ed-ticker .marquee-track { gap: 0; }
+.pain-radar.dash .ed-tpill { display: inline-flex; align-items: center; gap: 10px; padding: 0 26px; font-size: 11.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); white-space: nowrap; border-right: 1px solid var(--hair-strong); }
+.pain-radar.dash .ed-tpill .d { width: 7px; height: 7px; border-radius: 999px; flex: none; }
+
+.pain-radar.dash .ed-split { display: grid; grid-template-columns: 1.7fr 1fr; gap: 38px; align-items: start; }
+
+.pain-radar.dash .ed-table-wrap { overflow-x: auto; }
+.pain-radar.dash .ed-table { width: 100%; border-collapse: collapse; min-width: 460px; }
+.pain-radar.dash .ed-table th { text-align: left; font-size: 10.5px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-2); padding: 0 12px 14px; border-bottom: 1.5px solid var(--ink); }
+.pain-radar.dash .ed-table th.r, .pain-radar.dash .ed-table td.r { text-align: right; font-variant-numeric: tabular-nums; }
+.pain-radar.dash .ed-table td { padding: 18px 12px; border-bottom: 1px solid var(--hair); font-size: 14px; color: var(--ink); vertical-align: middle; }
+.pain-radar.dash .ed-table tbody tr { transition: background var(--t-fast); }
+.pain-radar.dash .ed-table tbody tr:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.pain-radar.dash .ed-table .ed-ch { display: flex; align-items: center; gap: 13px; }
+.pain-radar.dash .ed-table .ed-ch-mark { width: 34px; height: 34px; border-radius: var(--r); display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 12px; flex: none; }
+.pain-radar.dash .ed-table .ed-ch b { font-weight: 600; font-size: 14.5px; display: block; letter-spacing: -0.01em; }
+.pain-radar.dash .ed-table .ed-ch small { font-size: 11.5px; color: var(--ink-2); }
+.pain-radar.dash .ed-table .ed-num-big { font-size: 16px; font-weight: 650; letter-spacing: -0.02em; }
+.pain-radar.dash .ed-conv { display: inline-flex; align-items: center; gap: 7px; justify-content: flex-end; }
+.pain-radar.dash .ed-conv-bar { width: 46px; height: 5px; border-radius: 0; background: var(--hair-strong); overflow: hidden; }
+.pain-radar.dash .ed-conv-bar i { display: block; height: 100%; background: var(--accent); }
+
+.pain-radar.dash .ed-timeline { position: relative; padding-left: 4px; }
+.pain-radar.dash .ed-tl-item { position: relative; display: grid; grid-template-columns: 22px 1fr; gap: 14px; padding-bottom: 22px; }
+.pain-radar.dash .ed-tl-item:last-child { padding-bottom: 0; }
+.pain-radar.dash .ed-tl-rail { position: relative; display: flex; justify-content: center; }
+.pain-radar.dash .ed-tl-dot { width: 11px; height: 11px; border-radius: 999px; margin-top: 4px; border: 2px solid var(--paper); box-shadow: 0 0 0 1.5px currentColor; z-index: 1; flex: none; }
+.pain-radar.dash .ed-tl-line { position: absolute; top: 16px; bottom: -22px; width: 1.5px; background: var(--hair); left: 50%; transform: translateX(-50%); }
+.pain-radar.dash .ed-tl-item:last-child .ed-tl-line { display: none; }
+.pain-radar.dash .ed-tl-body { min-width: 0; }
+.pain-radar.dash .ed-tl-body p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink); }
+.pain-radar.dash .ed-tl-body p b { font-weight: 650; }
+.pain-radar.dash .ed-tl-time { font-family: var(--font-mono); font-size: 11px; color: var(--ink-2); margin-top: 5px; letter-spacing: 0.02em; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+/* Tablet / small desktop: collapse the sidebar to icon rail */
+@media (max-width: 1080px) and (min-width: 769px) {
+  .pain-radar .sidebar:not(.collapsed) { width: 72px; }
+  .pain-radar .sidebar:not(.collapsed) .nav-txt,
+  .pain-radar .sidebar:not(.collapsed) .nav-label,
+  .pain-radar .sidebar:not(.collapsed) .brand-name,
+  .pain-radar .sidebar:not(.collapsed) .upgrade-card { display: none; }
+  .pain-radar .sidebar:not(.collapsed) .brand { justify-content: center; }
+  .pain-radar .sidebar:not(.collapsed) .nav-item { justify-content: center; }
+  .pain-radar .sidebar:not(.collapsed) .nav-item.active::before { display: none; }
+  .pain-radar .sidebar:not(.collapsed) .nav-item .badge-dot { display: none; }
+  .pain-radar .sidebar:not(.collapsed) .nav-group-head { display: none; }
+  .pain-radar .sidebar:not(.collapsed) .nav-group-body { display: flex; }
+  .pain-radar .sidebar:not(.collapsed) .nav-group-body > div { overflow: visible; }
+  .pain-radar .topbar-search { display: none; }
+  .pain-radar .search-btn { display: grid; }
+}
+
+/* Mobile: sidebar becomes an off-canvas drawer */
+@media (max-width: 768px) {
+  .pain-radar .app-root { grid-template-columns: 1fr; }
+  .pain-radar .sidebar {
+    position: fixed; top: 0; bottom: 0; left: 0;
+    width: 270px; max-width: 84vw;
+    transform: translateX(-102%);
+    box-shadow: var(--shadow-pop);
+    transition: transform var(--t-base) var(--ease);
+  }
+  .pain-radar .sidebar.drawer-open { transform: translateX(0); }
+  /* never icon-collapse inside the drawer — restore the full-text layout */
+  .pain-radar .sidebar.collapsed { width: 270px; }
+  .pain-radar .sidebar.collapsed .nav-txt, .pain-radar .sidebar.collapsed .brand-name { display: inline; }
+  .pain-radar .sidebar.collapsed .nav-label, .pain-radar .sidebar.collapsed .upgrade-card { display: block; }
+  .pain-radar .sidebar.collapsed .brand { justify-content: flex-start; }
+  .pain-radar .sidebar.collapsed .nav-item { justify-content: flex-start; }
+  .pain-radar .sidebar.collapsed .nav-item.active::before { display: block; }
+  /* Restore accordion in full-width phone drawer */
+  .pain-radar .sidebar.collapsed .nav-group-head { display: flex; }
+  .pain-radar .sidebar.collapsed .nav-group-body { display: grid; }
+  .pain-radar .drawer-scrim { display: block; position: fixed; inset: 0; background: rgba(0, 0, 0, .4); z-index: 25; animation: pr-fade var(--t-fast) ease both; }
+  .pain-radar .topbar { padding: 0 16px; gap: 10px; }
+  .pain-radar .topbar-search { display: none; }
+  .pain-radar .search-btn { display: grid; }
+  .pain-radar .org-meta { display: none; }
+  .pain-radar.screen { padding: 22px 16px 64px; }
+}
+
+/* tiered grid collapse so cards never crush on tablet */
+@media (max-width: 1024px) { .pain-radar .grid-4 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 960px) { .pain-radar .grid-3 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 700px) {
+  .pain-radar .grid-4, .pain-radar .grid-3, .pain-radar .grid-2 { grid-template-columns: 1fr; }
+  .pain-radar .span-2 { grid-column: span 1; }
+}
+
+/* calendar: swipeable horizontal scroll on small screens */
+@media (max-width: 720px) {
+  .pain-radar .cal { grid-template-columns: repeat(7, minmax(130px, 1fr)); overflow-x: auto; padding-bottom: 8px; scrollbar-width: thin; }
+}
+
+@media (max-width: 1080px) {
+  .pain-radar.dash .ed-bento { grid-template-columns: repeat(2, 1fr); }
+  .pain-radar.dash .ed-hero { grid-column: span 2; grid-row: span 1; }
+  .pain-radar.dash .ed-wide { grid-column: span 2; }
+  .pain-radar.dash .ed-split { grid-template-columns: 1fr; gap: 28px; }
+  .pain-radar.dash .ed-loop { grid-template-columns: 1fr 1fr; gap: 22px 18px; }
+  .pain-radar.dash .ed-lstep:nth-child(even) { padding-right: 0; }
+}
+
+@media (max-width: 640px) {
+  .pain-radar.dash .ed-bento { grid-template-columns: 1fr; }
+  .pain-radar.dash .ed-hero, .pain-radar.dash .ed-wide { grid-column: span 1; }
+  .pain-radar.dash .ed-loop { grid-template-columns: 1fr; }
+  .pain-radar.dash .ed-head { gap: 18px; }
+  .pain-radar.dash .ed-actions { width: 100%; }
+}
+
+/* Small phones: stop tabular metric values from overflowing */
+@media (max-width: 380px) {
+  .pain-radar .metric .m-value { font-size: 26px; }
+  .pain-radar.screen { padding: 18px 12px 56px; }
+}
+
+/* ============================================================
+   PAIN RADAR — app-specific additions
+   ============================================================ */
+.pain-radar .topbar-eyebrow {
+  font-size: 11px; font-weight: 600; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--text-3); white-space: nowrap;
+}
+@media (max-width: 768px) { .pain-radar .topbar-eyebrow { display: none; } }
+
+.pain-radar .spin { animation: pr-spin 0.9s linear infinite; }
+@keyframes pr-spin { to { transform: rotate(360deg); } }
+
+/* mention card (theme detail) */
+.pain-radar .mention { display: flex; flex-direction: column; gap: 10px; transition: border-color var(--t-fast), box-shadow var(--t-fast); }
+.pain-radar .mention:hover { border-color: var(--border-2); box-shadow: var(--shadow-1); }
+.pain-radar .mention-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.pain-radar .mention-title { font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.4; color: var(--text); text-decoration: none; display: inline-flex; align-items: flex-start; gap: 6px; }
+.pain-radar .mention-title:hover { color: var(--accent); }
+.pain-radar .mention-title svg { margin-top: 3px; flex: none; opacity: 0; transition: opacity var(--t-fast); }
+.pain-radar .mention-title:hover svg { opacity: 1; }
+.pain-radar .mention-body { font-size: 13px; color: var(--text-2); line-height: 1.55; margin: 0; }
+.pain-radar .mention-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; font-size: 11.5px; color: var(--text-3); }
+.pain-radar .mention-foot .mf-stat { display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
+.pain-radar .kw-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pain-radar .kw-chip { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2); }
+
+/* intensity meter inline */
+.pain-radar .intensity { display: inline-flex; align-items: center; gap: 8px; min-width: 120px; }
+.pain-radar .intensity .bar { flex: 1; height: 6px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+.pain-radar .intensity .bar i { display: block; height: 100%; border-radius: 999px; background: var(--accent); transition: width var(--t-slow) var(--ease-out); }
+.pain-radar .intensity .pct { font-size: 11.5px; color: var(--text-3); font-variant-numeric: tabular-nums; width: 26px; text-align: right; }
+
+/* themes funnel link rows */
+.pain-radar .theme-row { text-decoration: none; color: inherit; display: block; border-radius: var(--radius-sm); transition: background var(--t-fast); }
+.pain-radar .theme-row:hover { background: var(--surface-2); }
+
+/* empty state */
+.pain-radar .empty { border: 1px dashed var(--border-2); border-radius: var(--radius); padding: 56px 24px; text-align: center; }
+.pain-radar .empty b { font-size: 16px; font-weight: 600; }
+.pain-radar .empty p { color: var(--text-2); font-size: 13.5px; margin: 8px 0 0; }
+
+/* setup notice */
+.pain-radar .notice { border: 1px solid var(--accent-line); background: var(--accent-soft); border-radius: var(--radius); padding: 18px 20px; }
+.pain-radar .notice b { color: var(--accent); font-weight: 600; }
+.pain-radar .notice p, .pain-radar .notice ul { color: var(--text-2); font-size: 13px; line-height: 1.6; margin: 8px 0 0; }
+.pain-radar .notice code { font-family: var(--font-mono); font-size: 12px; color: var(--text); background: var(--surface-2); padding: 1px 5px; border-radius: 5px; }
+
+/* ============================================================
+   THESIS FLOW — build-thesis visualization
+   Lives on .thesis (also carries .dash so editorial tokens
+   ink, paper, hair, block colors and ed-font are in scope).
+   ============================================================ */
+.pain-radar.thesis .t-step { margin: 0; }
+.pain-radar.thesis .t-step-head { display: flex; gap: 18px; align-items: flex-start; margin-bottom: 18px; }
+.pain-radar.thesis .t-num {
+  flex: none; width: 46px; height: 46px; border-radius: 999px;
+  display: grid; place-items: center;
+  font-family: var(--ed-font); font-size: 18px; font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  background: var(--ink); color: var(--paper);
+}
+.pain-radar.thesis .t-step-meta { min-width: 0; }
+.pain-radar.thesis .t-step-top { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.pain-radar.thesis .t-step-title { font-family: var(--ed-font); font-size: 24px; font-weight: 600; letter-spacing: -0.025em; margin: 0; color: var(--ink); }
+.pain-radar.thesis .t-step-tag { font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.pain-radar.thesis .t-step-blurb { font-size: 13.5px; color: var(--ink-2); margin: 8px 0 0; max-width: 64ch; line-height: 1.55; }
+
+.pain-radar.thesis .t-card { border-radius: var(--r); padding: 30px; position: relative; overflow: hidden; }
+
+.pain-radar.thesis .t-connector { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; }
+.pain-radar.thesis .t-conn-line { width: 2px; height: 36px; background: repeating-linear-gradient(var(--hair-strong) 0 5px, transparent 5px 11px); }
+.pain-radar.thesis .t-connector svg { color: var(--ink-2); }
+
+/* ---- Step 1 · brainstorming web ---- */
+.pain-radar.thesis .t-web { position: relative; width: 100%; height: clamp(390px, 44vw, 480px); }
+.pain-radar.thesis .t-web-lines { position: absolute; inset: 0; overflow: visible; }
+.pain-radar.thesis .t-line { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-dasharray: 1; opacity: 0.26; }
+.pain-radar.thesis .t-line.on { stroke: var(--accent); opacity: 1; stroke-width: 2; }
+.pain-radar.thesis .t-line.dim { opacity: 0.1; }
+
+.pain-radar.thesis .t-node { position: absolute; }
+.pain-radar.thesis .t-center {
+  display: grid; place-items: center; text-align: center; line-height: 1.05;
+  width: 118px; height: 118px; border-radius: 999px;
+  background: var(--blkink); color: var(--blk);
+  font-family: var(--ed-font); font-weight: 600; font-size: 17px; letter-spacing: -0.02em;
+  box-shadow: 0 10px 28px color-mix(in srgb, #000 18%, transparent); z-index: 2;
+}
+.pain-radar.thesis .t-center span { display: block; }
+
+.pain-radar.thesis .t-sat {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 15px 8px 9px; border-radius: 999px; max-width: 200px; z-index: 2;
+  border: 1.5px solid color-mix(in srgb, currentColor 24%, transparent);
+  background: color-mix(in srgb, currentColor 8%, var(--blk));
+  box-shadow: 0 4px 14px color-mix(in srgb, #000 10%, transparent);
+}
+.pain-radar.thesis .t-sat.on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--blk));
+  box-shadow: 0 8px 22px color-mix(in srgb, #000 16%, transparent);
+}
+.pain-radar.thesis .t-sat.dim { opacity: 0.5; }
+.pain-radar.thesis .t-sat-ic {
+  width: 30px; height: 30px; border-radius: 999px; flex: none;
+  display: grid; place-items: center;
+  border: 1.5px solid color-mix(in srgb, currentColor 24%, transparent);
+}
+.pain-radar.thesis .t-sat.on .t-sat-ic { border-color: var(--accent); color: var(--accent); }
+.pain-radar.thesis .t-sat-tx { min-width: 0; }
+.pain-radar.thesis .t-sat-tx b { display: block; font-size: 13px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; }
+.pain-radar.thesis .t-sat-tx small { font-size: 11px; opacity: 0.7; }
+
+/* ---- Step 2 · feedback loop + stack ---- */
+.pain-radar.thesis .t-dev { display: grid; grid-template-columns: minmax(260px, 330px) 1fr; gap: 40px; align-items: center; }
+.pain-radar.thesis .t-loop { position: relative; width: 100%; max-width: 320px; aspect-ratio: 1; margin: 0 auto; }
+.pain-radar.thesis .t-loop-svg { position: absolute; inset: 0; width: 100%; height: 100%; color: var(--accent); overflow: visible; }
+.pain-radar.thesis .t-loop-arc { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-dasharray: 1; }
+.pain-radar.thesis .t-loop-node { position: absolute; width: 96px; display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; }
+.pain-radar.thesis .t-loop-ic { width: 40px; height: 40px; border-radius: 999px; display: grid; place-items: center; background: var(--blkink); color: var(--blk); margin-bottom: 3px; }
+.pain-radar.thesis .t-loop-node b { font-size: 13px; font-weight: 600; }
+.pain-radar.thesis .t-loop-node small { font-size: 10.5px; opacity: 0.72; line-height: 1.2; }
+.pain-radar.thesis .t-loop-hub {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.7;
+}
+.pain-radar.thesis .t-loop-hub svg { color: var(--accent); opacity: 0.9; }
+
+.pain-radar.thesis .t-stack-label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.7; margin-bottom: 14px; }
+.pain-radar.thesis .t-chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.pain-radar.thesis .t-chip {
+  display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 550; white-space: nowrap;
+  border: 1.5px solid color-mix(in srgb, currentColor 22%, transparent);
+  background: color-mix(in srgb, currentColor 7%, var(--blk));
+  transition: transform var(--t-fast) var(--ease), border-color var(--t-fast), background var(--t-fast);
+}
+.pain-radar.thesis .t-chip:hover { transform: translateY(-2px); border-color: var(--accent); }
+.pain-radar.thesis .t-chip svg { opacity: 0.8; flex: none; }
+
+/* ---- Step 3 · traction + scale ---- */
+.pain-radar.thesis .t-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+.pain-radar.thesis .t-ncard {
+  display: flex; flex-direction: column; gap: 5px; padding: 18px 16px; border-radius: var(--r);
+  border: 1.5px solid color-mix(in srgb, currentColor 16%, transparent);
+  background: color-mix(in srgb, currentColor 7%, var(--blk));
+  transition: transform var(--t-fast) var(--ease), border-color var(--t-fast);
+}
+.pain-radar.thesis .t-ncard:hover { transform: translateY(-4px); border-color: color-mix(in srgb, currentColor 55%, transparent); }
+.pain-radar.thesis .t-ncard-ic { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; background: var(--blkink); color: var(--blk); margin-bottom: 6px; }
+.pain-radar.thesis .t-ncard b { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+.pain-radar.thesis .t-ncard small { font-size: 11.5px; opacity: 0.72; line-height: 1.35; }
+
+@media (max-width: 860px) {
+  .pain-radar.thesis .t-dev { grid-template-columns: 1fr; gap: 26px; }
+  .pain-radar.thesis .t-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .pain-radar.thesis .t-grid { grid-template-columns: 1fr; }
+  .pain-radar.thesis .t-card { padding: 20px; }
+  .pain-radar.thesis .t-web { height: 430px; }
+  .pain-radar.thesis .t-sat-tx small { display: none; }
+}
+
+/* ---- Overview ---- */
+.pain-radar .ov-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.pain-radar .ov-card { display: flex; flex-direction: column; gap: 6px; padding: 18px; }
+.pain-radar .ov-eyebrow { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.pain-radar .ov-title { font-size: 19px; font-weight: 650; letter-spacing: -0.01em; }
+.pain-radar .ov-desc { font-size: 13px; color: var(--text-2); min-height: 36px; }
+.pain-radar .ov-stat { font-size: 30px; font-weight: 650; letter-spacing: -0.02em; margin-top: 6px; }
+.pain-radar .ov-stat-label { font-size: 12px; color: var(--text-3); margin-bottom: 12px; }
+.pain-radar .ov-card .ed-btn { align-self: flex-start; }
+@media (max-width: 900px) { .pain-radar .ov-grid { grid-template-columns: 1fr; } }

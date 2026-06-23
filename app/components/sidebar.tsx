@@ -29,6 +29,13 @@ const NAV_FITNESS: NavItem[] = [
   { label: 'Gym', icon: 'Dumbbell', to: '/fitness' },
 ]
 
+const NAV_RADAR: NavItem[] = [
+  { label: 'Dashboard', icon: 'Radio', to: '/radar', end: true },
+  { label: 'Sources', icon: 'Layers', to: '/radar/sources' },
+  { label: 'Alerts', icon: 'Bell', to: '/radar/alerts' },
+  { label: 'Runs', icon: 'Clock', to: '/radar/runs' },
+]
+
 function Brand({ collapsed }: { collapsed: boolean }) {
   return (
     <div className="flex items-center gap-3">
@@ -173,6 +180,14 @@ export function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
         {collapsed && <div className="my-3 mx-3 border-t border-border" />}
         <div className="space-y-0.5">
           {NAV_FITNESS.map((it) => (
+            <NavRow key={it.to} item={it} collapsed={collapsed} />
+          ))}
+        </div>
+
+        {!collapsed && <p className="px-3 pb-1.5 pt-5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70">Pain Radar</p>}
+        {collapsed && <div className="my-3 mx-3 border-t border-border" />}
+        <div className="space-y-0.5">
+          {NAV_RADAR.map((it) => (
             <NavRow key={it.to} item={it} collapsed={collapsed} />
           ))}
         </div>
