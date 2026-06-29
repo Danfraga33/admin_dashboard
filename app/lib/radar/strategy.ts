@@ -15,7 +15,7 @@ export interface StrategyStep {
 
 export const STRATEGY_INTRO = {
   eyebrow: "Method · Opportunity hunting",
-  headline: "Market Strategy",
+  headline: "Opportunity framework",
   subline:
     "How I find opportunistic markets before they're obvious — four moves from raw signal to a defensible wedge. The radar feeds Step 1; the rest is judgement.",
 };

@@ -34,7 +34,7 @@ const NAV_RADAR: NavItem[] = [
   { label: 'Sources', icon: 'Layers', to: '/radar/sources' },
   { label: 'Alerts', icon: 'Bell', to: '/radar/alerts' },
   { label: 'Runs', icon: 'Clock', to: '/radar/runs' },
-  { label: 'Market Strategy', icon: 'Target', to: '/radar/strategy' },
+  { label: 'Strategy', icon: 'Target', to: '/radar/strategy' },
 ]
 
 function Brand({ collapsed }: { collapsed: boolean }) {

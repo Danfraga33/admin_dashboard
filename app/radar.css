@@ -1025,3 +1025,85 @@
 .pain-radar .ov-stat-label { font-size: 12px; color: var(--text-3); margin-bottom: 12px; }
 .pain-radar .ov-card .ed-btn { align-self: flex-start; }
 @media (max-width: 900px) { .pain-radar .ov-grid { grid-template-columns: 1fr; } }
+
+/* ---- Circuit board (Strategy flow) ---- */
+.pain-radar .cb-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1000 / 260;
+  margin: 8px 0 30px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border-2);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+}
+.pain-radar .cb-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pain-radar .cb-dot { fill: var(--grid-line); }
+.pain-radar .cb-trace {
+  fill: none;
+  stroke: var(--border-2);
+  stroke-width: 2.5;
+}
+.pain-radar .cb-trace-live {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 34 320;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 60%, transparent));
+  animation: pr-cbFlow var(--cb-pulse, 2.4s) linear infinite;
+}
+@keyframes pr-cbFlow {
+  from { stroke-dashoffset: 354; }
+  to { stroke-dashoffset: 0; }
+}
+
+.pain-radar .cb-nodes { position: absolute; inset: 0; }
+.pain-radar .cb-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: min(150px, 18%);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 13px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border-2);
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+  transition: transform var(--t-fast) var(--ease), border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.pain-radar .cb-node:hover {
+  transform: translate(-50%, -50%) translateY(-3px);
+  border-color: var(--accent-line);
+  box-shadow: var(--shadow-pop);
+}
+.pain-radar .cb-node-ic {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: grid; place-items: center;
+  background: var(--surface-3); color: var(--text);
+  margin-bottom: 4px;
+}
+.pain-radar .cb-node-label { font-size: 13.5px; font-weight: 650; letter-spacing: -0.01em; color: var(--text); }
+.pain-radar .cb-node-sub { font-size: 11px; color: var(--text-2); line-height: 1.3; }
+.pain-radar .cb-node-goal {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow-1);
+}
+.pain-radar .cb-node-goal .cb-node-ic { background: var(--accent); color: var(--accent-ink); }
+.pain-radar .cb-node-goal .cb-node-label { color: var(--accent); }
+.pain-radar .cb-node-badge {
+  position: absolute; top: -9px; right: 10px;
+  font-size: 9.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 999px;
+  background: var(--accent); color: var(--accent-ink);
+}
+
+@media (max-width: 760px) {
+  .pain-radar .cb-wrap { aspect-ratio: auto; height: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .pain-radar .cb-svg { display: none; }
+  .pain-radar .cb-nodes { position: static; display: flex; flex-direction: column; gap: 14px; }
+  .pain-radar .cb-node { position: static; transform: none; width: 100%; }
+  .pain-radar .cb-node:hover { transform: translateY(-3px); }
+}

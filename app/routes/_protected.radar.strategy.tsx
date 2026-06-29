@@ -2,9 +2,11 @@ import type { Route } from "./+types/_protected.radar.strategy";
 import { ScrambleText } from "~/lib/radar/motion";
 import { Icon } from "~/lib/radar/icons";
 import { STRATEGY_INTRO, STRATEGY_STEPS, type StrategyStep } from "~/lib/radar/strategy";
+import { CircuitBoard } from "~/components/radar/circuit-board";
+import { FLOW_INTRO, FLOW_NODES, FLOW_CONNECTIONS } from "~/lib/radar/flow";
 
 export function meta(_: Route.MetaArgs) {
-  return [{ title: "Pain Radar — Market Strategy" }];
+  return [{ title: "Pain Radar — Strategy" }];
 }
 
 function StepHead({ step }: { step: StrategyStep["step"] }) {
@@ -61,8 +63,18 @@ export default function MarketStrategy() {
     <div className="pain-radar screen screen-anim dash thesis">
       <div className="ed-head">
         <div>
+          <div className="ed-eyebrow">{FLOW_INTRO.eyebrow}</div>
+          <ScrambleText as="h1" className="ed-headline" text={FLOW_INTRO.headline} />
+          <p className="ed-subline">{FLOW_INTRO.subline}</p>
+        </div>
+      </div>
+
+      <CircuitBoard nodes={FLOW_NODES} connections={FLOW_CONNECTIONS} />
+
+      <div className="ed-head" style={{ marginTop: 8 }}>
+        <div>
           <div className="ed-eyebrow">{STRATEGY_INTRO.eyebrow}</div>
-          <ScrambleText as="h1" className="ed-headline" text={STRATEGY_INTRO.headline} />
+          <ScrambleText as="h2" className="ed-headline" text={STRATEGY_INTRO.headline} />
           <p className="ed-subline">{STRATEGY_INTRO.subline}</p>
         </div>
       </div>
