@@ -30,11 +30,11 @@ const NAV_FITNESS: NavItem[] = [
 ]
 
 const NAV_RADAR: NavItem[] = [
+  { label: 'Strategy', icon: 'Target', to: '/radar/strategy' },
   { label: 'Dashboard', icon: 'Radio', to: '/radar', end: true },
   { label: 'Sources', icon: 'Layers', to: '/radar/sources' },
   { label: 'Alerts', icon: 'Bell', to: '/radar/alerts' },
   { label: 'Runs', icon: 'Clock', to: '/radar/runs' },
-  { label: 'Strategy', icon: 'Target', to: '/radar/strategy' },
 ]
 
 function Brand({ collapsed }: { collapsed: boolean }) {

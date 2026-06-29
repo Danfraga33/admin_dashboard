@@ -4,6 +4,7 @@
    next. No external dependency. Animation is CSS-driven, so the global
    prefers-reduced-motion rule on .pain-radar disables it automatically. */
 
+import { Link } from "react-router";
 import { Icon } from "~/lib/radar/icons";
 import type { FlowNode, FlowConnection } from "~/lib/radar/flow";
 
@@ -56,24 +57,34 @@ export function CircuitBoard({ nodes, connections, pulseSpeed = 2.4 }: CircuitBo
       </svg>
 
       <div className="cb-nodes">
-        {nodes.map((n, i) => (
-          <div
-            key={n.id}
-            className={`cb-node rise${n.goal ? " cb-node-goal" : ""}`}
-            style={{
-              left: `${(n.x / VB_W) * 100}%`,
-              top: `${(n.y / VB_H) * 100}%`,
-              animationDelay: `${i * 90}ms`,
-            }}
-          >
-            <span className="cb-node-ic">
-              <Icon name={n.icon} size={20} />
-            </span>
-            <b className="cb-node-label">{n.label}</b>
-            <small className="cb-node-sub">{n.sub}</small>
-            {n.goal && <span className="cb-node-badge">Goal</span>}
-          </div>
-        ))}
+        {nodes.map((n, i) => {
+          const className = `cb-node rise${n.goal ? " cb-node-goal" : ""}${n.href ? " cb-node-link" : ""}`;
+          const style = {
+            left: `${(n.x / VB_W) * 100}%`,
+            top: `${(n.y / VB_H) * 100}%`,
+            animationDelay: `${i * 90}ms`,
+          };
+          const inner = (
+            <>
+              <span className="cb-node-ic">
+                <Icon name={n.icon} size={20} />
+              </span>
+              <b className="cb-node-label">{n.label}</b>
+              <small className="cb-node-sub">{n.sub}</small>
+              {n.goal && <span className="cb-node-badge">Goal</span>}
+              {n.href && <span className="cb-node-badge cb-node-badge-start">Start here</span>}
+            </>
+          );
+          return n.href ? (
+            <Link key={n.id} to={n.href} prefetch="render" className={className} style={style}>
+              {inner}
+            </Link>
+          ) : (
+            <div key={n.id} className={className} style={style}>
+              {inner}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

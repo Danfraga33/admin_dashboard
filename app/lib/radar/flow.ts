@@ -1,6 +1,7 @@
 /* flow.ts — static data for the Strategy circuit-board flowchart.
    A horizontal pipeline that reads left-to-right and ends on the goal:
-   Large Market → Marketing → Development → Sales → Money ($50K/mo).
+   Find Problems → Development → Marketing & Sales → Money ($50K/mo).
+   Step 1 links into the Pain Radar dashboard, where the problems come from.
    Coordinates are in a 1000×260 viewBox; the SVG scales to its container. */
 
 export interface FlowNode {
@@ -11,6 +12,8 @@ export interface FlowNode {
   x: number;
   y: number;
   goal?: boolean;
+  /** When set, the node renders as a link into that route. */
+  href?: string;
 }
 
 export interface FlowConnection {
@@ -22,20 +25,18 @@ export const FLOW_INTRO = {
   eyebrow: "Method · The machine",
   headline: "The path to $50K / mo",
   subline:
-    "Strategy as a circuit: a large market feeds development, development feeds marketing, marketing feeds sales, and sales feeds the goal. Each node only fires when the one before it does.",
+    "Strategy as a circuit: find real problems in large markets, build what they'll pay for, then market and sell it into revenue. Each node only fires when the one before it does — and step one starts in the radar.",
 };
 
 export const FLOW_NODES: FlowNode[] = [
-  { id: "market", label: "Large Market", sub: "big TAM, room to grow", icon: "globe", x: 90, y: 130 },
-  { id: "development", label: "Development", sub: "build what they'll pay for", icon: "code", x: 290, y: 130 },
-  { id: "marketing", label: "Marketing", sub: "demand gen & distribution", icon: "send", x: 490, y: 130 },
-  { id: "sales", label: "Sales", sub: "convert demand to revenue", icon: "trend", x: 690, y: 130 },
+  { id: "problems", label: "Find Problems", sub: "pain points in large markets", icon: "flame", x: 90, y: 130, href: "/radar" },
+  { id: "development", label: "Development", sub: "build what they'll pay for", icon: "code", x: 380, y: 130 },
+  { id: "gtm", label: "Marketing & Sales", sub: "demand gen → revenue", icon: "send", x: 670, y: 130 },
   { id: "money", label: "Money", sub: "$50K / mo goal", icon: "card", x: 905, y: 130, goal: true },
 ];
 
 export const FLOW_CONNECTIONS: FlowConnection[] = [
-  { from: "market", to: "development" },
-  { from: "development", to: "marketing" },
-  { from: "marketing", to: "sales" },
-  { from: "sales", to: "money" },
+  { from: "problems", to: "development" },
+  { from: "development", to: "gtm" },
+  { from: "gtm", to: "money" },
 ];

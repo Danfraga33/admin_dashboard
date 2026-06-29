@@ -1099,6 +1099,19 @@
   padding: 2px 7px; border-radius: 999px;
   background: var(--accent); color: var(--accent-ink);
 }
+.pain-radar .cb-node-link {
+  text-decoration: none; cursor: pointer;
+}
+.pain-radar .cb-node-link:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow-pop);
+}
+.pain-radar .cb-node-link:hover .cb-node-ic { background: var(--accent); color: var(--accent-ink); }
+.pain-radar .cb-node-badge-start {
+  top: -9px; left: 10px; right: auto;
+  background: var(--surface-3); color: var(--text);
+  border: 1px solid var(--accent-line);
+}
 
 @media (max-width: 760px) {
   .pain-radar .cb-wrap { aspect-ratio: auto; height: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }

@@ -27,7 +27,7 @@ export const SCAN: StrategyStep = {
     title: "Scan the field",
     tag: "Cast wide",
     blurb:
-      "Opportunity hides in friction nobody owns. Mine operator complaints, watch where money already flows, and track shifts that reset the board.",
+      "Opportunity hides in friction nobody owns. Start in the Pain Radar dashboard — mine ranked operator complaints from large markets, watch where money already flows, and track shifts that reset the board.",
     block: "blk-cream",
   },
   nodes: [
