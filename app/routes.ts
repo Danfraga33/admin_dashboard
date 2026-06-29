@@ -31,6 +31,7 @@ export default [
     route('radar/alerts', 'routes/_protected.radar.alerts.tsx'),
     route('radar/runs', 'routes/_protected.radar.runs.tsx'),
     route('radar/thesis', 'routes/_protected.radar.thesis.tsx'),
+    route('radar/strategy', 'routes/_protected.radar.strategy.tsx'),
     route('events', 'routes/_protected.events.tsx'),
     route('resources/saas-events', 'routes/resources.saas-events.tsx'),
   ]),
