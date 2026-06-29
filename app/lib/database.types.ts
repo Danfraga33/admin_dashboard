@@ -806,6 +806,9 @@ export type Database = {
       }
       sharesight_portfolio: {
         Row: {
+          briefing_at: string | null
+          briefing_signals: Json | null
+          briefing_text: string | null
           cash: number
           day_abs: number
           day_pct: number
@@ -817,6 +820,9 @@ export type Database = {
           ytd_pct: number
         }
         Insert: {
+          briefing_at?: string | null
+          briefing_signals?: Json | null
+          briefing_text?: string | null
           cash?: number
           day_abs?: number
           day_pct?: number
@@ -828,6 +834,9 @@ export type Database = {
           ytd_pct?: number
         }
         Update: {
+          briefing_at?: string | null
+          briefing_signals?: Json | null
+          briefing_text?: string | null
           cash?: number
           day_abs?: number
           day_pct?: number

@@ -345,21 +345,34 @@ export interface ValuePoint {
   cash: number
 }
 
+/**
+ * Read the cached portfolio.
+ *
+ * Default freshness is the 30-min `STALE_MS` window with a fire-and-forget
+ * background refresh. Pass `maxAgeMs` to demand a *synchronous* (awaited) sync
+ * when the cache is older than that — needed on serverless, where the
+ * background promise is killed once the response returns. Briefing uses this
+ * with a 24h window so the morning numbers actually refresh.
+ */
 export async function readPortfolio(
   admin: SupabaseClient,
-  userId: string
+  userId: string,
+  opts: { maxAgeMs?: number } = {}
 ): Promise<{ portfolio: Portfolio; live: boolean; syncedAt: string | null; valueSeries: ValuePoint[] }> {
   try {
     let { data: pr } = await admin
       .from('sharesight_portfolio').select('*').eq('user_id', userId).maybeSingle()
 
-    if (!pr) {
-      // No cache: must block on first sync.
+    const ageMs = pr?.synced_at ? Date.now() - new Date(pr.synced_at).getTime() : Infinity
+    const mustBlock = opts.maxAgeMs != null && ageMs > opts.maxAgeMs
+
+    if (!pr || mustBlock) {
+      // No cache, or caller demands fresh data past its window: block on sync.
       await syncSharesight(admin, userId)
       const r = await admin.from('sharesight_portfolio').select('*').eq('user_id', userId).maybeSingle()
       pr = r.data
       if (!pr) return { portfolio: PORTFOLIO, live: false, syncedAt: null, valueSeries: [] }
-    } else if (Date.now() - new Date(pr.synced_at).getTime() > STALE_MS) {
+    } else if (ageMs > STALE_MS) {
       // Stale but present: serve stale now, refresh in background.
       void syncSharesight(admin, userId).catch(() => {})
     }

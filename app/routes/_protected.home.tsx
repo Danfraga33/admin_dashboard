@@ -15,6 +15,7 @@ import { cn, fmtCompact } from '~/lib/utils'
 import { requireSession } from '~/lib/session.server'
 import { createSupabaseAdminClient } from '~/lib/supabase.admin'
 import { readPortfolio } from '~/lib/sharesight.server'
+import { getBriefingLive } from '~/lib/briefing.server'
 import {
   Reveal,
   RevealContext,
@@ -35,8 +36,6 @@ import {
 } from '~/components/atlas'
 import { useAgents } from '~/components/atlas/agents-context'
 import { usePrivacy } from '~/components/privacy-provider'
-
-const TZ = 'Australia/Sydney'
 
 function signed(p: number): string {
   return `${p >= 0 ? '+' : ''}${p}%`
@@ -61,32 +60,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     bars: ranked.slice(0, 3).map((p) => ({ label: p.name, pct: p.progress, color: p.accent })),
   }
 
-  const now = new Date()
-  const hour = Number(new Intl.DateTimeFormat('en-AU', { hour: 'numeric', hour12: false, timeZone: TZ }).format(now))
-  const part = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening'
-  const cashPct = portfolio.total > 0 ? Math.round((portfolio.cash / portfolio.total) * 100) : 0
-  const dir = portfolio.dayPct >= 0 ? 'up' : 'down'
-
-  const briefing: BriefingData = {
-    date: new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: TZ }).format(now),
-    greeting: `Good ${part}, Daniel.`,
-    synthLabel: 'Synthesized from Sharesight + active builds',
-    summary: [
-      `Portfolio is ${dir} ${Math.abs(portfolio.dayPct)}% on the day, ${ytd.toLowerCase()}`,
-      top ? ` — ${top.sym} is the largest position at ${top.alloc}% of the book, with cash at ${cashPct}% for dry powder.` : `, with cash at ${cashPct}% for dry powder.`,
-      ` On the build side, ${lead.name} leads ${active.length} active builds at ${lead.progress}%.`,
-      ` Fraga Ventures is still in construction — ideas prove out on the ABN, winners transfer to the Pty.`,
-      ` Your highest-leverage move today: ship ${lead.name}'s last ${100 - lead.progress}%.`,
-    ].join(''),
-    signals: [
-      ...(top
-        ? [{ agent: 'scout', tone: (top.pct > 0 ? 'up' : top.pct < 0 ? 'down' : 'flat') as Signal['tone'], text: `${top.sym} ${signed(top.pct)} today — ${top.alloc}% of the book` }]
-        : []),
-      { agent: 'forge', tone: 'up' as const, text: `${lead.name} at ${lead.progress}% — ${lead.activity}` },
-      { agent: 'ledger', tone: 'flat' as const, text: `Cash at ${cashPct}% of portfolio — dry powder for acquisitions` },
-      { agent: 'ledger', tone: 'flat' as const, text: 'Fraga Ventures in construction — ABN→Pty structure playbook drafted' },
-    ],
-  }
+  // Briefing is frozen for 24h and self-syncs Sharesight when stale (see briefing.server).
+  const briefing = await getBriefingLive(session.user.id)
 
   return {
     briefing,
