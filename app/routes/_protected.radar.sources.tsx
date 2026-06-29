@@ -7,7 +7,9 @@ import {
   addSource,
   toggleSource,
   deleteSource,
+  isDbConfigured,
 } from "~/lib/radar/queries.server";
+import { DbNotice } from "~/lib/radar/ui";
 import type { Platform } from "~/lib/radar/types";
 
 const SOURCE_TYPES = [
@@ -42,7 +44,8 @@ export function meta(_: Route.MetaArgs) {
 }
 
 export async function loader(_: Route.LoaderArgs) {
-  return { sources: await getSourcesWithStats() };
+  if (!isDbConfigured()) return { configured: false as const };
+  return { configured: true as const, sources: await getSourcesWithStats() };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -86,7 +89,16 @@ function SourceIngestButton({ id }: { id: number }) {
 }
 
 export default function SourcesPage() {
-  const { sources } = useLoaderData<typeof loader>();
+  const data = useLoaderData<typeof loader>();
+  if (!data.configured) {
+    return (
+      <DbNotice
+        title="Sources"
+        sub="Subreddits and YouTube search queries the radar scans for complaints."
+      />
+    );
+  }
+  const { sources } = data;
 
   return (
     <div className="pain-radar screen screen-anim">

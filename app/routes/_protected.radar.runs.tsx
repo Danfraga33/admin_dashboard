@@ -1,16 +1,17 @@
 import { useLoaderData } from "react-router";
 import type { Route } from "./+types/_protected.radar.runs";
 import { Icon } from "~/lib/radar/icons";
-import { Badge } from "~/lib/radar/ui";
+import { Badge, DbNotice } from "~/lib/radar/ui";
 import { relativeTime } from "~/lib/radar/format";
-import { getRuns } from "~/lib/radar/queries.server";
+import { getRuns, isDbConfigured } from "~/lib/radar/queries.server";
 
 export function meta(_: Route.MetaArgs) {
   return [{ title: "Runs — Pain Radar" }];
 }
 
 export async function loader(_: Route.LoaderArgs) {
-  return { runs: await getRuns() };
+  if (!isDbConfigured()) return { configured: false as const };
+  return { configured: true as const, runs: await getRuns() };
 }
 
 function statusIcon(status: string) {
@@ -20,7 +21,16 @@ function statusIcon(status: string) {
 }
 
 export default function RunsPage() {
-  const { runs } = useLoaderData<typeof loader>();
+  const data = useLoaderData<typeof loader>();
+  if (!data.configured) {
+    return (
+      <DbNotice
+        title="Ingest runs"
+        sub="History of fetches per source — useful for spotting broken connectors."
+      />
+    );
+  }
+  const { runs } = data;
 
   return (
     <div className="pain-radar screen screen-anim">

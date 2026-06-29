@@ -4,7 +4,8 @@ import { AnimatedNumber } from "~/lib/radar/motion";
 import { Icon } from "~/lib/radar/icons";
 import { Badge } from "~/lib/radar/ui";
 import { relativeTime, truncate } from "~/lib/radar/format";
-import { getPlatformComplaints } from "~/lib/radar/queries.server";
+import { getPlatformComplaints, isDbConfigured } from "~/lib/radar/queries.server";
+import { DbNotice } from "~/lib/radar/ui";
 import { isPlatform, platformLabel } from "~/lib/radar/platforms";
 import { topicLabel } from "~/lib/radar/topics";
 
@@ -15,11 +16,16 @@ export function meta({ data }: Route.MetaArgs) {
 
 export async function loader({ params }: Route.LoaderArgs) {
   const raw = params.platform ?? "";
+  if (!isDbConfigured()) {
+    const label = isPlatform(raw) ? platformLabel(raw) : "Source";
+    return { configured: false as const, platform: raw, label };
+  }
   if (!isPlatform(raw)) {
-    return { valid: false as const, platform: raw, label: raw };
+    return { configured: true as const, valid: false as const, platform: raw, label: raw };
   }
   const { stat, mentions } = await getPlatformComplaints(raw);
   return {
+    configured: true as const,
     valid: true as const,
     platform: raw,
     label: platformLabel(raw),
@@ -30,6 +36,11 @@ export async function loader({ params }: Route.LoaderArgs) {
 
 export default function SourcePage() {
   const data = useLoaderData<typeof loader>();
+  if (!data.configured) {
+    return (
+      <DbNotice title={data.label} sub="Complaints mined from this platform." />
+    );
+  }
 
   return (
     <div className="pain-radar screen screen-anim">

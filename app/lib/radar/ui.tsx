@@ -50,3 +50,25 @@ export function StatusBadge({ state }: { state: string }) {
     </Badge>
   );
 }
+
+/** Friendly empty state shown when DATABASE_URL isn't configured, so radar
+ *  routes degrade gracefully instead of throwing a 500 from the loader. */
+export function DbNotice({ title, sub }: { title: string; sub: string }) {
+  return (
+    <div className="pain-radar screen screen-anim">
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">{title}</h1>
+          <p className="page-sub">{sub}</p>
+        </div>
+      </div>
+      <div className="notice">
+        <b>Connect your database to begin</b>
+        <p>
+          Set <code>DATABASE_URL</code> to your Neon connection string. Schema and
+          default sources are created automatically on first load.
+        </p>
+      </div>
+    </div>
+  );
+}

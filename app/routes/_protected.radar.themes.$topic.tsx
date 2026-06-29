@@ -4,7 +4,8 @@ import { Gauge, AnimatedNumber } from "~/lib/radar/motion";
 import { Icon } from "~/lib/radar/icons";
 import { Badge } from "~/lib/radar/ui";
 import { relativeTime, truncate } from "~/lib/radar/format";
-import { getTheme } from "~/lib/radar/queries.server";
+import { getTheme, isDbConfigured } from "~/lib/radar/queries.server";
+import { DbNotice } from "~/lib/radar/ui";
 import { topicLabel } from "~/lib/radar/topics";
 
 export function meta({ data }: Route.MetaArgs) {
@@ -14,12 +15,19 @@ export function meta({ data }: Route.MetaArgs) {
 
 export async function loader({ params }: Route.LoaderArgs) {
   const topic = params.topic;
+  if (!isDbConfigured()) {
+    return { configured: false as const, topic, label: topicLabel(topic) };
+  }
   const { theme, mentions } = await getTheme(topic);
-  return { topic, label: topicLabel(topic), theme, mentions };
+  return { configured: true as const, topic, label: topicLabel(topic), theme, mentions };
 }
 
 export default function ThemePage() {
-  const { topic, label, theme, mentions } = useLoaderData<typeof loader>();
+  const data = useLoaderData<typeof loader>();
+  if (!data.configured) {
+    return <DbNotice title={data.label} sub="Complaints clustered into this pain theme." />;
+  }
+  const { topic, label, theme, mentions } = data;
 
   return (
     <div className="pain-radar screen screen-anim">

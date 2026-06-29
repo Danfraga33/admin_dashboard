@@ -2,10 +2,12 @@ import { Form, Link, useLoaderData } from "react-router";
 import type { Route } from "./+types/_protected.radar.alerts";
 import { Icon } from "~/lib/radar/icons";
 import { relativeTime } from "~/lib/radar/format";
+import { DbNotice } from "~/lib/radar/ui";
 import {
   getAlerts,
   acknowledgeAlert,
   acknowledgeAllAlerts,
+  isDbConfigured,
 } from "~/lib/radar/queries.server";
 
 export function meta(_: Route.MetaArgs) {
@@ -13,7 +15,8 @@ export function meta(_: Route.MetaArgs) {
 }
 
 export async function loader(_: Route.LoaderArgs) {
-  return { alerts: await getAlerts() };
+  if (!isDbConfigured()) return { configured: false as const };
+  return { configured: true as const, alerts: await getAlerts() };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -25,7 +28,16 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function AlertsPage() {
-  const { alerts } = useLoaderData<typeof loader>();
+  const data = useLoaderData<typeof loader>();
+  if (!data.configured) {
+    return (
+      <DbNotice
+        title="Alerts"
+        sub="Raised when a theme's complaint volume spikes vs the prior week."
+      />
+    );
+  }
+  const { alerts } = data;
   const open = alerts.filter((a) => !a.acknowledged);
 
   return (
