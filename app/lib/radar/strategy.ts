@@ -32,10 +32,41 @@ export const PICK_TAM: StrategyStep = {
   },
   nodes: [
     { label: "Big + defensible", icon: "target", sub: "not big TAM alone" },
-    { label: "Distribution moat", icon: "link", sub: "how you reach buyers cheap" },
-    { label: "Data moat", icon: "database", sub: "compounds with every user" },
-    { label: "Brand moat", icon: "bulb", sub: "the name they trust" },
-    { label: "7 Powers lens", icon: "shield", sub: "which power applies here" },
+    {
+      label: "Scale Economies",
+      icon: "trend",
+      sub: "per-unit cost drops as you grow — smaller rivals can't match pricing or margin",
+    },
+    {
+      label: "Network Economies",
+      icon: "globe",
+      sub: "value rises as more people use it — users lock into the dominant platform",
+    },
+    {
+      label: "Counter-Positioning",
+      icon: "repeat",
+      sub: "a superior model the incumbent can't copy without killing its own revenue",
+    },
+    {
+      label: "Switching Costs",
+      icon: "key",
+      sub: "too costly, slow, or risky to switch — customers stay locked in",
+    },
+    {
+      label: "Branding",
+      icon: "bulb",
+      sub: "charge a premium for an identical product on trust alone",
+    },
+    {
+      label: "Cornered Resource",
+      icon: "database",
+      sub: "exclusive access to a prize asset — patents, locations, key talent",
+    },
+    {
+      label: "Process Power",
+      icon: "layers",
+      sub: "embedded workflows or culture that rivals can't duplicate",
+    },
   ],
 };
 
@@ -43,7 +74,7 @@ export const PICK_TAM: StrategyStep = {
 export const FIND_JTBD: StrategyStep = {
   step: {
     n: 2,
-    title: "Find the painful JTBD",
+    title: "Find the painful JTBD (Job-to-be-done)",
     tag: "Find Problems",
     blurb:
       "Inside that market, find the job people are desperate to get done. Mom Test rules — ask about their life, not your idea. Look for hair-on-fire, not interest.",
