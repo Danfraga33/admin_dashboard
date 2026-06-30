@@ -14,6 +14,7 @@ interface NavItem {
 
 const NAV_MAIN: NavItem[] = [
   { label: 'Daily Update', icon: 'Sparkles', to: '/', end: true },
+  { label: 'Wealth Strategy', icon: 'Landmark', to: '/wealth-strategy' },
   { label: 'Investments', icon: 'LineChart', to: '/investments' },
   { label: 'Projects', icon: 'Hammer', to: '/projects' },
   { label: 'Fraga Ventures', icon: 'Building', to: '/ventures' },
@@ -185,7 +186,7 @@ export function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
           ))}
         </div>
 
-        {!collapsed && <p className="px-3 pb-1.5 pt-5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70">Pain Radar</p>}
+        {!collapsed && <p className="px-3 pb-1.5 pt-5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/70">Business</p>}
         {collapsed && <div className="my-3 mx-3 border-t border-border" />}
         <div className="space-y-0.5">
           {NAV_RADAR.map((it) => (

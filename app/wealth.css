@@ -1,0 +1,280 @@
+/* wealth.css — scoped styles for the Wealth Strategy chalkboard.
+   The board is always dark (it IS a chalkboard) regardless of app theme.
+   Chalk strokes draw themselves in via stroke-dashoffset; the whole thing
+   goes static under prefers-reduced-motion. */
+
+.wealth-strategy {
+  --chalk: #f4f1e8;
+  --chalk-dim: #cfc9b6;
+  --chalk-faint: rgba(244, 241, 232, 0.55);
+  --chalk-gold: #f5d77a;
+  --board: #1f3a32;
+  --board-edge: #16302a;
+  --wood: #6b4a2b;
+  --wood-hi: #8a6238;
+}
+
+.wealth-strategy .wb-head {
+  margin-bottom: 18px;
+}
+.wealth-strategy .wb-eyebrow {
+  font-family: var(--font-sans, ui-sans-serif), sans-serif;
+  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.wealth-strategy .wb-headline {
+  font-family: "Caveat", cursive;
+  font-size: clamp(34px, 5vw, 56px);
+  line-height: 1.05; font-weight: 700;
+  color: var(--foreground);
+  margin: 2px 0 4px;
+}
+.wealth-strategy .wb-subline {
+  max-width: 62ch; color: var(--muted-foreground); font-size: 14px; line-height: 1.5;
+}
+
+/* The board + wooden frame */
+.wealth-strategy .wb-board {
+  margin-top: 8px;
+}
+.wealth-strategy .wb-frame {
+  position: relative;
+  border-radius: 14px;
+  padding: 16px;
+  background:
+    linear-gradient(160deg, var(--wood-hi), var(--wood) 55%, var(--board-edge));
+  box-shadow:
+    0 24px 60px -24px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.wealth-strategy .wb-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1130 / 720;
+  border-radius: 6px;
+  background:
+    radial-gradient(120% 120% at 30% 10%, rgba(255, 255, 255, 0.05), transparent 55%),
+    radial-gradient(90% 90% at 80% 90%, rgba(255, 255, 255, 0.035), transparent 60%),
+    var(--board);
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.45), inset 0 0 0 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Chalk strokes ---------------------------------------------------------- */
+.wealth-strategy .wb-box {
+  stroke: var(--chalk);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0.92;
+}
+.wealth-strategy .wb-line {
+  stroke: var(--chalk-dim);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 4 0;
+}
+.wealth-strategy .wb-arrowhead {
+  stroke: var(--chalk-dim);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Text ------------------------------------------------------------------- */
+.wealth-strategy text { font-family: "Caveat", cursive; fill: var(--chalk); }
+.wealth-strategy .wb-label { font-size: 28px; font-weight: 700; letter-spacing: 0.5px; }
+.wealth-strategy .wb-sub { font-size: 18px; fill: var(--chalk-faint); }
+.wealth-strategy .wb-note { font-size: 18px; fill: var(--chalk-faint); }
+
+/* Per-kind emphasis */
+.wealth-strategy .wb-head .wb-label { font-size: 31px; letter-spacing: 1px; }
+.wealth-strategy .wb-head .wb-box { stroke-width: 2.4; }
+.wealth-strategy .wb-engine .wb-box { stroke: var(--chalk); stroke-width: 2.6; }
+.wealth-strategy .wb-engine .wb-label { font-size: 29px; }
+
+.wealth-strategy .wb-goal .wb-box { stroke: var(--chalk-gold); stroke-width: 3; }
+.wealth-strategy .wb-goal .wb-label { fill: var(--chalk-gold); font-size: 32px; }
+.wealth-strategy .wb-goal .wb-sub { fill: rgba(245, 215, 122, 0.7); font-size: 16px; }
+.wealth-strategy .wb-glow {
+  stroke: var(--chalk-gold);
+  stroke-width: 1.2;
+  opacity: 0.35;
+}
+.wealth-strategy .wb-star { fill: var(--chalk-gold); font-size: 20px; }
+
+/* Chalk tray + chalk sticks --------------------------------------------- */
+.wealth-strategy .wb-tray {
+  position: absolute; left: 16px; right: 16px; bottom: 4px; height: 12px;
+  display: flex; align-items: center; gap: 10px; padding: 0 14px;
+  border-radius: 0 0 6px 6px;
+  background: linear-gradient(180deg, var(--wood-hi), var(--wood));
+  box-shadow: 0 3px 6px -2px rgba(0, 0, 0, 0.5);
+}
+.wealth-strategy .wb-chalk { width: 26px; height: 5px; border-radius: 3px; }
+.wealth-strategy .wb-chalk-1 { background: var(--chalk); }
+.wealth-strategy .wb-chalk-2 { background: var(--chalk-gold); }
+.wealth-strategy .wb-eraser {
+  margin-left: auto; width: 30px; height: 8px; border-radius: 2px;
+  background: linear-gradient(180deg, #3a4d49, #2a3a37);
+  box-shadow: inset 0 2px 0 #51635e;
+}
+
+/* Draw-in animation ------------------------------------------------------ */
+.wealth-strategy .wb-node {
+  opacity: 0;
+  animation: wb-pop 0.5s ease forwards;
+}
+.wealth-strategy .wb-edge {
+  opacity: 0;
+  animation: wb-fade 0.6s ease forwards;
+}
+.wealth-strategy .wb-edge .wb-line {
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+  animation: wb-draw 0.9s ease forwards;
+  animation-delay: inherit;
+}
+
+/* Opacity-only so it doesn't clobber each node's rotate() transform attr. */
+@keyframes wb-pop {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes wb-fade { to { opacity: 1; } }
+@keyframes wb-draw { to { stroke-dashoffset: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .wealth-strategy .wb-node,
+  .wealth-strategy .wb-edge { opacity: 1; animation: none; }
+  .wealth-strategy .wb-edge .wb-line { stroke-dashoffset: 0; animation: none; }
+}
+
+/* Net-worth chart — chalked above the node row ------------------------- */
+.wealth-strategy .wb-axis {
+  stroke: var(--chalk-dim);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.85;
+}
+.wealth-strategy .wb-curve {
+  stroke: var(--chalk-gold);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.wealth-strategy .wb-cross {
+  stroke: var(--chalk-faint);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-dasharray: 4 6;
+}
+.wealth-strategy .wb-axis-label {
+  font-family: "Caveat", cursive;
+  font-size: 14px;
+  fill: var(--chalk-dim);
+}
+.wealth-strategy .wb-cross-label {
+  font-family: "Caveat", cursive;
+  font-size: 15px;
+  font-weight: 700;
+  fill: var(--chalk-gold);
+}
+.wealth-strategy .wb-regime {
+  font-family: "Caveat", cursive;
+  font-size: 13px;
+  fill: var(--chalk);
+}
+.wealth-strategy .wb-regime-below { fill: var(--chalk-faint); }
+.wealth-strategy .wb-regime-above { fill: var(--chalk); }
+
+.wealth-strategy .wb-feed-box { stroke-width: 2; opacity: 0.9; }
+.wealth-strategy .wb-feed-label {
+  font-family: "Caveat", cursive;
+  font-size: 17px;
+  font-weight: 700;
+  fill: var(--chalk);
+}
+
+/* $5 mil milestone tick on the invest→FU edge */
+.wealth-strategy .wb-tick {
+  stroke: var(--chalk-faint);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-dasharray: 3 5;
+}
+.wealth-strategy .wb-tick-label {
+  font-family: "Caveat", cursive;
+  font-size: 16px;
+  font-weight: 700;
+  fill: var(--chalk-gold);
+}
+
+/* Business playbook — chalked on the board, below the node row ----------- */
+.wealth-strategy .wb-pb { opacity: 0; animation: wb-fade 0.6s ease 0.5s forwards; }
+.wealth-strategy .wb-pb-drop {
+  stroke: var(--chalk-dim);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 5 6;
+  opacity: 0.7;
+}
+
+/* foreignObject content — real HTML wrapping, chalk-styled */
+.wealth-strategy .wb-pb-fo {
+  font-family: "Caveat", cursive;
+  color: var(--chalk);
+}
+.wealth-strategy .wb-pb-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--chalk-gold);
+  margin: 0 0 5px;
+  letter-spacing: 0.5px;
+}
+.wealth-strategy .wb-pb-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.wealth-strategy .wb-pb-step { display: flex; gap: 7px; }
+.wealth-strategy .wb-pb-num {
+  flex: 0 0 auto;
+  width: 17px; height: 17px;
+  display: grid; place-items: center;
+  font-size: 11px; font-weight: 700;
+  color: var(--chalk);
+  border: 1.2px solid var(--chalk-dim);
+  border-radius: 50% 48% 52% 47% / 48% 52% 47% 53%;
+  opacity: 0.92;
+}
+.wealth-strategy .wb-pb-body { padding-top: 0; }
+.wealth-strategy .wb-pb-head {
+  font-size: 12px;
+  line-height: 1.15;
+  font-weight: 700;
+  color: var(--chalk);
+  margin: 0;
+}
+.wealth-strategy .wb-pb-lines { list-style: none; margin: 0; padding: 0; }
+.wealth-strategy .wb-pb-lines li {
+  position: relative;
+  padding-left: 13px;
+  font-size: 10.5px;
+  line-height: 1.18;
+  color: var(--chalk-faint);
+}
+.wealth-strategy .wb-pb-lines li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--chalk-dim);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wealth-strategy .wb-pb { opacity: 1; animation: none; }
+}

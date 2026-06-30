@@ -14,6 +14,7 @@ export default [
     route('content/ideas', 'routes/_protected.content.ideas.tsx'),
     route('content/schedule', 'routes/_protected.content.schedule.tsx'),
     route('business/saas', 'routes/_protected.business.saas.tsx'),
+    route('wealth-strategy', 'routes/_protected.wealth-strategy.tsx'),
     route('investments', 'routes/_protected.investments.tsx'),
     route('projects', 'routes/_protected.projects.tsx'),
     route('ventures', 'routes/_protected.ventures.tsx'),

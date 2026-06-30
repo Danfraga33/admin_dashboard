@@ -32,6 +32,7 @@ import {
   Dot,
   Dumbbell,
   CalendarDays,
+  Landmark,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -70,6 +71,7 @@ export const ICONS: Record<string, LucideIcon> = {
   Dot,
   Dumbbell,
   CalendarDays,
+  Landmark,
 }
 
 export function getIcon(name: string): LucideIcon {

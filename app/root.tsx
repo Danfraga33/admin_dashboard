@@ -9,8 +9,11 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import "@fontsource/caveat/400.css";
+import "@fontsource/caveat/700.css";
 import "./app.css";
 import "./radar.css";
+import "./wealth.css";
 
 // Applied to every route via @vercel/react-router (children inherit the root
 // config). Set at the root so all routes share ONE server bundle — a per-route
