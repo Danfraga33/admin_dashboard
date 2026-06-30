@@ -113,13 +113,13 @@ export const SCALE_OR_KILL: StrategyStep = {
     title: "Scale or kill",
     tag: "Volume negates luck",
     blurb:
-      "Pull → scale. No pull → kill it, repeat. $1.7M funds many shots; volume negates luck.",
+      "Pull → scale. No pull → kill it, repeat. Volume negates luck.",
     block: "blk-clay",
   },
   nodes: [
     { label: "Scale the winners", icon: "rocket", sub: "double down on pull" },
     { label: "Kill the rest", icon: "power", sub: "no pull, walk away" },
-    { label: "Many shots ($1.7M)", icon: "layers", sub: "capital funds volume" },
+    { label: "Many shots", icon: "layers", sub: "capital funds volume" },
     { label: "Volume negates luck", icon: "repeat", sub: "repeat until it hits" },
   ],
 };
