@@ -75,7 +75,9 @@ export default function MarketStrategy() {
         <div>
           <div className="ed-eyebrow">{STRATEGY_INTRO.eyebrow}</div>
           <ScrambleText as="h2" className="ed-headline" text={STRATEGY_INTRO.headline} />
-          <p className="ed-subline">{STRATEGY_INTRO.subline}</p>
+          {STRATEGY_INTRO.subline && (
+            <p className="ed-subline">{STRATEGY_INTRO.subline}</p>
+          )}
         </div>
       </div>
 
