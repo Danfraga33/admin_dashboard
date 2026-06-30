@@ -195,15 +195,15 @@ export function Chalkboard({ nodes, edges, playbook, playbookUnder, chart }: Cha
                 {/* crossover crosshair at $500k */}
                 <path className="wb-cross" d={`M ${cx} ${y1} L ${cx} ${cy}`} fill="none" />
                 <path className="wb-cross" d={`M ${x0} ${cy} L ${cx} ${cy}`} fill="none" />
-                <text className="wb-cross-label" x={cx + 18} y={cy + 18} textAnchor="start">
+                <text className="wb-cross-label" x={cx + 8} y={cy + 4} textAnchor="start">
                   {chart.crossLabel}
                 </text>
 
-                {/* regime callouts */}
-                <text className="wb-regime wb-regime-below" x={x0 + 18} y={y1 - 26} textAnchor="start">
+                {/* regime callouts — kept clear of the curve */}
+                <text className="wb-regime wb-regime-below" x={x0 + 16} y={cy + 40} textAnchor="start">
                   {chart.below}
                 </text>
-                <text className="wb-regime wb-regime-above" x={x1 - 12} y={y0 + 46} textAnchor="end">
+                <text className="wb-regime wb-regime-above" x={cx - 40} y={y0 + 30} textAnchor="start">
                   {chart.above}
                 </text>
 
