@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { data, useFetcher, useLoaderData, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router'
-import { useReducedMotion } from 'framer-motion'
-import { Check, Star, Plus, X, Pencil, Loader2 } from 'lucide-react'
+import { useReducedMotion, Reorder, useDragControls } from 'framer-motion'
+import { Check, Star, Plus, X, Pencil, Loader2, GripVertical } from 'lucide-react'
 import { AGENTS, type Holding, type Portfolio, type ChartColor } from '~/lib/atlas-data'
 import { cn } from '~/lib/utils'
 import { usePrivacy } from '~/components/privacy-provider'
@@ -115,6 +115,14 @@ export async function action({ request }: ActionFunctionArgs) {
 
   if (intent === 'delete') {
     await supabase.from('watchlist').delete().eq('id', String(form.get('id')))
+  }
+
+  if (intent === 'reorder') {
+    const ids = String(form.get('ids') || '').split(',').filter(Boolean)
+    // Persist the dragged order; position = index. RLS scopes writes to the owner.
+    await Promise.all(
+      ids.map((id, i) => supabase.from('watchlist').update({ position: i }).eq('id', id)),
+    )
   }
 
   if (intent === 'theme-create') {
@@ -253,9 +261,10 @@ function Allocation({ data, mask }: { data: Portfolio; mask: boolean }) {
   )
 }
 
-function WatchRowItem({ w, pending = false }: { w: WatchRow; pending?: boolean }) {
+function WatchRowItem({ w, pending = false, draggable = false }: { w: WatchRow; pending?: boolean; draggable?: boolean }) {
   const [editing, setEditing] = useState(false)
   const fetcher = useFetcher()
+  const dragControls = useDragControls()
   const busy = fetcher.state !== 'idle'
   const intent = fetcher.formData?.get('intent')
 
@@ -317,8 +326,18 @@ function WatchRowItem({ w, pending = false }: { w: WatchRow; pending?: boolean }
   }
 
   const name = COMPANY[w.sym] || w.note
-  return (
-    <div className="group flex items-center gap-3 rounded-lg px-1 py-2 hover:bg-muted/40 transition-colors">
+  const inner = (
+    <>
+      {draggable && (
+        <button
+          type="button"
+          onPointerDown={(e) => dragControls.start(e)}
+          className="grid h-6 w-5 shrink-0 cursor-grab touch-none place-items-center rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-foreground transition-all active:cursor-grabbing"
+          aria-label={`Reorder ${w.sym}`}
+        >
+          <GripVertical size={14} />
+        </button>
+      )}
       <span className="grid w-12 shrink-0 place-items-center rounded-md border border-border bg-muted/40 py-1 font-mono text-[11px] font-semibold text-foreground">{w.sym}</span>
       <span className="flex-1 truncate text-[13px] text-muted-foreground">{name || '—'}</span>
       <button onClick={() => setEditing(true)} className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted hover:text-foreground transition-all cursor-pointer" aria-label={`Edit ${w.sym}`}>
@@ -331,27 +350,54 @@ function WatchRowItem({ w, pending = false }: { w: WatchRow; pending?: boolean }
           <X size={13} />
         </button>
       </fetcher.Form>
-    </div>
+    </>
+  )
+
+  const rowCls = 'group flex items-center gap-2 rounded-lg px-1 py-2 hover:bg-muted/40 transition-colors'
+
+  if (!draggable) {
+    return <div className={rowCls}>{inner}</div>
+  }
+
+  return (
+    <Reorder.Item value={w} dragListener={false} dragControls={dragControls} className={rowCls}>
+      {inner}
+    </Reorder.Item>
   )
 }
 
 function Watchlist({ watch }: { watch: WatchRow[] }) {
   const fetcher = useFetcher()
+  const reorderFetcher = useFetcher()
   const formRef = useRef<HTMLFormElement>(null)
+
+  // Local order so a drag feels instant; re-sync whenever the loader data changes
+  // (create/edit/delete round-trips). Keyed on the id+order signature of `watch`.
+  const [order, setOrder] = useState<WatchRow[]>(watch)
+  const watchKey = watch.map((w) => w.id).join(',')
+  useEffect(() => {
+    setOrder(watch)
+  }, [watchKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Optimistic: while a create is in flight, show the pending symbol immediately.
   const creating = fetcher.state !== 'idle' && fetcher.formData?.get('intent') === 'create'
   const pendingSym = creating ? String(fetcher.formData!.get('sym') || '').trim().toUpperCase() : null
   const pendingNote = creating ? String(fetcher.formData!.get('note') || '').trim() : ''
 
-  const rows: WatchRow[] = pendingSym
-    ? [...watch, { id: `pending-${pendingSym}`, sym: pendingSym, note: pendingNote }]
-    : watch
-
   function onSubmit() {
     // clear the input right after submit so it feels instant
     setTimeout(() => formRef.current?.reset(), 0)
   }
+
+  function persistOrder(next: WatchRow[]) {
+    setOrder(next)
+    reorderFetcher.submit(
+      { intent: 'reorder', ids: next.map((w) => w.id).join(',') },
+      { method: 'post' },
+    )
+  }
+
+  const draggable = order.length > 1
 
   return (
     <Reveal delay={340}>
@@ -359,7 +405,7 @@ function Watchlist({ watch }: { watch: WatchRow[] }) {
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-1.5">
             <Label>Scout watchlist</Label>
-            <InfoHint text="Symbols you're tracking for a possible entry — not held positions. Add, edit, or remove freely." />
+            <InfoHint text="Symbols you're tracking for a possible entry — not held positions. Drag to reorder; add, edit, or remove freely." />
           </span>
           <Star size={14} className="text-muted-foreground" />
         </div>
@@ -382,16 +428,25 @@ function Watchlist({ watch }: { watch: WatchRow[] }) {
           </button>
         </fetcher.Form>
 
-        <ul className="mt-2 space-y-0.5">
-          {rows.length === 0 && (
-            <li className="px-1 py-3 text-[12px] text-muted-foreground">Watchlist empty — add a symbol above.</li>
-          )}
-          {rows.map((w) => (
-            <li key={w.id}>
-              <WatchRowItem w={w} pending={w.id.startsWith('pending-')} />
-            </li>
+        {order.length === 0 && !pendingSym && (
+          <p className="mt-2 px-1 py-3 text-[12px] text-muted-foreground">Watchlist empty — add a symbol above.</p>
+        )}
+
+        <Reorder.Group axis="y" values={order} onReorder={persistOrder} className="mt-2 space-y-0.5">
+          {order.map((w) => (
+            <WatchRowItem key={w.id} w={w} draggable={draggable} />
           ))}
-        </ul>
+        </Reorder.Group>
+
+        {/* Pending create row renders outside the reorder group (not yet a real id). */}
+        {pendingSym && (
+          <div className="mt-0.5">
+            <WatchRowItem
+              w={{ id: `pending-${pendingSym}`, sym: pendingSym, note: pendingNote }}
+              pending
+            />
+          </div>
+        )}
       </Card>
     </Reveal>
   )
