@@ -30,6 +30,13 @@ export const COMMANDS: CommandItem[] = [
   { id: 'finance-accounting', label: 'Accounting', to: '/finance/accounting', icon: 'Wallet', section: 'Finance', keywords: ['p&l', 'pnl', 'books', 'tax', 'ledger', 'income', 'expenses'] },
 
   { id: 'business-saas', label: 'SaaS', to: '/business/saas', icon: 'Cpu', section: 'Business', keywords: ['mrr', 'arr', 'churn', 'subscriptions', 'product', 'metrics'] },
+  { id: 'wealth-strategy', label: 'Wealth Strategy', to: '/wealth-strategy', icon: 'Landmark', section: 'Business', keywords: ['wealth', 'chalkboard', 'net worth', 'fu money', 'playbook', 'whiteboard'] },
+  { id: 'radar-strategy', label: 'Strategy', to: '/radar/strategy', icon: 'Target', section: 'Business', keywords: ['opportunity', 'framework', 'market', 'tam', 'moat', '7 powers', 'jtbd', 'radar'] },
+  { id: 'radar', label: 'Pain Radar', to: '/radar', icon: 'Radio', section: 'Business', keywords: ['radar', 'dashboard', 'pain', 'signals', 'complaints'] },
+  { id: 'radar-sources', label: 'Radar Sources', to: '/radar/sources', icon: 'Layers', section: 'Business', keywords: ['radar', 'reddit', 'youtube', 'forums', 'channels', 'ingest'] },
+  { id: 'radar-alerts', label: 'Radar Alerts', to: '/radar/alerts', icon: 'Bell', section: 'Business', keywords: ['radar', 'notifications', 'watch', 'triggers'] },
+  { id: 'radar-runs', label: 'Radar Runs', to: '/radar/runs', icon: 'Clock', section: 'Business', keywords: ['radar', 'history', 'jobs', 'pipeline', 'ingest'] },
+  { id: 'radar-thesis', label: 'Radar Thesis', to: '/radar/thesis', icon: 'Target', section: 'Business', keywords: ['radar', 'thesis', 'flow', 'where', 'why'] },
 
   { id: 'notes', label: 'Notes', to: '/notes', icon: 'StickyNote', section: 'Workspace', keywords: ['memo', 'scratch', 'jot'] },
 ]
