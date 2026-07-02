@@ -296,8 +296,12 @@ function supabaseStore(): EventsStore {
   }
 }
 
+/** Auto-discovery via grounded Gemini search is disabled to avoid its per-call
+ *  cost. apiKey is forced undefined so getSaasEvents serves the (manually added)
+ *  cache and never hits Gemini. The calendar is manual-add only; Scout's own
+ *  Gemini path (scout.server.ts) is unaffected. */
 function liveDeps(): EventsDeps {
-  return { now: () => new Date(), fetch, apiKey: process.env.GEMINI_API_KEY }
+  return { now: () => new Date(), fetch, apiKey: undefined }
 }
 
 /** Production wrapper using real clock, fetch, env key and the Supabase-backed store.
