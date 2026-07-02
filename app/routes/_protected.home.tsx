@@ -322,8 +322,7 @@ export const meta = () => [{ title: 'Atlas · Daily Update' }]
 export default function DailyUpdate() {
   const navigate = useNavigate()
   const { briefing, investTotal, investDayPct, investSpark, investInsight, projects, showVentures } = useLoaderData<typeof loader>()
-  const { agents, running } = useAgents()
-  const liveCount = agents.filter((a) => a.state === 'running').length
+  const { agents } = useAgents()
 
   return (
     <RevealContext.Provider value={false}>
@@ -347,7 +346,7 @@ export default function DailyUpdate() {
               <Label>Now mastering</Label>
               <p className="mt-1.5 text-base font-medium tracking-tight text-foreground md:text-xl">AI Agents &amp; Orchestration</p>
               <p className="mt-1 inline-flex items-center gap-1.5 font-mono text-[11px] text-chart-2">
-                <AgentDot state="running" /> {running ? 'agents running…' : `${liveCount} agents running`}
+                <AgentDot state="running" /> Scout live
               </p>
             </div>
           </Reveal>

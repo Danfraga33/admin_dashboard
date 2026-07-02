@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { data, useFetcher, useLoaderData, type LoaderFunctionArgs, type ActionFunctionArgs } from 'react-router'
 import { Check, GitBranch, Minus, Plus } from 'lucide-react'
-import { AGENTS, PROJECTS, type ProjectItem } from '~/lib/atlas-data'
+import { PROJECTS, type ProjectItem } from '~/lib/atlas-data'
 import { cn } from '~/lib/utils'
 import { requireSession } from '~/lib/session.server'
 import {
@@ -11,7 +11,7 @@ import {
   Num,
   Label,
   StatusBadge,
-  AgentSummary,
+  SummaryCard,
   PageHeader,
   stag,
 } from '~/components/atlas'
@@ -48,7 +48,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         }))
       : PROJECTS.items.map((p, i) => ({ ...p, id: `static-${i}` }))
 
-  return { items, forgeNote: PROJECTS.forgeNote, forge: AGENTS.find((a) => a.id === 'forge')! }
+  return { items, forgeNote: PROJECTS.forgeNote }
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -314,7 +314,7 @@ function ProjectCard({ p, i, onProgress }: { p: ProjectRow; i: number; onProgres
 export const meta = () => [{ title: 'Atlas · Projects' }]
 
 export default function Projects() {
-  const { items, forgeNote, forge } = useLoaderData<typeof loader>()
+  const { items, forgeNote } = useLoaderData<typeof loader>()
   const building = items.filter((p) => p.status === 'Building').length
 
   // Overlay in-progress edits so the header average updates as you drag/nudge.
@@ -333,7 +333,7 @@ export default function Projects() {
         <PageHeader
           kicker="Projects"
           title="What I'm building"
-          sub="Forge watches your repos and deploys, and tells you where the leverage is today."
+          sub="Tracks your repos and deploys, and surfaces where the leverage is today."
           right={
             <div className="flex gap-6 md:justify-end">
               <div className="md:text-right">
@@ -353,9 +353,11 @@ export default function Projects() {
         />
 
         <div className="mt-7">
-          <AgentSummary
-            agent={forge}
-            label="Build status · updated now"
+          <SummaryCard
+            icon="Hammer"
+            accent="chart-4"
+            title="Build status"
+            label="Repos & deploys · updated now"
             text={forgeNote}
             footer={
               <>
