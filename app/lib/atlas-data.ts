@@ -150,24 +150,7 @@ function series(seed: number, n: number, base: number, vol: number, drift: numbe
 
 export const AGENTS: Agent[] = [
   { id: 'scout', name: 'Scout', role: 'Markets & portfolio', icon: 'LineChart', state: 'running', last: 'now', accent: 'chart-1' },
-  { id: 'ledger', name: 'Ledger', role: 'Finance & net worth', icon: 'Wallet', state: 'idle', last: '6m ago', accent: 'chart-2' },
-  { id: 'forge', name: 'Forge', role: 'Projects & shipping', icon: 'Hammer', state: 'running', last: 'now', accent: 'chart-4' },
-  { id: 'echo', name: 'Echo', role: 'Content & distribution', icon: 'Radio', state: 'idle', last: '22m ago', accent: 'chart-5' },
 ]
-
-export const BRIEFING: Briefing = {
-  date: 'Friday, May 30',
-  greeting: 'Good morning, Daniel.',
-  synthLabel: 'Synthesized by Atlas from 4 agents',
-  summary:
-    "Portfolio is up 1.8% overnight — NVDA and the AI basket carried it while cash held flat. Scout flags two buy-box SaaS targets that crossed your revenue threshold this week. On the build side, the RAG agent shipped to staging and the orchestration prototype is unblocked. Net worth ticked to $4.24M. Your highest-leverage move today: close out the multi-agent orchestration study — it's the last gate on Stage 1.",
-  signals: [
-    { agent: 'scout', tone: 'up', text: 'AI basket +3.2% — NVDA leads, rebalance window open' },
-    { agent: 'forge', tone: 'up', text: 'RAG agent passed eval suite, deployed to staging' },
-    { agent: 'ledger', tone: 'flat', text: 'Cash flat at $312K — runway 19 months' },
-    { agent: 'scout', tone: 'up', text: '2 acquisition targets entered buy-box this week' },
-  ],
-}
 
 export const STAGES: Stage[] = [
   { n: '01', title: 'Learn the skill', desc: 'AI agents, workflows, orchestration, RAG.', status: 'Active', progress: 64 },
@@ -177,12 +160,9 @@ export const STAGES: Stage[] = [
 
 export const ACTIVITY: ActivityEvent[] = [
   { agent: 'scout', text: 'fetched 14 holdings from brokerage', t: '2m' },
-  { agent: 'forge', text: 'detected new deploy on agent-core', t: '8m' },
-  { agent: 'ledger', text: 'reconciled May cash position', t: '12m' },
   { agent: 'scout', text: 'summarized pre-market movers', t: '18m' },
-  { agent: 'echo', text: 'queued 3 posts for distribution', t: '22m' },
-  { agent: 'forge', text: 'updated build progress on Atlas', t: '31m' },
-  { agent: 'ledger', text: 'flagged 2 buy-box matches', t: '44m' },
+  { agent: 'scout', text: 'refreshed weekly portfolio note', t: '31m' },
+  { agent: 'scout', text: 'flagged 2 buy-box matches', t: '44m' },
 ]
 
 export const PORTFOLIO: Portfolio = {

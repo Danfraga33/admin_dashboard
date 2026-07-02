@@ -65,9 +65,9 @@ export function buildBriefing(portfolio: Portfolio, now: Date): BriefingCore {
           },
         ]
       : []),
-    { agent: 'forge', tone: 'up', text: `${lead.name} at ${lead.progress}% — ${lead.activity}` },
-    { agent: 'ledger', tone: 'flat', text: `Cash at ${cashPct}% of portfolio — dry powder for acquisitions` },
-    { agent: 'ledger', tone: 'flat', text: 'Fraga Ventures in construction — ABN→Pty structure playbook drafted' },
+    { agent: 'scout', tone: 'up', text: `${lead.name} at ${lead.progress}% — ${lead.activity}` },
+    { agent: 'scout', tone: 'flat', text: `Cash at ${cashPct}% of portfolio — dry powder for acquisitions` },
+    { agent: 'scout', tone: 'flat', text: 'Fraga Ventures in construction — ABN→Pty structure playbook drafted' },
   ]
 
   return { summary, signals }

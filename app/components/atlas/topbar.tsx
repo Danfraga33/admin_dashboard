@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Sparkles, ChevronRight, Search, Clock, RefreshCw, Bell, Sun, Moon, Layers, Eye, EyeOff } from 'lucide-react'
-import { cn } from '~/lib/utils'
+import { Sparkles, ChevronRight, Search, Clock, Bell, Sun, Moon, Layers, Eye, EyeOff } from 'lucide-react'
 import { useTheme } from '~/components/theme-provider'
 import { usePrivacy } from '~/components/privacy-provider'
-import { useAgents } from './agents-context'
 
 function LiveClock() {
   const [now, setNow] = useState<string | null>(null)
@@ -20,7 +18,6 @@ function LiveClock() {
 export function Topbar({ title, onMenu, onOpenPalette }: { title: string; onMenu: () => void; onOpenPalette: () => void }) {
   const { theme, setTheme } = useTheme()
   const { hidden, toggle: togglePrivacy } = usePrivacy()
-  const { running, runAgents } = useAgents()
 
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur-md">
@@ -45,16 +42,6 @@ export function Topbar({ title, onMenu, onOpenPalette }: { title: string; onMenu
             <Clock size={14} className="text-muted-foreground" />
             <LiveClock />
           </div>
-          <button
-            onClick={runAgents}
-            className={cn(
-              'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors cursor-pointer',
-              running ? 'border-chart-2/40 bg-chart-2/10 text-chart-2' : 'border-border text-foreground hover:bg-muted',
-            )}
-          >
-            <RefreshCw size={14} className={running ? 'animate-spin' : ''} />
-            <span className="hidden sm:inline">{running ? 'Running agents…' : 'Run agents'}</span>
-          </button>
           <button className="relative grid h-8 w-8 place-items-center rounded-md text-foreground hover:bg-muted transition-colors cursor-pointer">
             <Bell size={16} />
             <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-chart-1" />

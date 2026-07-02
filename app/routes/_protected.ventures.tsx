@@ -1,6 +1,6 @@
 import { Check, TrendingUp, Target, Sparkles } from 'lucide-react'
 import { useLoaderData } from 'react-router'
-import { AGENTS, VENTURES, type Deal, type Finance } from '~/lib/atlas-data'
+import { VENTURES, type Deal, type Finance } from '~/lib/atlas-data'
 import {
   Reveal,
   RevealContext,
@@ -12,7 +12,7 @@ import {
   Delta,
   Label,
   StatusBadge,
-  AgentSummary,
+  SummaryCard,
   PageHeader,
   StatTile,
   InConstruction,
@@ -22,7 +22,6 @@ import {
 export function loader() {
   return {
     VENTURES,
-    ledger: AGENTS.find((a) => a.id === 'ledger')!,
     show: process.env.SHOW_VENTURES === 'true',
   }
 }
@@ -198,7 +197,6 @@ export default function Ventures() {
   const { show } = useLoaderData<typeof loader>()
   const data = VENTURES
   const f = data.finance
-  const ledger = AGENTS.find((a) => a.id === 'ledger')!
 
   if (!show) {
     return (
@@ -216,7 +214,7 @@ export default function Ventures() {
         <PageHeader
           kicker="Fraga Ventures · Acquisitions"
           title="Own & integrate"
-          sub="Stage 3 — the output of the playbook. Ledger keeps the finances honest and the buy-box tight."
+          sub="Stage 3 — the output of the playbook. Finances kept honest and the buy-box tight."
           right={
             <div className="md:text-right">
               <Label>Net worth</Label>
@@ -231,9 +229,11 @@ export default function Ventures() {
         />
 
         <div className="mt-7">
-          <AgentSummary
-            agent={ledger}
-            label="Finance & deal read · updated 6m ago"
+          <SummaryCard
+            icon="Wallet"
+            accent="chart-2"
+            title="Finance & deal read"
+            label="Net worth & buy-box · updated 6m ago"
             text={data.ledgerNote}
             speed={11}
             footer={

@@ -145,6 +145,48 @@ export function AgentSummary({
   )
 }
 
+/**
+ * Neutral summary card — same layout as AgentSummary but not tied to an agent
+ * persona. Used on pages that surface real data without an owning agent.
+ */
+export function SummaryCard({
+  icon,
+  accent = 'chart-1',
+  title,
+  label,
+  text,
+  footer,
+  delay = 0,
+  speed = 11,
+}: {
+  icon: string
+  accent?: ChartColor
+  title: string
+  label: string
+  text: string
+  footer?: React.ReactNode
+  delay?: number
+  speed?: number
+}) {
+  return (
+    <Reveal delay={delay}>
+      <SpotlightCard className="p-6 md:p-7" lift={false} glow={accent}>
+        <div className="flex items-center gap-3">
+          <AgentAvatar icon={icon} accent={accent} size={40} />
+          <div className="flex-1">
+            <p className="text-sm font-semibold tracking-tight text-foreground">{title}</p>
+            <p className="text-[11px] text-muted-foreground">{label}</p>
+          </div>
+        </div>
+        <p className="mt-4 text-base leading-relaxed tracking-tight text-foreground/95 md:text-lg">
+          <StreamingText text={text} speed={speed} start={300} />
+        </p>
+        {footer && <div className="mt-4 flex items-center gap-2 border-t border-border pt-3 text-xs text-muted-foreground">{footer}</div>}
+      </SpotlightCard>
+    </Reveal>
+  )
+}
+
 /** Full-page placeholder shown when a feature flag is off. */
 export function InConstruction({
   kicker,
