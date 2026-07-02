@@ -1030,7 +1030,7 @@
 .pain-radar .cb-wrap {
   position: relative;
   width: 100%;
-  aspect-ratio: 1000 / 260;
+  aspect-ratio: 1000 / 300;
   margin: 8px 0 30px;
   border-radius: var(--radius);
   border: 1px solid var(--border-2);

@@ -9,9 +9,10 @@ import { Icon } from "~/lib/radar/icons";
 import type { FlowNode, FlowConnection } from "~/lib/radar/flow";
 
 const VB_W = 1000;
-const VB_H = 260;
+const VB_H = 300;
 /** Half-width / half-height of a node card in viewBox units, for trace anchoring. */
 const NODE_HW = 78;
+const NODE_HH = 40;
 
 interface CircuitBoardProps {
   nodes: FlowNode[];
@@ -21,11 +22,19 @@ interface CircuitBoardProps {
 }
 
 function tracePath(a: FlowNode, b: FlowNode): string {
+  // Vertical feed: nodes share a column, trace runs top/bottom edge to edge.
+  if (Math.abs(b.x - a.x) < NODE_HW) {
+    const x = a.x;
+    const y1 = b.y > a.y ? a.y + NODE_HH : a.y - NODE_HH;
+    const y2 = b.y > a.y ? b.y - NODE_HH : b.y + NODE_HH;
+    const mid = (y1 + y2) / 2;
+    return `M ${x} ${y1} C ${x} ${mid}, ${b.x} ${mid}, ${b.x} ${y2}`;
+  }
+  // Horizontal pipeline: left edge to right edge with a smooth S-curve.
   const x1 = a.x + NODE_HW;
   const x2 = b.x - NODE_HW;
   const y = a.y;
   const mid = (x1 + x2) / 2;
-  // Smooth S-curve between the two node edges (flat here, but keeps it organic).
   return `M ${x1} ${y} C ${mid} ${y}, ${mid} ${b.y}, ${x2} ${b.y}`;
 }
 
