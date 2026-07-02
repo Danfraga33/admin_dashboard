@@ -1,14 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
 import { Form, data, useActionData, useFetcher, useFetchers, useLoaderData, useNavigation } from 'react-router'
 import type { LoaderFunctionArgs, ActionFunctionArgs } from 'react-router'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import { RichEditor, RichContent } from '~/components/rich-editor'
 import { requireSession } from '~/lib/session.server'
 
 type NotesActionData = {
   ok: boolean
   intent: string
   message?: string
+}
+
+// Strips HTML/markdown syntax to a plain-text snippet for table previews.
+function bodyPreview(body?: string | null): string {
+  if (!body) return ''
+  return body
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/[#*`>_-]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -77,54 +86,6 @@ export async function action({ request }: ActionFunctionArgs) {
   return data({ ok: true, intent: String(intent ?? '') }, { headers: responseHeaders })
 }
 
-function NoteMarkdown({ children }: { children: string }) {
-  return (
-    <div className="text-lg text-foreground leading-loose space-y-4">
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        components={{
-          h1: ({ children }) => <h1 className="text-2xl font-semibold tracking-wide mt-6 mb-2 first:mt-0">{children}</h1>,
-          h2: ({ children }) => <h2 className="text-xl font-semibold tracking-wide mt-6 mb-2 first:mt-0">{children}</h2>,
-          h3: ({ children }) => <h3 className="text-lg font-semibold mt-4 mb-1 first:mt-0">{children}</h3>,
-          p: ({ children }) => <p className="leading-loose">{children}</p>,
-          ul: ({ children }) => <ul className="list-disc pl-6 space-y-1">{children}</ul>,
-          ol: ({ children }) => <ol className="list-decimal pl-6 space-y-1">{children}</ol>,
-          li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-          a: ({ children, href }) => (
-            <a href={href} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2 hover:opacity-80">
-              {children}
-            </a>
-          ),
-          strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
-          em: ({ children }) => <em className="italic">{children}</em>,
-          blockquote: ({ children }) => (
-            <blockquote className="border-l-2 border-border pl-4 italic text-muted-foreground">{children}</blockquote>
-          ),
-          code: ({ children, className }) =>
-            className ? (
-              <code className={className}>{children}</code>
-            ) : (
-              <code className="bg-muted/40 rounded px-1.5 py-0.5 text-base font-mono">{children}</code>
-            ),
-          pre: ({ children }) => (
-            <pre className="bg-muted/40 rounded-md p-4 overflow-x-auto text-base font-mono leading-relaxed">{children}</pre>
-          ),
-          hr: () => <hr className="border-border my-4" />,
-          table: ({ children }) => (
-            <div className="overflow-x-auto">
-              <table className="w-full text-base border-collapse">{children}</table>
-            </div>
-          ),
-          th: ({ children }) => <th className="border border-border px-3 py-1.5 text-left font-medium">{children}</th>,
-          td: ({ children }) => <td className="border border-border px-3 py-1.5">{children}</td>,
-        }}
-      >
-        {children}
-      </ReactMarkdown>
-    </div>
-  )
-}
-
 function NoteModal({ note, onClose }: { note: any; onClose: () => void }) {
   const [editing, setEditing] = useState(false)
   const updateFetcher = useFetcher()
@@ -159,12 +120,7 @@ function NoteModal({ note, onClose }: { note: any; onClose: () => void }) {
               placeholder="Title"
               className="bg-input border border-border rounded-md px-3 py-2.5 text-base text-foreground focus:outline-none focus:ring-2 focus:ring-ring shrink-0"
             />
-            <textarea
-              name="body"
-              defaultValue={note.body ?? ''}
-              placeholder="Note body..."
-              className="bg-input border border-border rounded-md px-3 py-2.5 text-base text-foreground leading-relaxed focus:outline-none focus:ring-2 focus:ring-ring resize-none flex-1 min-h-[40vh]"
-            />
+            <RichEditor name="body" defaultValue={note.body ?? ''} className="flex-1 min-h-0" />
             <button
               type="submit"
               className="self-end bg-primary text-primary-foreground rounded-md px-4 py-2.5 text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer shrink-0"
@@ -198,7 +154,7 @@ function NoteModal({ note, onClose }: { note: any; onClose: () => void }) {
 
         {note.body ? (
           <div className="mb-6 overflow-y-auto">
-            <NoteMarkdown>{note.body}</NoteMarkdown>
+            <RichContent content={note.body} />
           </div>
         ) : (
           <p className="text-sm text-muted-foreground mb-6">No content.</p>
@@ -258,7 +214,7 @@ function NoteRow({
     >
       <td className="px-5 py-3.5 text-foreground font-medium">{note.title}</td>
       <td className="px-5 py-3.5 text-muted-foreground max-w-[300px] truncate hidden md:table-cell">
-        {note.body || '—'}
+        {bodyPreview(note.body) || '—'}
       </td>
       <td className="px-5 py-3.5 font-mono text-muted-foreground hidden md:table-cell">
         {isOptimisticRow ? 'Saving...' : new Date(note.updated_at).toLocaleDateString()}
@@ -292,6 +248,7 @@ export default function Notes() {
   const navigation = useNavigation()
   const [newTitle, setNewTitle] = useState('')
   const [newBody, setNewBody] = useState('')
+  const [editorKey, setEditorKey] = useState(0)
   const [selectedNote, setSelectedNote] = useState<any | null>(null)
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const pendingCreateRef = useRef<{ title: string; body: string } | null>(null)
@@ -353,6 +310,7 @@ export default function Notes() {
     if (pendingCreateRef.current) {
       setNewTitle(pendingCreateRef.current.title)
       setNewBody(pendingCreateRef.current.body)
+      setEditorKey((k) => k + 1)
     }
   }, [actionData])
 
@@ -370,10 +328,15 @@ export default function Notes() {
         <Form
           method="post"
           className="flex flex-col gap-4"
-          onSubmit={() => {
-            pendingCreateRef.current = { title: newTitle, body: newBody }
+          onSubmit={(e) => {
+            const fd = new FormData(e.currentTarget)
+            pendingCreateRef.current = {
+              title: String(fd.get('title') ?? ''),
+              body: String(fd.get('body') ?? ''),
+            }
             setNewTitle('')
             setNewBody('')
+            setEditorKey((k) => k + 1)
           }}
         >
           <input type="hidden" name="intent" value="create" />
@@ -385,14 +348,7 @@ export default function Notes() {
             onChange={(e) => setNewTitle(e.target.value)}
             className="bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
-          <textarea
-            name="body"
-            placeholder="Note body..."
-            rows={3}
-            value={newBody}
-            onChange={(e) => setNewBody(e.target.value)}
-            className="bg-input border border-border rounded-md px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-          />
+          <RichEditor key={editorKey} name="body" defaultValue={newBody} minHeight="min-h-[9rem]" />
           <div className="flex justify-end">
             <button
               type="submit"
