@@ -15,3 +15,9 @@
 .serena/
 docs/superpowers/
 .playwright-mcp/
+
+# Jarvis sidecar (local-only Python; never deployed)
+/sidecar/.env
+/sidecar/.cache/
+/sidecar/__pycache__/
+/sidecar/.venv/
