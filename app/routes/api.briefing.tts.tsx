@@ -26,8 +26,9 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   const briefing = await getBriefingLive(APP_USER_ID)
-  // What the voice actually reads: greeting + summary, in one pass.
-  const spoken = `${briefing.greeting} ${briefing.summary}`.trim()
+  // What the voice actually reads: greeting + summary, in one pass. Em/en dashes
+  // read awkwardly in TTS, so soften them to commas.
+  const spoken = `${briefing.greeting} ${briefing.summary}`.replace(/\s*[—–]\s*/g, ', ').trim()
 
   return Response.json({
     spoken,
