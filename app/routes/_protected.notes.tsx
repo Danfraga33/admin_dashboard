@@ -322,6 +322,20 @@ export default function Notes() {
 
   return (
     <div>
+      {/* Header + external Playbook link */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Notes</h1>
+        <a
+          href="https://playbook-pi-six.vercel.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/20 transition-colors cursor-pointer"
+        >
+          Open Playbook
+          <span aria-hidden className="text-muted-foreground">↗</span>
+        </a>
+      </div>
+
       {/* New note form */}
       <div className="bg-card border border-border rounded-lg p-6 mb-6">
         <h2 className="text-sm font-medium text-foreground mb-5">New Note</h2>
