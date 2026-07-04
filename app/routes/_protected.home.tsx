@@ -31,6 +31,7 @@ import {
   Label,
   Marquee,
   Num,
+  NoiseScope,
   stag,
   useMounted,
 } from '~/components/atlas'
@@ -103,6 +104,8 @@ function Briefing({ agents, b }: { agents: Agent[]; b: BriefingData }) {
         <p className="mt-5 text-lg md:text-[22px] leading-relaxed tracking-tight text-foreground">
           <StreamingText text={b.summary} speed={11} start={400} />
         </p>
+
+        <NoiseScope className="mt-5" />
 
         <div className="mt-6 grid gap-x-8 gap-y-0 border-t border-border pt-4 md:grid-cols-2">
           {b.signals.map((s, i) => (
