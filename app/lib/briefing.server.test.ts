@@ -30,18 +30,20 @@ function makePortfolio(over: Partial<Portfolio> = {}): Portfolio {
 describe('buildBriefing', () => {
   it('cites the largest non-cash position, day direction, ytd, cash %, and lead build', () => {
     const core = buildBriefing(makePortfolio(), new Date('2026-06-29T00:00:00Z'))
-    expect(core.summary).toContain('Portfolio is up 0.92% on the day')
+    expect(core.summary).toContain('Portfolio up 0.92% today')
     expect(core.summary).toContain('ytd -12.82%')
-    expect(core.summary).toContain('ETPMAG is the largest position at 19.3% of the book')
-    expect(core.summary).toContain('cash at 20% for dry powder')
+    expect(core.summary).toContain('ETPMAG leads at 19.3%')
+    expect(core.summary).toContain('cash 20% dry powder')
     // Lead build comes from the hardcoded PROJECTS const (Pavement at 88%).
-    expect(core.summary).toContain("Pavement leads 4 active builds at 88%")
+    expect(core.summary).toContain("Pavement tops 4 builds at 88%")
     expect(core.summary).toContain("ship Pavement's last 12%")
+    // Fraga Ventures line dropped.
+    expect(core.summary).not.toContain('Fraga Ventures')
   })
 
   it('marks a down day and signs the top mover negative', () => {
     const core = buildBriefing(makePortfolio({ dayPct: -3 }), new Date('2026-06-29T00:00:00Z'))
-    expect(core.summary).toContain('Portfolio is down 3% on the day')
+    expect(core.summary).toContain('Portfolio down 3% today')
     const mover = core.signals.find((s) => s.text.includes('ETPMAG'))
     expect(mover?.tone).toBe('down')
     expect(mover?.text).toContain('-24.88%')
@@ -50,8 +52,8 @@ describe('buildBriefing', () => {
   it('handles a book with no non-cash holdings', () => {
     const p = makePortfolio({ cash: 1000, holdings: [{ sym: 'CASH', name: 'Cash', val: 1000, pct: 0, shares: null, alloc: 100, spark: [], tone: 'flat', note: '' }] })
     const core = buildBriefing(p, new Date('2026-06-29T00:00:00Z'))
-    expect(core.summary).toContain('cash at 100% for dry powder')
-    expect(core.summary).not.toContain('largest position')
+    expect(core.summary).toContain('cash 100% dry powder')
+    expect(core.summary).not.toContain('leads at')
   })
 })
 

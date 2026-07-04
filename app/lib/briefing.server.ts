@@ -46,13 +46,12 @@ export function buildBriefing(portfolio: Portfolio, now: Date): BriefingCore {
   const dir = portfolio.dayPct >= 0 ? 'up' : 'down'
 
   const summary = [
-    `Portfolio is ${dir} ${Math.abs(portfolio.dayPct)}% on the day, ${ytd.toLowerCase()}`,
+    `Portfolio ${dir} ${Math.abs(portfolio.dayPct)}% today, ${ytd.toLowerCase()}`,
     top
-      ? ` — ${top.sym} is the largest position at ${top.alloc}% of the book, with cash at ${cashPct}% for dry powder.`
-      : `, with cash at ${cashPct}% for dry powder.`,
-    ` On the build side, ${lead.name} leads ${active.length} active builds at ${lead.progress}%.`,
-    ` Fraga Ventures is still in construction — ideas prove out on the ABN, winners transfer to the Pty.`,
-    ` Your highest-leverage move today: ship ${lead.name}'s last ${100 - lead.progress}%.`,
+      ? ` — ${top.sym} leads at ${top.alloc}%, cash ${cashPct}% dry powder.`
+      : `, cash ${cashPct}% dry powder.`,
+    ` ${lead.name} tops ${active.length} builds at ${lead.progress}%.`,
+    ` Highest-leverage move: ship ${lead.name}'s last ${100 - lead.progress}%.`,
   ].join('')
 
   const signals: Signal[] = [
