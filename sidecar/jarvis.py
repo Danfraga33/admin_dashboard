@@ -1157,6 +1157,11 @@ def main() -> int:
                     and (now - last_logged_double) >= COOLDOWN_S
                 ):
                     spike_armed = False
+                    # Debug: every spike that clears the gate. Compare a desk tap's rms
+                    # vs a real clap's, then set MIN_RMS between them. Silence via
+                    # JARVIS_LOG_SPIKES=0.
+                    if (os.environ.get("JARVIS_LOG_SPIKES") or "1").strip().lower() not in ("0", "false", "no"):
+                        log.info("spike rms=%.5f (threshold=%.5f, floor=%.5f)", level, threshold, noise_floor)
                     if first_clap_time is None:
                         first_clap_time = now
                         _hook_event("clap", ordinal=1, level=level)
