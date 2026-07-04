@@ -61,6 +61,16 @@ MAX_DOUBLE_GAP_S = 0.35
 RETRIGGER_RATIO = 0.55
 NOISE_FLOOR_ALPHA = 0.992
 MIN_RMS = 0.05
+
+
+def _env_float(name: str, default: float) -> float:
+    raw = (os.environ.get(name) or "").strip()
+    if raw:
+        try:
+            return float(raw)
+        except ValueError:
+            pass
+    return default
 QUIET_GATE_MULT = 2.2  # update noise floor only when below floor * this
 # Startup mic probe: if default input RMS stays below this, scan for a louder device.
 INPUT_PROBE_S = 0.5
@@ -113,6 +123,9 @@ SONG_URI = os.environ.get("SONG_URI") or SONG_URI
 ATLAS_BRIEFING_URL = (os.environ.get("ATLAS_BRIEFING_URL") or ATLAS_BRIEFING_URL).strip()
 ATLAS_BRIEFING_SECRET = (os.environ.get("ATLAS_BRIEFING_SECRET") or ATLAS_BRIEFING_SECRET).strip()
 JARVIS_WELCOME_PHRASE = os.environ.get("ATLAS_BRIEFING_FALLBACK") or JARVIS_WELCOME_PHRASE
+# Clap-detection tuning, overridable from .env.
+MIN_RMS = _env_float("MIN_RMS", MIN_RMS)
+SPIKE_RATIO = _env_float("SPIKE_RATIO", SPIKE_RATIO)
 
 # Optional live-dashboard hook (server.py sets jarvis.HOOK). Guarded everywhere so
 # standalone CLI use has zero behavior change when unset.
