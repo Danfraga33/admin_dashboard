@@ -10,7 +10,8 @@
     "test:watch": "vitest",
     "typecheck": "react-router typegen && tsc",
     "sidecar": "python sidecar/server.py",
-    "sidecar:setup": "python -m pip install -r sidecar/requirements.txt"
+    "sidecar:setup": "python -m pip install -r sidecar/requirements.txt",
+    "dev:all": "concurrently -k -n web,jarvis -c cyan,magenta \"npm run dev\" \"npm run sidecar\""
   },
   "dependencies": {
     "@fontsource/caveat": "^5.2.8",
@@ -48,6 +49,7 @@
     "@types/node": "^22",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "concurrently": "^10.0.3",
     "tailwindcss": "^4.1.13",
     "tsx": "^4.20.0",
     "typescript": "^5.9.2",

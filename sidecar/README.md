@@ -35,6 +35,12 @@ Fill `sidecar/.env`:
 ## Run
 
 ```bash
+npm run dev:all    # dashboard + clap sidecar together (Ctrl+C stops both)
+```
+
+Or run them separately:
+
+```bash
 npm run dev        # terminal 1 — dashboard (serves /api/briefing/tts)
 npm run sidecar    # terminal 2 — clap listener + HTTP bridge on :8756
 ```
