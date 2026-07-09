@@ -29,7 +29,8 @@ export const FLOW_INTRO = {
 };
 
 export const FLOW_NODES: FlowNode[] = [
-  { id: "ecommerce", label: "SaaS vertical building", sub: "passion — where I want to build (ecommerce, finance, etc)", icon: "card", x: 100, y: 150 },
+  { id: "underserved", label: "Productized agency", sub: "logic — thin supply, real demand", icon: "target", x: 100, y: 55 },
+  { id: "ecommerce", label: "SaaS vertical building", sub: "passion — where I want to build (ecommerce, finance, etc)", icon: "card", x: 100, y: 245 },
   { id: "problems", label: "Find Problems", sub: "pain points in large markets", icon: "flame", x: 340, y: 150, href: "/radar" },
   { id: "development", label: "Development", sub: "build what they'll pay for", icon: "code", x: 560, y: 150 },
   { id: "gtm", label: "Marketing & Sales", sub: "demand gen → revenue", icon: "send", x: 765, y: 150 },
@@ -37,6 +38,7 @@ export const FLOW_NODES: FlowNode[] = [
 ];
 
 export const FLOW_CONNECTIONS: FlowConnection[] = [
+  { from: "underserved", to: "problems" },
   { from: "ecommerce", to: "problems" },
   { from: "problems", to: "development" },
   { from: "development", to: "gtm" },
