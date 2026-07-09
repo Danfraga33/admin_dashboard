@@ -22,8 +22,17 @@ function norm(v: number) {
   return Math.min(1, Math.sqrt(Math.max(0, v) / CEIL))
 }
 
+/** The sidecar only ever runs on the local machine, so the strip is meaningless
+ * on the deployed URL — there's no 127.0.0.1:8756 there. Show it on localhost only. */
+function isLocalHost() {
+  if (typeof window === 'undefined') return false
+  const h = window.location.hostname
+  return h === 'localhost' || h === '127.0.0.1' || h === '[::1]'
+}
+
 export function NoiseScope({ className }: { className?: string }) {
   const mounted = useMounted() // WS is client-only; skip on SSR
+  const local = mounted && isLocalHost()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const histRef = useRef(new Float32Array(HISTORY))
   const blockRef = useRef<Block>({ level: 0, threshold: 0.05, armed: true })
@@ -32,7 +41,7 @@ export function NoiseScope({ className }: { className?: string }) {
 
   // --- WebSocket to the sidecar ---
   useEffect(() => {
-    if (!mounted) return
+    if (!local) return
     let alive = true
     let ws: WebSocket | null = null
     let retry: ReturnType<typeof setTimeout>
@@ -78,11 +87,11 @@ export function NoiseScope({ className }: { className?: string }) {
       clearTimeout(retry)
       ws?.close()
     }
-  }, [mounted])
+  }, [local])
 
   // --- draw loop ---
   useEffect(() => {
-    if (!mounted) return
+    if (!local) return
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
@@ -165,7 +174,10 @@ export function NoiseScope({ className }: { className?: string }) {
     }
     raf = requestAnimationFrame(draw)
     return () => cancelAnimationFrame(raf)
-  }, [mounted])
+  }, [local])
+
+  // Deployed URL (or pre-mount): render nothing — no local sidecar to talk to.
+  if (!local) return null
 
   return (
     <div className={className}>
