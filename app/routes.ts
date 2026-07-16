@@ -30,8 +30,6 @@ export default [
     route('radar/sources', 'routes/_protected.radar.sources.tsx'),
     route('radar/sources/:platform', 'routes/_protected.radar.sources.$platform.tsx'),
     route('radar/themes/:topic', 'routes/_protected.radar.themes.$topic.tsx'),
-    route('radar/alerts', 'routes/_protected.radar.alerts.tsx'),
-    route('radar/runs', 'routes/_protected.radar.runs.tsx'),
     route('radar/thesis', 'routes/_protected.radar.thesis.tsx'),
     route('radar/strategy', 'routes/_protected.radar.strategy.tsx'),
     route('events', 'routes/_protected.events.tsx'),

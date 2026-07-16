@@ -229,13 +229,3 @@ export async function deleteSource(id: number): Promise<void> {
   const sql = await ready();
   await sql`DELETE FROM sources WHERE id = ${id}`;
 }
-
-export async function acknowledgeAlert(id: number): Promise<void> {
-  const sql = await ready();
-  await sql`UPDATE alerts SET acknowledged = true WHERE id = ${id}`;
-}
-
-export async function acknowledgeAllAlerts(): Promise<void> {
-  const sql = await ready();
-  await sql`UPDATE alerts SET acknowledged = true WHERE acknowledged = false`;
-}

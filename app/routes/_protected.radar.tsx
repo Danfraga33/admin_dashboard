@@ -120,9 +120,6 @@ export default function Dashboard() {
           <Link to="/radar/sources" className="ed-btn">
             <Icon name="channels" size={15} /> Sources
           </Link>
-          <Link to="/radar/alerts" className="ed-btn solid">
-            <Icon name="bell" size={16} /> {overview.openAlerts} alerts
-          </Link>
         </div>
       </div>
 
