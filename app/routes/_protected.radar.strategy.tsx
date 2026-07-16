@@ -1,7 +1,8 @@
+import { useState } from "react";
 import type { Route } from "./+types/_protected.radar.strategy";
 import { ScrambleText } from "~/lib/radar/motion";
 import { Icon } from "~/lib/radar/icons";
-import { STRATEGY_INTRO, STRATEGY_STEPS, type StrategyStep } from "~/lib/radar/strategy";
+import { STRATEGY_INTRO, STRATEGY_TABS, type StrategyStep } from "~/lib/radar/strategy";
 import { CircuitBoard } from "~/components/radar/circuit-board";
 import { FLOW_INTRO, FLOW_NODES, FLOW_CONNECTIONS } from "~/lib/radar/flow";
 
@@ -59,6 +60,9 @@ function Step({ data }: { data: StrategyStep }) {
 }
 
 export default function MarketStrategy() {
+  const [activeTab, setActiveTab] = useState(STRATEGY_TABS[0].id);
+  const tab = STRATEGY_TABS.find((t) => t.id === activeTab) ?? STRATEGY_TABS[0];
+
   return (
     <div className="pain-radar screen screen-anim dash thesis">
       <div className="ed-head">
@@ -81,7 +85,24 @@ export default function MarketStrategy() {
         </div>
       </div>
 
-      {STRATEGY_STEPS.map((s, i) => (
+      <div className="t-tabs" role="tablist" aria-label="Strategy paths">
+        {STRATEGY_TABS.map((t) => (
+          <button
+            key={t.id}
+            role="tab"
+            type="button"
+            aria-selected={t.id === activeTab}
+            className={`t-tab ${t.id === activeTab ? "is-active" : ""}`}
+            onClick={() => setActiveTab(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <p className="t-tab-blurb">{tab.blurb}</p>
+
+      {tab.steps.map((s, i) => (
         <div key={s.step.n}>
           {i > 0 && <Connector />}
           <Step data={s} />

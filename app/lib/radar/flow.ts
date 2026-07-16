@@ -1,8 +1,10 @@
 /* flow.ts — static data for the Strategy circuit-board flowchart.
-   A horizontal pipeline that reads left-to-right and ends on the goal:
-   Find Problems → Development → Marketing & Sales → Money ($50K/mo).
-   Step 1 links into the Pain Radar dashboard, where the problems come from.
-   Coordinates are in a 1000×260 viewBox; the SVG scales to its container. */
+   One linear chain: start on micro-SaaS, curiosity pulls the flow down into a
+   SaaS vertical build (something bigger) stacked directly beneath it, then Find
+   Problems → Development → Marketing & Sales → Money ($50K/mo). Find Problems
+   links into the Pain Radar dashboard, where the problems come from — and it's
+   where productized-agency work points too: both funnel into real pain points.
+   Coordinates are in a 1000×300 viewBox; the SVG scales to its container. */
 
 export interface FlowNode {
   id: string;
@@ -25,21 +27,21 @@ export const FLOW_INTRO = {
   eyebrow: "Method · The machine",
   headline: "The path to $50K / mo",
   subline:
-    "Strategy as a circuit: find real problems in large markets, build what they'll pay for, then market and sell it into revenue. Each node only fires when the one before it does — and step one starts in the radar.",
+    "Strategy as a circuit: start on micro-SaaS — proven, crowded markets won on a sharper angle. Curiosity pulls you down into a SaaS vertical build, something bigger. Then the machine runs: find real problems, build what they'll pay for, market and sell it into revenue. Each node only fires when the one before it does.",
 };
 
 export const FLOW_NODES: FlowNode[] = [
-  { id: "underserved", label: "Productized agency", sub: "logic — thin supply, real demand", icon: "target", x: 100, y: 55 },
-  { id: "ecommerce", label: "SaaS vertical building", sub: "passion — where I want to build (ecommerce, finance, etc)", icon: "card", x: 100, y: 245 },
-  { id: "problems", label: "Find Problems", sub: "pain points in large markets", icon: "flame", x: 340, y: 150, href: "/radar" },
-  { id: "development", label: "Development", sub: "build what they'll pay for", icon: "code", x: 560, y: 150 },
-  { id: "gtm", label: "Marketing & Sales", sub: "demand gen → revenue", icon: "send", x: 765, y: 150 },
-  { id: "money", label: "Money", sub: "$50K / mo goal", icon: "card", x: 918, y: 150, goal: true },
+  { id: "micro", label: "Micro SaaS", sub: "crowded market, sharper angle + distribution", icon: "layers", x: 130, y: 78 },
+  { id: "vertical", label: "SaaS vertical build", sub: "curiosity pulls you up — build something bigger", icon: "rocket", x: 130, y: 222 },
+  { id: "problems", label: "Find Problems", sub: "productized-agency work → pain points in large markets", icon: "flame", x: 400, y: 150, href: "/radar" },
+  { id: "development", label: "Development", sub: "build what they'll pay for", icon: "code", x: 575, y: 150 },
+  { id: "gtm", label: "Marketing & Sales", sub: "demand gen → revenue", icon: "send", x: 725, y: 150 },
+  { id: "money", label: "Money", sub: "$50K / mo goal", icon: "card", x: 870, y: 150, goal: true },
 ];
 
 export const FLOW_CONNECTIONS: FlowConnection[] = [
-  { from: "underserved", to: "problems" },
-  { from: "ecommerce", to: "problems" },
+  { from: "micro", to: "vertical" },
+  { from: "vertical", to: "problems" },
   { from: "problems", to: "development" },
   { from: "development", to: "gtm" },
   { from: "gtm", to: "money" },

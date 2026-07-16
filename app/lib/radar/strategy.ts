@@ -142,10 +142,109 @@ export const SELLABLE_ASSET: StrategyStep = {
   ],
 };
 
-export const STRATEGY_STEPS: StrategyStep[] = [
+/* The Vertical SaaS path — the existing framework, unchanged. Hunts empty
+   markets with a domain moat and builds toward a sellable asset. */
+export const VERTICAL_SAAS_STEPS: StrategyStep[] = [
   PICK_TAM,
   FIND_JTBD,
   BUILD_VALIDATE,
   SCALE_OR_KILL,
   SELLABLE_ASSET,
+];
+
+/* Kept for any existing import path. Vertical SaaS is the default framework. */
+export const STRATEGY_STEPS = VERTICAL_SAAS_STEPS;
+
+/* ------------------------------------------------------------------ */
+/* Micro-SaaS path — the OPPOSITE game to vertical. Don't hunt unserved
+   problems; enter categories that already have PMF (crowded, fragmented,
+   proven demand) and win on a sharper angle + better distribution. The angle
+   isn't invented — angry 1–2★ reviews of the incumbents hand you the spec.
+   Source: starter_story note. Fast feedback, no moat, income-shaped ceiling. */
+
+/* Step 1 — Find categories that already have PMF. Fragmented = proven. */
+export const MICRO_FIND_PMF: StrategyStep = {
+  step: {
+    n: 1,
+    title: "Find categories with PMF",
+    tag: "Fragmented = proven demand",
+    blurb:
+      "Don't hunt unserved problems. Enter a crowded, fragmented market — many competitors, none dominant. Fragmentation is proof: demand exists, and there's room to enter on a sharper angle.",
+    block: "blk-cream",
+  },
+  nodes: [
+    { label: "300+ competitors", icon: "layers", sub: "fragmented, no one owns it" },
+    { label: "G2 / Capterra / Trustpilot", icon: "book", sub: "heavily listed = proven category" },
+    { label: "Proven demand", icon: "checkCircle", sub: "bet on execution, not discovery" },
+    { label: "Room to enter", icon: "target", sub: "no dominant player to unseat" },
+  ],
+};
+
+/* Step 2 — Figure out your angle. Angry reviews hand you the spec. */
+export const MICRO_ANGLE: StrategyStep = {
+  step: {
+    n: 2,
+    title: "Figure out your angle",
+    tag: "Angry reviews = your spec",
+    blurb:
+      "The angle comes from incumbents' pain, not your imagination. Read the 1–2★ reviews on G2. Log every repeated complaint. The one that repeats across 3+ competitors is your product spec — build the stripped-down tool that fixes exactly that.",
+    block: "blk-green",
+  },
+  nodes: [
+    { label: "Read 1–2★ reviews", icon: "alert", sub: "read ~50 on the incumbents" },
+    { label: "Log repeated complaints", icon: "edit", sub: "'I wish it did X' / 'too complicated'" },
+    { label: "Repeats across 3+", icon: "repeat", sub: "that repeated complaint = the angle" },
+    { label: "Strip it down", icon: "zap", sub: "verify emails / simpler than DocuSign" },
+  ],
+};
+
+/* Step 3 — Acquire customers profitably. Won on distribution, not product. */
+export const MICRO_ACQUIRE: StrategyStep = {
+  step: {
+    n: 3,
+    title: "Acquire customers profitably",
+    tag: "Won on distribution",
+    blurb:
+      "Micro-SaaS is won or lost in sales/marketing, not product. Position directly against the incumbent — '[incumbent] alternative'. Expect to fail a lot first (20+ failed cold-email attempts is normal). Target: first $1M ARR.",
+    block: "blk-ink",
+  },
+  nodes: [
+    { label: "Comparison SEO", icon: "search", sub: "'[incumbent] alternative' keywords" },
+    { label: "The review sites", icon: "book", sub: "G2 / Capterra — buyers compare there" },
+    { label: "Cold email", icon: "mail", sub: "expect 20+ fails first — it's learning" },
+    { label: "Communities", icon: "users", sub: "subreddits where users gather" },
+  ],
+};
+
+export const MICRO_SAAS_STEPS: StrategyStep[] = [
+  MICRO_FIND_PMF,
+  MICRO_ANGLE,
+  MICRO_ACQUIRE,
+];
+
+/* ------------------------------------------------------------------ */
+/* Tab metadata — the two paths shown below the machine flowchart. */
+
+export interface StrategyTab {
+  id: string;
+  label: string;
+  blurb: string;
+  steps: StrategyStep[];
+}
+
+export const STRATEGY_TABS: StrategyTab[] = [
+  {
+    id: "micro",
+    label: "Micro SaaS",
+    blurb:
+      "Enter crowded markets with proven PMF, win on a sharper angle + distribution. Fast feedback, no domain grind, no moat — an income-shaped play (~$100–300k/yr). Where the machine starts.",
+    steps: MICRO_SAAS_STEPS,
+  },
+  {
+    id: "vertical",
+    label: "Vertical SaaS",
+    blurb:
+      "The opposite game — hunt empty markets with a domain moat and build toward a sellable asset. Slower, defensible, asset-shaped. Where curiosity pulls you next.",
+    steps: VERTICAL_SAAS_STEPS,
+  },
 ];

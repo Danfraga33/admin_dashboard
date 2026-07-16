@@ -1015,6 +1015,44 @@
   .pain-radar.thesis .t-sat-tx small { display: none; }
 }
 
+/* ---- Strategy path tabs (Micro / Vertical SaaS) ---- */
+.pain-radar.thesis .t-tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  margin: 4px 0 0;
+  border-radius: 12px;
+  border: 1.5px solid var(--ink);
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+}
+.pain-radar.thesis .t-tab {
+  appearance: none;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--ed-font);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  padding: 9px 20px;
+  border-radius: 8px;
+  transition: color var(--t-fast), background var(--t-fast), transform var(--t-fast);
+}
+.pain-radar.thesis .t-tab:hover { color: var(--ink); }
+.pain-radar.thesis .t-tab.is-active {
+  background: var(--ink);
+  color: var(--paper);
+}
+.pain-radar.thesis .t-tab:active { transform: scale(0.97); }
+.pain-radar.thesis .t-tab-blurb {
+  font-size: 13.5px;
+  color: var(--ink-2);
+  line-height: 1.55;
+  max-width: 68ch;
+  margin: 14px 0 26px;
+}
+
 /* ---- Overview ---- */
 .pain-radar .ov-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .pain-radar .ov-card { display: flex; flex-direction: column; gap: 6px; padding: 18px; }
