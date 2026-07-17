@@ -4,7 +4,7 @@ import { ScrambleText } from "~/lib/radar/motion";
 import { Icon } from "~/lib/radar/icons";
 import { STRATEGY_INTRO, STRATEGY_TABS, type StrategyStep } from "~/lib/radar/strategy";
 import { CircuitBoard } from "~/components/radar/circuit-board";
-import { FLOW_INTRO, FLOW_NODES, FLOW_CONNECTIONS } from "~/lib/radar/flow";
+import { FLOW_INTRO, FLOW_EQUATION, FLOW_NODES, FLOW_CONNECTIONS } from "~/lib/radar/flow";
 
 export function meta(_: Route.MetaArgs) {
   return [{ title: "Pain Radar — Strategy" }];
@@ -20,6 +20,31 @@ function StepHead({ step }: { step: StrategyStep["step"] }) {
           <span className="t-step-tag">{step.tag}</span>
         </div>
         <p className="t-step-blurb">{step.blurb}</p>
+      </div>
+    </div>
+  );
+}
+
+function Equation() {
+  return (
+    <div className="ed-eq">
+      <p className="ed-eq-formula">
+        <span className="eq-lhs">{FLOW_EQUATION.lhs}</span>
+        <span className="eq-op">=</span>
+        {FLOW_EQUATION.terms.map((t, i) => (
+          <span className="eq-term" key={t.label}>
+            {i > 0 && <span className="eq-op">×</span>}
+            {t.label}
+            <span className={`eq-arrow ${t.dir}`} aria-hidden="true">
+              {t.dir === "up" ? "↑" : "↓"}
+            </span>
+            <span className="sr-only">{t.dir === "up" ? "high" : "low"}</span>
+          </span>
+        ))}
+      </p>
+      <div className="ed-eq-moat">
+        <p className="ed-eq-note">{FLOW_EQUATION.note}</p>
+        <p className="ed-eq-rule">{FLOW_EQUATION.rule}</p>
       </div>
     </div>
   );
@@ -69,7 +94,7 @@ export default function MarketStrategy() {
         <div>
           <div className="ed-eyebrow">{FLOW_INTRO.eyebrow}</div>
           <ScrambleText as="h1" className="ed-headline" text={FLOW_INTRO.headline} />
-          <p className="ed-subline">{FLOW_INTRO.subline}</p>
+          <Equation />
         </div>
       </div>
 

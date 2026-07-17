@@ -26,8 +26,16 @@ export interface FlowConnection {
 export const FLOW_INTRO = {
   eyebrow: "Method · The machine",
   headline: "The path to $50K / mo",
-  subline:
-    "Strategy as a circuit: start on micro-SaaS — proven, crowded markets won on a sharper angle. Curiosity pulls you down into a SaaS vertical build, something bigger. Then the machine runs: find real problems, build what they'll pay for, market and sell it into revenue. Each node only fires when the one before it does.",
+};
+
+export const FLOW_EQUATION = {
+  lhs: "Opportunity(Problem)",
+  terms: [
+    { label: "Demand", dir: "up" as const },
+    { label: "Competition", dir: "down" as const },
+  ],
+  note: "Look for how you can obtain a moat",
+  rule: "If high competition = find another moat",
 };
 
 export const FLOW_NODES: FlowNode[] = [
