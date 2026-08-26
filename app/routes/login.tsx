@@ -6,8 +6,13 @@ import { createSupabaseServerClient } from '~/lib/supabase.server'
 export async function loader({ request }: LoaderFunctionArgs) {
   const responseHeaders = new Headers()
   const supabase = createSupabaseServerClient(request, responseHeaders)
-  const { data: { session } } = await supabase.auth.getSession()
-  if (session) throw redirect('/', { headers: responseHeaders })
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) throw redirect('/', { headers: responseHeaders })
+  } catch (error) {
+    if (error instanceof Response) throw error
+    if (!isNetworkError(error)) throw error
+  }
   return null
 }
 
@@ -21,14 +26,31 @@ export async function action({ request }: ActionFunctionArgs) {
   let signInError: string | null = null
   try {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) signInError = error.message
-  } catch {
-    signInError = 'Unable to reach the authentication service. Please try again.'
+    if (error) signInError = isNetworkError(error) ? NETWORK_ERROR_MESSAGE : error.message
+  } catch (error) {
+    signInError = isNetworkError(error) ? NETWORK_ERROR_MESSAGE : 'Sign in failed. Please try again.'
   }
 
   if (signInError) return { error: signInError }
 
   throw redirect('/', { headers: responseHeaders })
+}
+
+const NETWORK_ERROR_MESSAGE =
+  'Unable to reach the authentication service. Please try again in a moment.'
+
+function isNetworkError(error: unknown) {
+  if (!error || typeof error !== 'object') return false
+  const { name, status, message } = error as {
+    name?: string
+    status?: number
+    message?: string
+  }
+  return (
+    name === 'AuthRetryableFetchError' ||
+    status === 0 ||
+    /fetch failed|network|ECONNREFUSED|ENOTFOUND|EAI_AGAIN/i.test(message ?? '')
+  )
 }
 
 export const meta = () => [{ title: 'Atlas · Sign In' }]
@@ -37,6 +59,7 @@ export default function Login() {
   const actionData = useActionData<typeof action>()
   const navigation = useNavigation()
   const isSubmitting = navigation.formAction === '/login'
+  const error = isSubmitting ? null : actionData?.error
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -81,8 +104,8 @@ export default function Login() {
                 />
               </div>
 
-              {actionData?.error && (
-                <p className="text-destructive-foreground text-sm">{actionData.error}</p>
+              {error && (
+                <p role="alert" className="text-destructive-foreground text-sm">{error}</p>
               )}
 
               <button
