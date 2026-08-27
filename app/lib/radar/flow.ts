@@ -1,9 +1,9 @@
 /* flow.ts — static data for the Strategy circuit-board flowchart.
-   One linear chain: start on micro-SaaS, curiosity pulls the flow down into a
-   SaaS vertical build (something bigger) stacked directly beneath it, then Find
-   Problems → Development → Marketing & Sales → Money ($50K/mo). Find Problems
-   links into the Pain Radar dashboard, where the problems come from — and it's
-   where productized-agency work points too: both funnel into real pain points.
+   One linear chain: pick a vertical → Find Problems → build the software that
+   lifts operators' earning power → install it across the vertical → Acquire.
+   The software is the acquisition edge: installed on day 1 it lifts EBITDA, so
+   every deal is bought below what it's worth with the software running. Find
+   Problems links into the Pain Radar dashboard, where the problems come from.
    Coordinates are in a 1000×300 viewBox; the SVG scales to its container. */
 
 export interface FlowNode {
@@ -25,7 +25,7 @@ export interface FlowConnection {
 
 export const FLOW_INTRO = {
   eyebrow: "Method · The machine",
-  headline: "The path to $50K / mo",
+  headline: "Software first, acquisition next",
 };
 
 export const FLOW_EQUATION = {
@@ -39,18 +39,16 @@ export const FLOW_EQUATION = {
 };
 
 export const FLOW_NODES: FlowNode[] = [
-  { id: "micro", label: "Micro SaaS", sub: "crowded market, sharper angle + distribution", icon: "layers", x: 130, y: 78 },
-  { id: "vertical", label: "SaaS vertical build", sub: "curiosity pulls you up — build something bigger", icon: "rocket", x: 130, y: 222 },
-  { id: "problems", label: "Find Problems", sub: "productized-agency work → pain points in large markets", icon: "flame", x: 400, y: 150, href: "/radar" },
-  { id: "development", label: "Development", sub: "build what they'll pay for", icon: "code", x: 575, y: 150 },
-  { id: "gtm", label: "Marketing & Sales", sub: "demand gen → revenue", icon: "send", x: 725, y: 150 },
-  { id: "money", label: "Money", sub: "$50K / mo goal", icon: "card", x: 870, y: 150, goal: true },
+  { id: "vertical", label: "Pick the vertical", sub: "one industry — the one you'll acquire in", icon: "target", x: 120, y: 150 },
+  { id: "problems", label: "Find Problems", sub: "operator pain across the vertical", icon: "flame", x: 300, y: 150, href: "/radar" },
+  { id: "software", label: "Build the software", sub: "lifts revenue or margin — earning power", icon: "code", x: 490, y: 150 },
+  { id: "install", label: "Install the vertical", sub: "operator by operator, case study by case study", icon: "send", x: 665, y: 150 },
+  { id: "acquire", label: "Acquire", sub: "software adds value from day 1", icon: "building", x: 850, y: 150, goal: true },
 ];
 
 export const FLOW_CONNECTIONS: FlowConnection[] = [
-  { from: "micro", to: "vertical" },
   { from: "vertical", to: "problems" },
-  { from: "problems", to: "development" },
-  { from: "development", to: "gtm" },
-  { from: "gtm", to: "money" },
+  { from: "problems", to: "software" },
+  { from: "software", to: "install" },
+  { from: "install", to: "acquire" },
 ];

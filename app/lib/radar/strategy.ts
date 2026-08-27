@@ -10,28 +10,29 @@ export interface StrategyStep {
   nodes: ThesisNode[];
 }
 
-/* The framework reads top-to-bottom: pick a defensible TAM → find the painful
-   job → build cheap and validate with real $ → scale or kill → build toward a
-   sellable asset. Each step compounds toward the acquirable business. */
+/* The framework reads top-to-bottom: pick the vertical you'll acquire in →
+   find the painful job → build the software that lifts operators' earning
+   power → install it across the vertical → acquire with the software edge.
+   Each step compounds toward day-1 value creation on every deal. */
 
 export const STRATEGY_INTRO = {
-  eyebrow: "Method · Opportunity hunting",
-  headline: "Market Opportunity Framework",
+  eyebrow: "Method · Vertical build",
+  headline: "Vertical Build Framework",
   subline: "",
 };
 
-/* Step 1 — Pick the TAM: big AND defensible. Moat must be possible. */
+/* Step 1 — Pick the vertical: chosen like an acquirer, not just a founder. */
 export const PICK_TAM: StrategyStep = {
   step: {
     n: 1,
-    title: "Pick the TAM",
-    tag: "Moat possible, not just big",
+    title: "Pick the vertical",
+    tag: "Where you'll buy, not just build",
     blurb:
-      "Big TAM alone is a trap. AI makes the build free, so the moat must come from distribution, data, or brand. Pick markets where a 7 Powers moat is possible — big and defensible, not big alone.",
+      "One vertical, chosen like an acquirer: fragmented ownership, boring operations, fat manual cost centers. Big TAM alone is a trap — a 7 Powers moat must be possible, and the software must matter to the P&L of every company in it.",
     block: "blk-cream",
   },
   nodes: [
-    { label: "Big + defensible", icon: "target", sub: "not big TAM alone" },
+    { label: "Big + defensible", icon: "target", sub: "and acquirable — fragmented ownership" },
     {
       label: "Scale Economies",
       icon: "trend",
@@ -77,7 +78,7 @@ export const FIND_JTBD: StrategyStep = {
     title: "Find the painful JTBD (Job-to-be-done)",
     tag: "Find Problems",
     blurb:
-      "Inside that market, find the job people are desperate to get done. Mom Test rules — ask about their life, not your idea. Look for hair-on-fire, not interest.",
+      "Inside the vertical, find the job operators are desperate to get done — the one that costs them real money. Mom Test rules — ask about their business, not your idea. Look for hair-on-fire, not interest.",
     block: "blk-green",
   },
   nodes: [
@@ -88,62 +89,62 @@ export const FIND_JTBD: StrategyStep = {
   ],
 };
 
-/* Step 3 — Build cheap, validate fast: real $ inside 30 days. */
+/* Step 3 — Build the earning-power software: lift the P&L, provably. */
 export const BUILD_VALIDATE: StrategyStep = {
   step: {
     n: 3,
-    title: "Build cheap, validate fast",
-    tag: "Hormozi 30-day rule",
+    title: "Build the earning-power software",
+    tag: "Lift the P&L, provably",
     blurb:
-      "Build it cheap with AI. Validate with real money fast — the 30-day rule. Either it pulls or it doesn't.",
+      "Build the tool that measurably increases revenue or cuts cost for operators in the vertical. Cheap with AI, validated with real money inside 30 days — if it doesn't move their P&L, it won't move an acquisition either.",
     block: "blk-ink",
   },
   nodes: [
+    { label: "Earning-power lift", icon: "trend", sub: "revenue up or cost out — measurable" },
     { label: "Build cheap (AI)", icon: "code", sub: "build cost near zero" },
     { label: "Real $ validation", icon: "card", sub: "paid, not promised" },
     { label: "30-day rule", icon: "clock", sub: "prove it inside a month" },
-    { label: "Pull signal", icon: "trend", sub: "do they come back" },
   ],
 };
 
-/* Step 4 — Scale or kill: volume negates luck. */
+/* Step 4 — Install across the vertical: every install is a case study. */
 export const SCALE_OR_KILL: StrategyStep = {
   step: {
     n: 4,
-    title: "Scale or kill",
-    tag: "Volume negates luck",
+    title: "Install across the vertical",
+    tag: "Case studies compound",
     blurb:
-      "Pull → scale. No pull → kill it, repeat. Volume negates luck.",
+      "Sell it operator by operator. Every install is proof — a before/after P&L case study. Pull → scale. No pull → kill the angle and re-aim. The vertical is finite, so reputation travels fast.",
     block: "blk-clay",
   },
   nodes: [
+    { label: "Operator by operator", icon: "users", sub: "the vertical is a small world" },
+    { label: "Before / after numbers", icon: "metrics", sub: "each install is a case study" },
     { label: "Scale the winners", icon: "rocket", sub: "double down on pull" },
-    { label: "Kill the rest", icon: "power", sub: "no pull, walk away" },
-    { label: "Many shots", icon: "layers", sub: "capital funds volume" },
-    { label: "Volume negates luck", icon: "repeat", sub: "repeat until it hits" },
+    { label: "Kill the rest", icon: "power", sub: "no pull, re-angle" },
   ],
 };
 
-/* Step 5 — Build toward a sellable asset: acquirable at the multiple. */
+/* Step 5 — Acquire with the software edge: day-1 value creation. */
 export const SELLABLE_ASSET: StrategyStep = {
   step: {
     n: 5,
-    title: "Build toward a sellable asset",
-    tag: "Acquirable at the multiple",
+    title: "Acquire with the software edge",
+    tag: "Day-1 value creation",
     blurb:
-      "Build toward an asset someone buys: recurring revenue, low founder-dependence. That's what gets acquired at the $10M multiple.",
+      "When acquisition comes around, the software is the edge: install it on day 1, lift EBITDA, and pay a multiple the seller thinks is fair on numbers you know you can beat. The SaaS stays a sellable asset in its own right — but its real job is making every acquired company worth more.",
     block: "blk-sky",
   },
   nodes: [
-    { label: "Recurring revenue", icon: "refresh", sub: "predictable cash" },
-    { label: "Low founder-dependence", icon: "users", sub: "runs without you" },
-    { label: "Sellable asset", icon: "building", sub: "a business, not a job" },
-    { label: "$10M multiple", icon: "arrowUp", sub: "what acquirers pay for" },
+    { label: "Day-1 install", icon: "zap", sub: "value creation starts at close" },
+    { label: "EBITDA lift", icon: "trend", sub: "the software's proven P&L effect" },
+    { label: "Multiple arbitrage", icon: "arrowUp", sub: "buy at X, operate at better than X" },
+    { label: "Flywheel", icon: "repeat", sub: "each deal deepens the software" },
   ],
 };
 
-/* The Vertical SaaS path — the existing framework, unchanged. Hunts empty
-   markets with a domain moat and builds toward a sellable asset. */
+/* The Vertical SaaS path — THE focus. Software that increases the earning
+   power of companies in one vertical, so acquisitions compound from day 1. */
 export const VERTICAL_SAAS_STEPS: StrategyStep[] = [
   PICK_TAM,
   FIND_JTBD,
@@ -234,17 +235,17 @@ export interface StrategyTab {
 
 export const STRATEGY_TABS: StrategyTab[] = [
   {
-    id: "micro",
-    label: "Micro SaaS",
-    blurb:
-      "Enter crowded markets with proven PMF, win on a sharper angle + distribution. Fast feedback, no domain grind, no moat — an income-shaped play (~$100–300k/yr). Where the machine starts.",
-    steps: MICRO_SAAS_STEPS,
-  },
-  {
     id: "vertical",
     label: "Vertical SaaS",
     blurb:
-      "The opposite game — hunt empty markets with a domain moat and build toward a sellable asset. Slower, defensible, asset-shaped. Where curiosity pulls you next.",
+      "The only focus. Build software that increases the earning power of companies in one vertical — so when acquisition comes around, it adds value from day 1. Slow, defensible, asset-shaped: every install is proof, every deal compounds.",
     steps: VERTICAL_SAAS_STEPS,
+  },
+  {
+    id: "micro",
+    label: "Micro SaaS",
+    blurb:
+      "The fun side quest — not the focus. Crowded markets with proven PMF, a sharper angle + distribution, fast feedback, income-shaped (~$100–300k/yr). Play it for reps and cashflow, not for the thesis.",
+    steps: MICRO_SAAS_STEPS,
   },
 ];
