@@ -1220,6 +1220,44 @@
 }
 
 /* ============================================================
+   SKILLS + MACHINE LOOP (Strategy page) — sk-*
+   Five compounding skills grid footer + the loop strip.
+   ============================================================ */
+.pain-radar.thesis .sk-founder {
+  margin: 22px 4px 0;
+  padding-top: 18px;
+  border-top: 1px dashed color-mix(in srgb, currentColor 25%, transparent);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 2;
+  letter-spacing: 0.01em;
+}
+.pain-radar.thesis .sk-founder-tail { font-weight: 700; margin-left: 10px; }
+.pain-radar.thesis .sk-arrow { opacity: 0.55; margin: 0 9px; }
+
+.pain-radar.thesis .sk-machine { display: flex; flex-direction: column; }
+.pain-radar.thesis .sk-loop {
+  display: flex; flex-wrap: wrap; align-items: center; row-gap: 12px;
+  margin: 4px 0 18px;
+}
+.pain-radar.thesis .sk-loop-step { display: inline-flex; align-items: center; }
+.pain-radar.thesis .sk-pill {
+  display: inline-block;
+  padding: 8px 15px;
+  border-radius: 999px;
+  border: 1.5px solid color-mix(in srgb, currentColor 40%, transparent);
+  font-size: 13px; font-weight: 650; letter-spacing: 0.02em;
+  transition: transform var(--t-fast) var(--ease), border-color var(--t-fast);
+}
+.pain-radar.thesis .sk-loop-step:hover .sk-pill { transform: translateY(-2px); border-color: currentColor; }
+.pain-radar.thesis .sk-note { font-size: 13px; opacity: 0.75; font-style: italic; }
+.pain-radar.thesis .sk-rule { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; margin-top: 6px; }
+
+@media (max-width: 900px) {
+  .pain-radar.thesis .sk-founder { line-height: 2.2; }
+}
+
+/* ============================================================
    IDEA BOARD (/radar/ideas) — ib-*
    Project-card grid + detail modal for the 10-box idea filter.
    ============================================================ */

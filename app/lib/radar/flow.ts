@@ -1,6 +1,7 @@
 /* flow.ts — static data for the Strategy circuit-board flowchart.
-   One linear chain: pick a vertical → Find Problems → build the software that
-   lifts operators' earning power → install it across the vertical → Acquire.
+   One linear chain: pick the customer (expensive, recurrent problem) → Find
+   Problems → build the software that lifts operators' earning power → install
+   it across the vertical → Acquire.
    The software is the acquisition edge: installed on day 1 it lifts EBITDA, so
    every deal is bought below what it's worth with the software running. Find
    Problems links into the Pain Radar dashboard, where the problems come from.
@@ -39,7 +40,7 @@ export const FLOW_EQUATION = {
 };
 
 export const FLOW_NODES: FlowNode[] = [
-  { id: "vertical", label: "Pick the vertical", sub: "one industry — the one you'll acquire in", icon: "target", x: 120, y: 150 },
+  { id: "vertical", label: "Pick the customer", sub: "expensive, recurrent problem — solvable thousands of times", icon: "users", x: 120, y: 150 },
   { id: "problems", label: "Find Problems", sub: "operator pain across the vertical", icon: "flame", x: 300, y: 150, href: "/radar" },
   { id: "software", label: "Build the software", sub: "lifts revenue or margin — earning power", icon: "code", x: 490, y: 150 },
   { id: "install", label: "Install the vertical", sub: "operator by operator, case study by case study", icon: "send", x: 665, y: 150 },

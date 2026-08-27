@@ -21,18 +21,21 @@ export const STRATEGY_INTRO = {
   subline: "",
 };
 
-/* Step 1 — Pick the vertical: chosen like an acquirer, not just a founder. */
+/* Step 1 — Pick the customer, not the industry. Industry-first loops forever;
+   the customer question terminates. The industry is just the terrain. */
 export const PICK_TAM: StrategyStep = {
   step: {
     n: 1,
-    title: "Pick the vertical",
-    tag: "Where you'll buy, not just build",
+    title: "Pick the customer, not the industry",
+    tag: "The industry is the terrain",
     blurb:
-      "One vertical, chosen like an acquirer: fragmented ownership, boring operations, fat manual cost centers. Big TAM alone is a trap — a 7 Powers moat must be possible, and the software must matter to the P&L of every company in it.",
+      "Industry-first sends you round in circles. Start with one question: what customer has a sufficiently expensive, recurrent problem that I can solve for them thousands of times? Answer that and the vertical picks itself — then check a 7 Powers moat is possible where they live.",
     block: "blk-cream",
   },
   nodes: [
-    { label: "Big + defensible", icon: "target", sub: "and acquirable — fragmented ownership" },
+    { label: "Expensive problem", icon: "card", sub: "costs real money every time it occurs" },
+    { label: "Recurrent", icon: "repeat", sub: "happens weekly, not once" },
+    { label: "Thousands of times", icon: "layers", sub: "same solve, sold across many customers" },
     {
       label: "Scale Economies",
       icon: "trend",
@@ -222,6 +225,52 @@ export const MICRO_SAAS_STEPS: StrategyStep[] = [
   MICRO_ANGLE,
   MICRO_ACQUIRE,
 ];
+
+/* ------------------------------------------------------------------ */
+/* The five compounding entrepreneurial skills + the loop they run.
+   Coding is a means of implementing product, not the core moat — AI
+   accelerates this. The machine is the loop; the industry is the terrain. */
+
+export const SKILLS_INTRO = {
+  eyebrow: "Method · The operator",
+  headline: "Five Compounding Skills",
+  subline:
+    "Coding is increasingly a means of implementing product, not the core moat — AI accelerates this dramatically. What compounds is the operator running the loop.",
+};
+
+export const SKILLS: ThesisNode[] = [
+  { label: "Customer discovery", icon: "search", sub: "understanding what people actually pay for" },
+  { label: "Sales / distribution", icon: "send", sub: "getting customers" },
+  { label: "Product", icon: "bulb", sub: "turning the problem into something customers repeatedly pay for" },
+  { label: "Operations", icon: "settings", sub: "delivering the result efficiently" },
+  { label: "Capital allocation", icon: "card", sub: "knowing where to deploy the next dollar" },
+];
+
+/* The founder loop — the five skills chained into one powerful cycle. */
+export const FOUNDER_LOOP = [
+  "identify a painful workflow",
+  "sell the solution",
+  "use AI to build it",
+  "measure the economics",
+  "improve it",
+];
+
+/* The machine — you don't need the perfect industry, you need an
+   environment where this loop runs and tech cheapens each iteration. */
+export const MACHINE_LOOP = {
+  steps: [
+    "Pain",
+    "Sale",
+    "Solution",
+    "Feedback",
+    "Improvement",
+    "Retention",
+    "Distribution",
+    "Scale",
+  ],
+  note: "Ideally, AI reduces the cost of delivering the solution each iteration.",
+  rule: "That's the machine. The industry is the terrain.",
+};
 
 /* ------------------------------------------------------------------ */
 /* Tab metadata — the two paths shown below the machine flowchart. */

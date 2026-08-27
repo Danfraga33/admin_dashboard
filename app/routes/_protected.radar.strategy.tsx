@@ -2,7 +2,15 @@ import { useState } from "react";
 import type { Route } from "./+types/_protected.radar.strategy";
 import { ScrambleText } from "~/lib/radar/motion";
 import { Icon } from "~/lib/radar/icons";
-import { STRATEGY_INTRO, STRATEGY_TABS, type StrategyStep } from "~/lib/radar/strategy";
+import {
+  STRATEGY_INTRO,
+  STRATEGY_TABS,
+  SKILLS_INTRO,
+  SKILLS,
+  FOUNDER_LOOP,
+  MACHINE_LOOP,
+  type StrategyStep,
+} from "~/lib/radar/strategy";
 import { CircuitBoard } from "~/components/radar/circuit-board";
 import { FLOW_INTRO, FLOW_EQUATION, FLOW_NODES, FLOW_CONNECTIONS } from "~/lib/radar/flow";
 
@@ -99,6 +107,61 @@ export default function MarketStrategy() {
       </div>
 
       <CircuitBoard nodes={FLOW_NODES} connections={FLOW_CONNECTIONS} />
+
+      <div className="ed-head" style={{ marginTop: 8 }}>
+        <div>
+          <div className="ed-eyebrow">{SKILLS_INTRO.eyebrow}</div>
+          <ScrambleText as="h2" className="ed-headline" text={SKILLS_INTRO.headline} />
+          <p className="ed-subline">{SKILLS_INTRO.subline}</p>
+        </div>
+      </div>
+
+      <section className="t-step">
+        <div className="t-card blk-cream">
+          <div className="t-grid">
+            {SKILLS.map((nd, i) => (
+              <div
+                className="t-ncard rise"
+                key={nd.label}
+                style={{ animationDelay: `${i * 80}ms` }}
+              >
+                <span className="t-ncard-ic">
+                  <Icon name={nd.icon} size={18} />
+                </span>
+                <b>
+                  {i + 1} · {nd.label}
+                </b>
+                {nd.sub && <small>{nd.sub}</small>}
+              </div>
+            ))}
+          </div>
+          <p className="sk-founder">
+            {FOUNDER_LOOP.map((s, i) => (
+              <span key={s}>
+                {i > 0 && <span className="sk-arrow" aria-hidden="true">→</span>}
+                {s}
+              </span>
+            ))}
+            <span className="sk-founder-tail">= an extremely powerful loop.</span>
+          </p>
+        </div>
+      </section>
+
+      <section className="t-step">
+        <div className="t-card blk-ink sk-machine">
+          <div className="t-stack-label">The machine — run this loop, anywhere it fits</div>
+          <div className="sk-loop">
+            {MACHINE_LOOP.steps.map((s, i) => (
+              <span key={s} className="sk-loop-step rise" style={{ animationDelay: `${i * 70}ms` }}>
+                {i > 0 && <span className="sk-arrow" aria-hidden="true">→</span>}
+                <span className="sk-pill">{s}</span>
+              </span>
+            ))}
+          </div>
+          <p className="sk-note">{MACHINE_LOOP.note}</p>
+          <p className="sk-rule">{MACHINE_LOOP.rule}</p>
+        </div>
+      </section>
 
       <div className="ed-head" style={{ marginTop: 8 }}>
         <div>
