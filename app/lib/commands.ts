@@ -35,6 +35,7 @@ export const COMMANDS: CommandItem[] = [
   { id: 'radar', label: 'Pain Radar', to: '/radar', icon: 'Radio', section: 'Business', keywords: ['radar', 'dashboard', 'pain', 'signals', 'complaints'] },
   { id: 'radar-sources', label: 'Radar Sources', to: '/radar/sources', icon: 'Layers', section: 'Business', keywords: ['radar', 'reddit', 'youtube', 'forums', 'channels', 'ingest'] },
   { id: 'radar-thesis', label: 'Radar Thesis', to: '/radar/thesis', icon: 'Target', section: 'Business', keywords: ['radar', 'thesis', 'flow', 'where', 'why'] },
+  { id: 'radar-ideas', label: 'Idea Board', to: '/radar/ideas', icon: 'Lightbulb', section: 'Business', keywords: ['ideas', 'board', 'filter', 'boxes', 'checklist', 'moat', 'expansion', 'radar'] },
 
   { id: 'notes', label: 'Notes', to: '/notes', icon: 'StickyNote', section: 'Workspace', keywords: ['memo', 'scratch', 'jot'] },
 ]

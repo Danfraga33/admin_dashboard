@@ -56,6 +56,69 @@ export type Database = {
         }
         Relationships: []
       }
+      business_ideas: {
+        Row: {
+          created_at: string
+          distribution: string | null
+          expansion: string | null
+          frequency: string | null
+          gross_margin: string | null
+          id: string
+          moat: string | null
+          notes: string | null
+          one_liner: string | null
+          pain: string | null
+          retention: string | null
+          scale: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+          who_pays: string | null
+          willingness_to_pay: string | null
+        }
+        Insert: {
+          created_at?: string
+          distribution?: string | null
+          expansion?: string | null
+          frequency?: string | null
+          gross_margin?: string | null
+          id?: string
+          moat?: string | null
+          notes?: string | null
+          one_liner?: string | null
+          pain?: string | null
+          retention?: string | null
+          scale?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+          who_pays?: string | null
+          willingness_to_pay?: string | null
+        }
+        Update: {
+          created_at?: string
+          distribution?: string | null
+          expansion?: string | null
+          frequency?: string | null
+          gross_margin?: string | null
+          id?: string
+          moat?: string | null
+          notes?: string | null
+          one_liner?: string | null
+          pain?: string | null
+          retention?: string | null
+          scale?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          who_pays?: string | null
+          willingness_to_pay?: string | null
+        }
+        Relationships: []
+      }
       buy_box_cards: {
         Row: {
           created_at: string

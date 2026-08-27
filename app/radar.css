@@ -1218,3 +1218,200 @@
   .pain-radar .cb-node { position: static; transform: none; width: 100%; }
   .pain-radar .cb-node:hover { transform: translateY(-3px); }
 }
+
+/* ============================================================
+   IDEA BOARD (/radar/ideas) — ib-*
+   Project-card grid + detail modal for the 10-box idea filter.
+   ============================================================ */
+.pain-radar .ib-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: var(--gap);
+}
+
+.pain-radar .ib-card {
+  appearance: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: var(--pad-card);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+  cursor: pointer;
+  transition: transform var(--t-fast) var(--ease), border-color var(--t-fast), box-shadow var(--t-fast);
+}
+.pain-radar .ib-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-line);
+  box-shadow: var(--shadow-pop);
+}
+.pain-radar .ib-card:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+
+.pain-radar .ib-card-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pain-radar .ib-status {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 11px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--text-2);
+}
+.pain-radar .ib-status i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.pain-radar .ib-score {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 12px; font-weight: 600;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.pain-radar .ib-score.done { color: var(--ok); }
+
+.pain-radar .ib-title { font-size: 16.5px; font-weight: 650; letter-spacing: -0.01em; line-height: 1.3; }
+.pain-radar .ib-liner {
+  font-size: 13px; color: var(--text-2); line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  min-height: 39px;
+}
+
+.pain-radar .ib-boxes { display: flex; gap: 5px; margin-top: 2px; }
+.pain-radar .ib-boxes i {
+  flex: 1; height: 7px; border-radius: 3px;
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.pain-radar .ib-boxes i.on { background: var(--accent); border-color: var(--accent); }
+
+.pain-radar .ib-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 2px; padding-top: 10px; border-top: 1px solid var(--border);
+  font-size: 11.5px; color: var(--text-3);
+}
+.pain-radar .ib-note-flag { display: inline-flex; align-items: center; gap: 5px; }
+
+/* ---- modal ---- */
+.pain-radar .ib-scrim {
+  position: fixed; inset: 0; z-index: 60;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, .45);
+  backdrop-filter: blur(3px);
+  animation: pr-fade var(--t-fast) ease both;
+}
+.pain-radar .ib-modal {
+  width: 100%; max-width: 760px; max-height: 90vh;
+  display: flex; flex-direction: column;
+  background: var(--bg);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-pop);
+  overflow: hidden;
+  animation: pr-rise var(--t-base) var(--ease-out) both;
+}
+.pain-radar .ib-form { display: flex; flex-direction: column; min-height: 0; }
+
+.pain-radar .ib-m-head {
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 22px 12px;
+}
+.pain-radar .ib-m-title { flex: 1; font-size: 18px; font-weight: 650; letter-spacing: -0.01em; }
+.pain-radar .ib-m-tools { display: flex; align-items: center; gap: 6px; }
+.pain-radar .ib-icon-btn {
+  appearance: none; border: none; background: none; font: inherit;
+  width: 32px; height: 32px; border-radius: 8px;
+  display: grid; place-items: center;
+  font-size: 20px; line-height: 1;
+  color: var(--text-3); cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+}
+.pain-radar .ib-icon-btn:hover { background: var(--surface-3); color: var(--text); }
+.pain-radar .ib-icon-btn.danger:hover { background: var(--bad-soft); color: var(--bad); }
+
+.pain-radar .ib-m-sub {
+  display: flex; gap: 10px;
+  padding: 0 22px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.pain-radar .ib-m-sub .input { flex: 1; }
+.pain-radar .ib-m-sub .select { flex: none; width: 140px; }
+
+.pain-radar .ib-m-body { overflow-y: auto; padding: 18px 22px; min-height: 0; }
+
+.pain-radar .ib-crits { display: flex; flex-direction: column; gap: 12px; }
+.pain-radar .ib-crit {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding: 13px 14px;
+  transition: border-color var(--t-fast);
+}
+.pain-radar .ib-crit.is-filled { border-color: var(--accent-line); }
+.pain-radar .ib-crit.is-critical { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+.pain-radar .ib-crit-head { display: flex; align-items: center; gap: 11px; margin-bottom: 9px; }
+.pain-radar .ib-crit-ic {
+  width: 32px; height: 32px; border-radius: 9px; flex: none;
+  display: grid; place-items: center;
+  background: var(--surface-3); color: var(--text-2);
+}
+.pain-radar .ib-crit.is-filled .ib-crit-ic { background: var(--accent-soft); color: var(--accent); }
+.pain-radar .ib-crit-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.pain-radar .ib-crit-meta b { font-size: 13.5px; font-weight: 650; letter-spacing: -0.005em; }
+.pain-radar .ib-crit-meta small { font-size: 12px; color: var(--text-2); }
+.pain-radar .ib-crit-star {
+  font-size: 9.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 999px; flex: none;
+  background: var(--accent); color: var(--accent-ink);
+}
+.pain-radar .ib-crit-tick {
+  width: 20px; height: 20px; border-radius: 50%; flex: none;
+  display: grid; place-items: center;
+  border: 1.5px solid var(--border-2); color: transparent;
+  transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
+}
+.pain-radar .ib-crit.is-filled .ib-crit-tick {
+  background: var(--accent); border-color: var(--accent); color: var(--accent-ink);
+}
+
+.pain-radar .ib-crit textarea,
+.pain-radar .ib-notes textarea {
+  width: 100%; resize: vertical;
+  font: inherit; font-size: 13px; line-height: 1.5;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 11px;
+  transition: border-color var(--t-fast), box-shadow var(--t-fast), background var(--t-fast);
+}
+.pain-radar .ib-crit textarea:focus,
+.pain-radar .ib-notes textarea:focus {
+  outline: none; border-color: var(--accent); background: var(--surface);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.pain-radar .ib-crit textarea::placeholder,
+.pain-radar .ib-notes textarea::placeholder { color: var(--text-3); }
+
+.pain-radar .ib-crit-note {
+  margin-top: 8px; font-size: 12px; font-style: italic; color: var(--accent);
+}
+
+.pain-radar .ib-notes {
+  margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border-2);
+}
+
+.pain-radar .ib-m-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 14px 22px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.pain-radar .ib-m-hint { font-size: 12.5px; color: var(--text-2); }
+
+@media (max-width: 640px) {
+  .pain-radar .ib-scrim { padding: 10px; }
+  .pain-radar .ib-m-sub { flex-direction: column; }
+  .pain-radar .ib-m-sub .select { width: 100%; }
+}
