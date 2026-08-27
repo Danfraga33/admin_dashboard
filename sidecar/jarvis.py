@@ -24,12 +24,14 @@ Tuning (constants below):
   MIN_DOUBLE_GAP_S / MAX_DOUBLE_GAP_S — allowed time between the two claps.
   MIN_RMS       — ignore spikes below this absolute level.
   SONG_URI      — Spotify URI to open on each double clap (empty = skip).
+  SONG_VOLUME   — Windows mixer volume applied to Spotify when the song starts.
   STOP_AFTER_FIRE — release the mic after the ritual so BT returns to A2DP.
   ATLAS_* / ELEVENLABS_* — the spoken briefing. Configure via `.env`.
 """
 
 from __future__ import annotations
 
+import ctypes
 import hashlib
 import logging
 import os
@@ -85,6 +87,12 @@ LISTEN_WINDOW_S = 0.0
 # Spotify: "spotify:track:TRACK_ID". A spotify: URI (not https) opens the
 # DESKTOP app and auto-plays. Overridable via SONG_URI in .env.
 SONG_URI = os.environ.get("SONG_URI") or "spotify:track:0cgODPSGPfVKvJ3ZarsK70"
+# Windows mixer volume applied to the Spotify audio session when the song starts
+# (0..1, or 0..100 as a percentage). Negative leaves the volume untouched.
+# Override JARVIS_SONG_VOLUME.
+SONG_VOLUME = 0.75
+# How long to keep looking for Spotify's audio session after launching the track.
+SONG_VOLUME_TIMEOUT_S = 20.0
 
 # Brave (fallback: default browser). Ritual browser windows open normally.
 OPEN_TRACTION_SITE_IN_CHROME = True
@@ -639,6 +647,198 @@ def _spotify_force_play_win32() -> None:
     user32.keybd_event(VK_MEDIA_PLAY_PAUSE, 0, KEYEVENTF_KEYUP, 0)
 
 
+def _song_volume() -> float:
+    """Mixer level for the Spotify session (0..1). Negative = do not touch it."""
+    raw = (os.environ.get("JARVIS_SONG_VOLUME") or "").strip()
+    if raw:
+        try:
+            val = float(raw)
+        except ValueError:
+            return SONG_VOLUME
+        if val < 0:
+            return val
+        # Accept either 0..1 or a 0..100 percentage.
+        if val > 1.0:
+            val = val / 100.0
+        return min(1.0, val)
+    return SONG_VOLUME
+
+
+class _GUID(ctypes.Structure):
+    _fields_ = [
+        ("Data1", ctypes.c_ulong),
+        ("Data2", ctypes.c_ushort),
+        ("Data3", ctypes.c_ushort),
+        ("Data4", ctypes.c_ubyte * 8),
+    ]
+
+
+def _guid(text: str) -> "_GUID":
+    g = _GUID()
+    ctypes.oledll.ole32.CLSIDFromString(text, ctypes.pointer(g))
+    return g
+
+
+# Windows Core Audio COM plumbing for per-app mixer volume, driven through raw
+# vtable offsets so the sidecar keeps its current dependency list.
+_CLSID_MMDeviceEnumerator = "{BCDE0395-E52F-467C-8E3D-C4579291692E}"
+_IID_IMMDeviceEnumerator = "{A95664D2-9614-4F35-A746-DE8DB63617E6}"
+_IID_IAudioSessionManager2 = "{77AA99A0-1BD6-484F-8BC7-2C654C9A9B6F}"
+_IID_IAudioSessionControl2 = "{BFB7FF88-7239-4FC9-8FA2-07C950BE9C6D}"
+_IID_ISimpleAudioVolume = "{87CE5498-68D6-44E5-9215-6DA47EF883D8}"
+_CLSCTX_ALL = 23
+_EDATAFLOW_RENDER = 0
+_EROLE_MULTIMEDIA = 1
+
+
+def _com_call(ptr, index: int, restype, *args):
+    """Invoke vtable slot `index` on a COM interface pointer."""
+    vtbl = ctypes.cast(ptr, ctypes.POINTER(ctypes.POINTER(ctypes.c_void_p)))[0]
+    proto = ctypes.WINFUNCTYPE(restype, ctypes.c_void_p, *(type(a) for a in args))
+    return proto(vtbl[index])(ptr, *args)
+
+
+def _com_release(ptr) -> None:
+    if ptr:
+        try:
+            _com_call(ptr, 2, ctypes.c_ulong)
+        except OSError:
+            pass
+
+
+def _win32_exe_for_pid(pid: int) -> str:
+    """Base name of the executable behind `pid`, lowercased; "" if unreadable."""
+    PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+    kernel32 = ctypes.windll.kernel32
+    h = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+    if not h:
+        return ""
+    try:
+        buf = ctypes.create_unicode_buffer(4096)
+        size = ctypes.c_ulong(len(buf))
+        if not kernel32.QueryFullProcessImageNameW(h, 0, buf, ctypes.pointer(size)):
+            return ""
+        return os.path.basename(buf.value).lower()
+    finally:
+        kernel32.CloseHandle(h)
+
+
+def _win32_set_app_volume(exe_name: str, level: float) -> bool:
+    """Set the mixer volume of each audio session owned by `exe_name`. True if any matched."""
+    target = exe_name.lower()
+    enumerator = ctypes.c_void_p()
+    device = ctypes.c_void_p()
+    manager = ctypes.c_void_p()
+    sessions = ctypes.c_void_p()
+    matched = False
+    try:
+        ctypes.oledll.ole32.CoCreateInstance(
+            ctypes.pointer(_guid(_CLSID_MMDeviceEnumerator)),
+            None,
+            _CLSCTX_ALL,
+            ctypes.pointer(_guid(_IID_IMMDeviceEnumerator)),
+            ctypes.pointer(enumerator),
+        )
+        _com_call(
+            enumerator, 4, ctypes.HRESULT,
+            ctypes.c_int(_EDATAFLOW_RENDER),
+            ctypes.c_int(_EROLE_MULTIMEDIA),
+            ctypes.pointer(device),
+        )
+        _com_call(
+            device, 3, ctypes.HRESULT,
+            ctypes.pointer(_guid(_IID_IAudioSessionManager2)),
+            ctypes.c_ulong(_CLSCTX_ALL),
+            ctypes.c_void_p(None),
+            ctypes.pointer(manager),
+        )
+        _com_call(manager, 5, ctypes.HRESULT, ctypes.pointer(sessions))
+        count = ctypes.c_int(0)
+        _com_call(sessions, 3, ctypes.HRESULT, ctypes.pointer(count))
+        for i in range(count.value):
+            control = ctypes.c_void_p()
+            control2 = ctypes.c_void_p()
+            volume = ctypes.c_void_p()
+            try:
+                _com_call(sessions, 4, ctypes.HRESULT, ctypes.c_int(i), ctypes.pointer(control))
+                _com_call(
+                    control, 0, ctypes.HRESULT,
+                    ctypes.pointer(_guid(_IID_IAudioSessionControl2)),
+                    ctypes.pointer(control2),
+                )
+                pid = ctypes.c_ulong(0)
+                _com_call(control2, 14, ctypes.HRESULT, ctypes.pointer(pid))
+                if not pid.value or _win32_exe_for_pid(pid.value) != target:
+                    continue
+                _com_call(
+                    control2, 0, ctypes.HRESULT,
+                    ctypes.pointer(_guid(_IID_ISimpleAudioVolume)),
+                    ctypes.pointer(volume),
+                )
+                _com_call(
+                    volume, 3, ctypes.HRESULT,
+                    ctypes.c_float(level),
+                    ctypes.c_void_p(None),
+                )
+                matched = True
+            except OSError:
+                continue
+            finally:
+                _com_release(volume)
+                _com_release(control2)
+                _com_release(control)
+    finally:
+        _com_release(sessions)
+        _com_release(manager)
+        _com_release(device)
+        _com_release(enumerator)
+    return matched
+
+
+def _win32_hold_song_volume(exe_name: str, level: float, timeout_s: float) -> None:
+    """Wait for the app's audio session to appear, then pin its mixer volume."""
+    COINIT_APARTMENTTHREADED = 0x2
+    RPC_E_CHANGED_MODE = -2147417850
+    try:
+        ctypes.oledll.ole32.CoInitializeEx(None, COINIT_APARTMENTTHREADED)
+    except OSError as e:
+        if getattr(e, "winerror", 0) != RPC_E_CHANGED_MODE:
+            log.warning("Could not init COM for song volume: %s", e)
+            return
+    deadline = time.monotonic() + max(0.0, timeout_s)
+    try:
+        while True:
+            try:
+                if _win32_set_app_volume(exe_name, level):
+                    log.info("Set %s volume to %d%%.", exe_name, round(level * 100))
+                    return
+            except OSError as e:
+                log.warning("Could not set %s volume: %s", exe_name, e)
+                return
+            if time.monotonic() >= deadline:
+                log.info("No %s audio session appeared; left its volume alone.", exe_name)
+                return
+            time.sleep(0.5)
+    finally:
+        try:
+            ctypes.windll.ole32.CoUninitialize()
+        except OSError:
+            pass
+
+
+def _apply_song_volume_win32() -> None:
+    """Pin Spotify's mixer volume in the background so the ritual is not delayed."""
+    level = _song_volume()
+    if level < 0:
+        return
+    exe = (os.environ.get("JARVIS_SONG_APP") or "Spotify.exe").strip() or "Spotify.exe"
+    threading.Thread(
+        target=_win32_hold_song_volume,
+        args=(exe, level, SONG_VOLUME_TIMEOUT_S),
+        daemon=True,
+    ).start()
+
+
 def play_song(uri: str) -> None:
     u = uri.strip()
     if not u:
@@ -646,6 +846,7 @@ def play_song(uri: str) -> None:
     try:
         if sys.platform == "win32":
             os.startfile(u)
+            _apply_song_volume_win32()
             _spotify_force_play_win32()
         else:
             webbrowser.open(u)

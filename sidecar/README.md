@@ -31,6 +31,7 @@ Fill `sidecar/.env`:
 - `ATLAS_BRIEFING_URL` — the dashboard's briefing endpoint (default points at the
   Vite dev server `http://localhost:5173/api/briefing/tts`).
 - `SONG_URI`, `TRACTION_SITE_URL`, `TRACTION_CHROME_MONITOR` — ritual targets.
+- `JARVIS_SONG_VOLUME` — Windows mixer volume for Spotify when the track starts (default `0.75`).
 
 ## Run
 

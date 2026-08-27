@@ -125,6 +125,7 @@ hook = ListenerHook()
 # --- config: editable knobs surfaced to the UI -------------------------------
 CONFIG_FIELDS: list[dict[str, Any]] = [
     {"key": "SONG_URI", "label": "Spotify track", "kind": "url", "group": "ritual"},
+    {"key": "JARVIS_SONG_VOLUME", "label": "Song volume (0..1)", "kind": "float", "group": "ritual"},
     {"key": "OPEN_TRACTION_SITE_IN_CHROME", "label": "Open dashboard in Brave", "kind": "bool", "group": "ritual"},
     {"key": "OPEN_TRADINGVIEW_APP", "label": "Open TradingView app", "kind": "bool", "group": "ritual"},
     {"key": "TRACTION_CHROME_MONITOR", "label": "Brave monitor", "kind": "int", "group": "ritual"},
