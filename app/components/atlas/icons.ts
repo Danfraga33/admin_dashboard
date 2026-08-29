@@ -34,6 +34,7 @@ import {
   CalendarDays,
   Landmark,
   Lightbulb,
+  Images,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -74,6 +75,7 @@ export const ICONS: Record<string, LucideIcon> = {
   CalendarDays,
   Landmark,
   Lightbulb,
+  Images,
 }
 
 export function getIcon(name: string): LucideIcon {

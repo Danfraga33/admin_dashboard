@@ -25,6 +25,7 @@ export default [
     route('finance/investment-flowchart', 'routes/_protected.finance.investment-flowchart.tsx'),
     route('finance/accounting', 'routes/_protected.finance.accounting.tsx'),
     route('notes', 'routes/_protected.notes.tsx'),
+    route('memories', 'routes/_protected.memories.tsx'),
     route('fitness', 'routes/_protected.fitness.tsx'),
     route('radar', 'routes/_protected.radar.tsx'),
     route('radar/sources', 'routes/_protected.radar.sources.tsx'),

@@ -24,6 +24,7 @@ const NAV_WORK: NavItem[] = [
   { label: 'Content', icon: 'FileText', to: '/content' },
   { label: 'Calendar', icon: 'CalendarDays', to: '/events' },
   { label: 'Notes', icon: 'StickyNote', to: '/notes' },
+  { label: 'Memories', icon: 'Images', to: '/memories' },
 ]
 
 const NAV_FITNESS: NavItem[] = [

@@ -541,6 +541,57 @@ export type Database = {
         }
         Relationships: []
       }
+      memories: {
+        Row: {
+          caption: string | null
+          created_at: string
+          duration_seconds: number | null
+          favorite: boolean
+          height: number | null
+          id: string
+          kind: string
+          mime_type: string
+          size_bytes: number | null
+          storage_path: string
+          tags: string[]
+          taken_at: string
+          user_id: string
+          width: number | null
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          favorite?: boolean
+          height?: number | null
+          id?: string
+          kind: string
+          mime_type: string
+          size_bytes?: number | null
+          storage_path: string
+          tags?: string[]
+          taken_at?: string
+          user_id: string
+          width?: number | null
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          favorite?: boolean
+          height?: number | null
+          id?: string
+          kind?: string
+          mime_type?: string
+          size_bytes?: number | null
+          storage_path?: string
+          tags?: string[]
+          taken_at?: string
+          user_id?: string
+          width?: number | null
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           body: string | null
