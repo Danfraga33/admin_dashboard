@@ -6,6 +6,7 @@ export default [
   route('api/refresh-events', 'routes/api.refresh-events.tsx'),
   route('api/ingest', 'routes/api.ingest.tsx'),
   route('api/briefing/tts', 'routes/api.briefing.tts.tsx'),
+  route('api/cron/sync', 'routes/api.cron.sync.tsx'),
   layout('routes/_protected.tsx', [
     index('routes/_protected.home.tsx'),
     route('content', 'routes/_protected.content.tsx'),
