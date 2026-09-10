@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Route } from "./+types/_protected.radar.strategy";
+import type { Route } from "./+types/_protected.business.strategy";
 import { ScrambleText } from "~/lib/radar/motion";
 import { Icon } from "~/lib/radar/icons";
 import {
@@ -12,6 +12,7 @@ import {
   type StrategyStep,
 } from "~/lib/radar/strategy";
 import { CircuitBoard } from "~/components/radar/circuit-board";
+import { RevealModal } from "~/components/radar/reveal-modal";
 import { FLOW_INTRO, FLOW_EQUATION, FLOW_NODES, FLOW_CONNECTIONS } from "~/lib/radar/flow";
 
 export function meta(_: Route.MetaArgs) {
@@ -94,6 +95,8 @@ function Step({ data }: { data: StrategyStep }) {
 
 export default function MarketStrategy() {
   const [activeTab, setActiveTab] = useState(STRATEGY_TABS[0].id);
+  const [flowOpen, setFlowOpen] = useState(false);
+  const [skillsOpen, setSkillsOpen] = useState(false);
   const tab = STRATEGY_TABS.find((t) => t.id === activeTab) ?? STRATEGY_TABS[0];
 
   return (
@@ -102,11 +105,28 @@ export default function MarketStrategy() {
         <div>
           <div className="ed-eyebrow">{FLOW_INTRO.eyebrow}</div>
           <ScrambleText as="h1" className="ed-headline" text={FLOW_INTRO.headline} />
-          <Equation />
         </div>
       </div>
 
-      <CircuitBoard nodes={FLOW_NODES} connections={FLOW_CONNECTIONS} />
+      <div className="rv-trigger">
+        <button
+          type="button"
+          className="ed-btn solid"
+          onClick={() => setFlowOpen(true)}
+        >
+          <Icon name="flow" size={16} />
+          View the flowchart
+        </button>
+      </div>
+
+      <RevealModal
+        open={flowOpen}
+        onClose={() => setFlowOpen(false)}
+        title={FLOW_INTRO.headline}
+      >
+        <Equation />
+        <CircuitBoard nodes={FLOW_NODES} connections={FLOW_CONNECTIONS} />
+      </RevealModal>
 
       <div className="ed-head" style={{ marginTop: 8 }}>
         <div>
@@ -116,52 +136,69 @@ export default function MarketStrategy() {
         </div>
       </div>
 
-      <section className="t-step">
-        <div className="t-card blk-cream">
-          <div className="t-grid">
-            {SKILLS.map((nd, i) => (
-              <div
-                className="t-ncard rise"
-                key={nd.label}
-                style={{ animationDelay: `${i * 80}ms` }}
-              >
-                <span className="t-ncard-ic">
-                  <Icon name={nd.icon} size={18} />
-                </span>
-                <b>
-                  {i + 1} · {nd.label}
-                </b>
-                {nd.sub && <small>{nd.sub}</small>}
-              </div>
-            ))}
-          </div>
-          <p className="sk-founder">
-            {FOUNDER_LOOP.map((s, i) => (
-              <span key={s}>
-                {i > 0 && <span className="sk-arrow" aria-hidden="true">→</span>}
-                {s}
-              </span>
-            ))}
-            <span className="sk-founder-tail">= an extremely powerful loop.</span>
-          </p>
-        </div>
-      </section>
+      <div className="rv-trigger">
+        <button
+          type="button"
+          className="ed-btn solid"
+          onClick={() => setSkillsOpen(true)}
+        >
+          <Icon name="layers" size={16} />
+          View the five skills
+        </button>
+      </div>
 
-      <section className="t-step">
-        <div className="t-card blk-ink sk-machine">
-          <div className="t-stack-label">The machine — run this loop, anywhere it fits</div>
-          <div className="sk-loop">
-            {MACHINE_LOOP.steps.map((s, i) => (
-              <span key={s} className="sk-loop-step rise" style={{ animationDelay: `${i * 70}ms` }}>
-                {i > 0 && <span className="sk-arrow" aria-hidden="true">→</span>}
-                <span className="sk-pill">{s}</span>
-              </span>
-            ))}
+      <RevealModal
+        open={skillsOpen}
+        onClose={() => setSkillsOpen(false)}
+        title={SKILLS_INTRO.headline}
+      >
+        <section className="t-step">
+          <div className="t-card blk-cream">
+            <div className="t-grid">
+              {SKILLS.map((nd, i) => (
+                <div
+                  className="t-ncard rise"
+                  key={nd.label}
+                  style={{ animationDelay: `${i * 80}ms` }}
+                >
+                  <span className="t-ncard-ic">
+                    <Icon name={nd.icon} size={18} />
+                  </span>
+                  <b>
+                    {i + 1} · {nd.label}
+                  </b>
+                  {nd.sub && <small>{nd.sub}</small>}
+                </div>
+              ))}
+            </div>
+            <p className="sk-founder">
+              {FOUNDER_LOOP.map((s, i) => (
+                <span key={s}>
+                  {i > 0 && <span className="sk-arrow" aria-hidden="true">→</span>}
+                  {s}
+                </span>
+              ))}
+              <span className="sk-founder-tail">= an extremely powerful loop.</span>
+            </p>
           </div>
-          <p className="sk-note">{MACHINE_LOOP.note}</p>
-          <p className="sk-rule">{MACHINE_LOOP.rule}</p>
-        </div>
-      </section>
+        </section>
+
+        <section className="t-step">
+          <div className="t-card blk-ink sk-machine">
+            <div className="t-stack-label">The machine — run this loop, anywhere it fits</div>
+            <div className="sk-loop">
+              {MACHINE_LOOP.steps.map((s, i) => (
+                <span key={s} className="sk-loop-step rise" style={{ animationDelay: `${i * 70}ms` }}>
+                  {i > 0 && <span className="sk-arrow" aria-hidden="true">→</span>}
+                  <span className="sk-pill">{s}</span>
+                </span>
+              ))}
+            </div>
+            <p className="sk-note">{MACHINE_LOOP.note}</p>
+            <p className="sk-rule">{MACHINE_LOOP.rule}</p>
+          </div>
+        </section>
+      </RevealModal>
 
       <div className="ed-head" style={{ marginTop: 8 }}>
         <div>
