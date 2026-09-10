@@ -1453,3 +1453,54 @@
   .pain-radar .ib-m-sub { flex-direction: column; }
   .pain-radar .ib-m-sub .select { width: 100%; }
 }
+
+/* ---- Reveal modal (Strategy flowchart + skills) ---- */
+.pain-radar .rv-scrim {
+  position: fixed; inset: 0; z-index: 120;
+  background: rgba(0, 0, 0, .55);
+  display: flex; align-items: center; justify-content: center;
+  padding: 5vh 16px;
+  animation: pr-fade var(--t-fast) ease both;
+}
+.pain-radar .rv-panel {
+  width: 100%; max-width: 1180px; max-height: 90vh;
+  display: flex; flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: 14px;
+  box-shadow: var(--shadow-pop);
+  outline: none;
+  animation: pr-popIn var(--t-fast) var(--ease-out) both;
+}
+.pain-radar .rv-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  flex: none;
+}
+.pain-radar .rv-title {
+  font-family: var(--ed-font);
+  font-size: 16px; font-weight: 650; letter-spacing: -0.01em;
+  color: var(--text);
+}
+.pain-radar .rv-close {
+  appearance: none; cursor: pointer;
+  display: grid; place-items: center;
+  width: 34px; height: 34px; flex: none;
+  border: 1px solid var(--border-2); border-radius: 9px;
+  background: transparent; color: var(--text-2);
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+}
+.pain-radar .rv-close:hover { background: color-mix(in srgb, var(--text) 7%, transparent); color: var(--text); }
+.pain-radar .rv-close:active { transform: scale(.94); }
+.pain-radar .rv-body { padding: 20px; overflow-y: auto; }
+.pain-radar .rv-body > .cb-wrap { margin: 0; }
+.pain-radar .rv-body > .t-step { margin: 0; }
+.pain-radar .rv-body > .t-step + .t-step { margin-top: 18px; }
+.pain-radar.dash .rv-body > .ed-eq { margin: 0 0 20px; }
+
+.pain-radar.thesis .rv-trigger { margin: 8px 0 30px; }
+@media (max-width: 900px) {
+  .pain-radar .rv-scrim { padding: 0; }
+  .pain-radar .rv-panel { max-width: none; max-height: 100vh; height: 100%; border-radius: 0; border: none; }
+}
