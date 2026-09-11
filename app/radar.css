@@ -1498,8 +1498,21 @@
 .pain-radar .rv-body > .t-step { margin: 0; }
 .pain-radar .rv-body > .t-step + .t-step { margin-top: 18px; }
 .pain-radar.dash .rv-body > .ed-eq { margin: 0 0 20px; }
+.pain-radar .rv-section-head {
+  margin: 30px 0 18px;
+  padding-top: 26px;
+  border-top: 1px solid var(--border);
+}
+.pain-radar .rv-section-title {
+  font-family: var(--ed-font);
+  font-size: 26px; font-weight: 700; letter-spacing: -0.02em;
+  color: var(--text); margin: 6px 0 0;
+}
+.pain-radar .rv-section-head .ed-subline { margin-top: 8px; }
+.pain-radar .rv-body > .t-tabs { margin-top: 0; }
+.pain-radar .rv-body > .t-tab-blurb { margin-bottom: 20px; }
 
-.pain-radar.thesis .rv-trigger { margin: 8px 0 30px; }
+.pain-radar.thesis .rv-trigger { display: flex; flex-wrap: wrap; gap: 12px; margin: 8px 0 30px; }
 @media (max-width: 900px) {
   .pain-radar .rv-scrim { padding: 0; }
   .pain-radar .rv-panel { max-width: none; max-height: 100vh; height: 100%; border-radius: 0; border: none; }

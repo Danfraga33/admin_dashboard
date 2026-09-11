@@ -95,8 +95,8 @@ function Step({ data }: { data: StrategyStep }) {
 
 export default function MarketStrategy() {
   const [activeTab, setActiveTab] = useState(STRATEGY_TABS[0].id);
-  const [flowOpen, setFlowOpen] = useState(false);
-  const [skillsOpen, setSkillsOpen] = useState(false);
+  const [methodOpen, setMethodOpen] = useState(false);
+  const [frameworkOpen, setFrameworkOpen] = useState(false);
   const tab = STRATEGY_TABS.find((t) => t.id === activeTab) ?? STRATEGY_TABS[0];
 
   return (
@@ -112,46 +112,35 @@ export default function MarketStrategy() {
         <button
           type="button"
           className="ed-btn solid"
-          onClick={() => setFlowOpen(true)}
+          onClick={() => setMethodOpen(true)}
         >
           <Icon name="flow" size={16} />
-          View the flowchart
+          View the method
+        </button>
+        <button
+          type="button"
+          className="ed-btn solid"
+          onClick={() => setFrameworkOpen(true)}
+        >
+          <Icon name="layers" size={16} />
+          Vertical framework
         </button>
       </div>
 
       <RevealModal
-        open={flowOpen}
-        onClose={() => setFlowOpen(false)}
+        open={methodOpen}
+        onClose={() => setMethodOpen(false)}
         title={FLOW_INTRO.headline}
       >
         <Equation />
         <CircuitBoard nodes={FLOW_NODES} connections={FLOW_CONNECTIONS} />
-      </RevealModal>
 
-      <div className="ed-head" style={{ marginTop: 8 }}>
-        <div>
+        <div className="rv-section-head">
           <div className="ed-eyebrow">{SKILLS_INTRO.eyebrow}</div>
-          <ScrambleText as="h2" className="ed-headline" text={SKILLS_INTRO.headline} />
+          <h4 className="rv-section-title">{SKILLS_INTRO.headline}</h4>
           <p className="ed-subline">{SKILLS_INTRO.subline}</p>
         </div>
-      </div>
 
-      <div className="rv-trigger">
-        <button
-          type="button"
-          className="ed-btn solid"
-          onClick={() => setSkillsOpen(true)}
-        >
-          <Icon name="layers" size={16} />
-          View the five skills
-        </button>
-      </div>
-
-      <RevealModal
-        open={skillsOpen}
-        onClose={() => setSkillsOpen(false)}
-        title={SKILLS_INTRO.headline}
-      >
         <section className="t-step">
           <div className="t-card blk-cream">
             <div className="t-grid">
@@ -200,39 +189,35 @@ export default function MarketStrategy() {
         </section>
       </RevealModal>
 
-      <div className="ed-head" style={{ marginTop: 8 }}>
-        <div>
-          <div className="ed-eyebrow">{STRATEGY_INTRO.eyebrow}</div>
-          <ScrambleText as="h2" className="ed-headline" text={STRATEGY_INTRO.headline} />
-          {STRATEGY_INTRO.subline && (
-            <p className="ed-subline">{STRATEGY_INTRO.subline}</p>
-          )}
+      <RevealModal
+        open={frameworkOpen}
+        onClose={() => setFrameworkOpen(false)}
+        title={STRATEGY_INTRO.headline}
+      >
+        <div className="t-tabs" role="tablist" aria-label="Strategy paths">
+          {STRATEGY_TABS.map((t) => (
+            <button
+              key={t.id}
+              role="tab"
+              type="button"
+              aria-selected={t.id === activeTab}
+              className={`t-tab ${t.id === activeTab ? "is-active" : ""}`}
+              onClick={() => setActiveTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
-      </div>
 
-      <div className="t-tabs" role="tablist" aria-label="Strategy paths">
-        {STRATEGY_TABS.map((t) => (
-          <button
-            key={t.id}
-            role="tab"
-            type="button"
-            aria-selected={t.id === activeTab}
-            className={`t-tab ${t.id === activeTab ? "is-active" : ""}`}
-            onClick={() => setActiveTab(t.id)}
-          >
-            {t.label}
-          </button>
+        <p className="t-tab-blurb">{tab.blurb}</p>
+
+        {tab.steps.map((s, i) => (
+          <div key={s.step.n}>
+            {i > 0 && <Connector />}
+            <Step data={s} />
+          </div>
         ))}
-      </div>
-
-      <p className="t-tab-blurb">{tab.blurb}</p>
-
-      {tab.steps.map((s, i) => (
-        <div key={s.step.n}>
-          {i > 0 && <Connector />}
-          <Step data={s} />
-        </div>
-      ))}
+      </RevealModal>
     </div>
   );
 }
