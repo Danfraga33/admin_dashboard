@@ -22,6 +22,7 @@ const VIEW_TITLES: Record<string, string> = {
   '/ventures': 'Fraga Ventures',
   '/content': 'Content',
   '/notes': 'Notes',
+  '/business/strategy': 'Strategy',
 }
 
 function titleFor(pathname: string): string {
