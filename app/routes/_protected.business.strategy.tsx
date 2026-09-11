@@ -16,7 +16,7 @@ import { RevealModal } from "~/components/radar/reveal-modal";
 import { FLOW_INTRO, FLOW_EQUATION, FLOW_NODES, FLOW_CONNECTIONS } from "~/lib/radar/flow";
 
 export function meta(_: Route.MetaArgs) {
-  return [{ title: "Atlas · Strategy" }];
+  return [{ title: "Atlas · Business Strategy" }];
 }
 
 function StepHead({ step }: { step: StrategyStep["step"] }) {

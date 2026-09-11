@@ -32,7 +32,7 @@ const NAV_FITNESS: NavItem[] = [
 ]
 
 const NAV_RADAR: NavItem[] = [
-  { label: 'Strategy', icon: 'Target', to: '/business/strategy' },
+  { label: 'Business Strategy', icon: 'Target', to: '/business/strategy' },
   { label: 'Idea Board', icon: 'Lightbulb', to: '/radar/ideas' },
 ]
 
