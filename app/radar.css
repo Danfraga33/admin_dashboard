@@ -1015,7 +1015,7 @@
   .pain-radar.thesis .t-sat-tx small { display: none; }
 }
 
-/* ---- Opportunity equation (under the flow intro) ---- */
+/* ---- Premise block (in the method modal) ---- */
 .pain-radar.dash .ed-eq {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, auto);
@@ -1029,25 +1029,6 @@
   background: color-mix(in srgb, var(--ink) 4%, transparent);
   max-width: none;
 }
-.pain-radar.dash .ed-eq-formula {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px 18px;
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: clamp(16px, 2vw, 26px);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-}
-.pain-radar.dash .ed-eq .eq-lhs { color: var(--accent); }
-.pain-radar.dash .ed-eq .eq-op { color: var(--ink-2); font-weight: 500; }
-.pain-radar.dash .ed-eq .eq-term { display: inline-flex; align-items: baseline; gap: 8px; white-space: nowrap; }
-.pain-radar.dash .ed-eq .eq-arrow { font-size: 1.05em; line-height: 1; }
-.pain-radar.dash .ed-eq .eq-arrow.up { color: var(--ok); }
-.pain-radar.dash .ed-eq .eq-arrow.down { color: var(--bad); }
 .pain-radar.dash .ed-eq-moat {
   display: flex;
   flex-direction: column;
@@ -1070,7 +1051,6 @@
 }
 @media (max-width: 900px) {
   .pain-radar.dash .ed-eq { grid-template-columns: minmax(0, 1fr); padding: 18px 20px; }
-  .pain-radar.dash .ed-eq-formula { justify-content: flex-start; }
   .pain-radar.dash .ed-eq-moat { padding-left: 0; padding-top: 14px; border-left: 0; border-top: 1.5px solid color-mix(in srgb, var(--ink) 22%, transparent); }
 }
 
@@ -1498,6 +1478,19 @@
 .pain-radar .rv-body > .t-step { margin: 0; }
 .pain-radar .rv-body > .t-step + .t-step { margin-top: 18px; }
 .pain-radar.dash .rv-body > .ed-eq { margin: 0 0 20px; }
+.pain-radar.dash .ed-premise-quote {
+  margin: 0;
+  font-family: var(--ed-font);
+  font-size: 19px;
+  font-weight: 650;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+@media (max-width: 900px) {
+  .pain-radar.dash .ed-premise-quote { font-size: 17px; }
+}
 .pain-radar .rv-section-head {
   margin: 30px 0 18px;
   padding-top: 26px;

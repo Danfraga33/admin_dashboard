@@ -3,8 +3,9 @@
    Problems → build the software that lifts operators' earning power → install
    it across the vertical → Acquire.
    The software is the acquisition edge: installed on day 1 it lifts EBITDA, so
-   every deal is bought below what it's worth with the software running. Find
-   Problems links into the Pain Radar dashboard, where the problems come from.
+   every deal is bought below what it's worth with the software running — but
+   income comes first, and acquisition later or not at all. Find Problems links
+   into the Pain Radar dashboard, where the problems come from.
    Coordinates are in a 1000×300 viewBox; the SVG scales to its container. */
 
 export interface FlowNode {
@@ -29,14 +30,11 @@ export const FLOW_INTRO = {
   headline: "Software first, acquisition next",
 };
 
-export const FLOW_EQUATION = {
-  lhs: "Opportunity(Problem)",
-  terms: [
-    { label: "Demand", dir: "up" as const },
-    { label: "Competition", dir: "down" as const },
-  ],
-  note: "Look for how you can obtain a moat",
-  rule: "If high competition = find another moat",
+export const FLOW_PREMISE = {
+  quote:
+    "Do automation work pointed at the industry you need to learn. Paid to sit inside their workflow.",
+  note: "Focus on income. Acquisition comes later or not at all.",
+  rule: "USA is optimal for acquisition.",
 };
 
 export const FLOW_NODES: FlowNode[] = [

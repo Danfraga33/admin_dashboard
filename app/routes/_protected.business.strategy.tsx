@@ -13,7 +13,7 @@ import {
 } from "~/lib/radar/strategy";
 import { CircuitBoard } from "~/components/radar/circuit-board";
 import { RevealModal } from "~/components/radar/reveal-modal";
-import { FLOW_INTRO, FLOW_EQUATION, FLOW_NODES, FLOW_CONNECTIONS } from "~/lib/radar/flow";
+import { FLOW_INTRO, FLOW_PREMISE, FLOW_NODES, FLOW_CONNECTIONS } from "~/lib/radar/flow";
 
 export function meta(_: Route.MetaArgs) {
   return [{ title: "Atlas · Business Strategy" }];
@@ -34,26 +34,13 @@ function StepHead({ step }: { step: StrategyStep["step"] }) {
   );
 }
 
-function Equation() {
+function Premise() {
   return (
-    <div className="ed-eq">
-      <p className="ed-eq-formula">
-        <span className="eq-lhs">{FLOW_EQUATION.lhs}</span>
-        <span className="eq-op">=</span>
-        {FLOW_EQUATION.terms.map((t, i) => (
-          <span className="eq-term" key={t.label}>
-            {i > 0 && <span className="eq-op">×</span>}
-            {t.label}
-            <span className={`eq-arrow ${t.dir}`} aria-hidden="true">
-              {t.dir === "up" ? "↑" : "↓"}
-            </span>
-            <span className="sr-only">{t.dir === "up" ? "high" : "low"}</span>
-          </span>
-        ))}
-      </p>
+    <div className="ed-eq ed-premise">
+      <blockquote className="ed-premise-quote">{FLOW_PREMISE.quote}</blockquote>
       <div className="ed-eq-moat">
-        <p className="ed-eq-note">{FLOW_EQUATION.note}</p>
-        <p className="ed-eq-rule">{FLOW_EQUATION.rule}</p>
+        <p className="ed-eq-note">{FLOW_PREMISE.note}</p>
+        <p className="ed-eq-rule">{FLOW_PREMISE.rule}</p>
       </div>
     </div>
   );
@@ -132,7 +119,7 @@ export default function MarketStrategy() {
         onClose={() => setMethodOpen(false)}
         title={FLOW_INTRO.headline}
       >
-        <Equation />
+        <Premise />
         <CircuitBoard nodes={FLOW_NODES} connections={FLOW_CONNECTIONS} />
 
         <div className="rv-section-head">
