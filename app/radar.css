@@ -1503,6 +1503,7 @@
 }
 .pain-radar .rv-section-head .ed-subline { margin-top: 8px; }
 .pain-radar .rv-body > .t-tabs { margin-top: 0; }
+.pain-radar .rv-body > .ed-subline:first-child { margin: 0 0 18px; }
 .pain-radar .rv-body > .t-tab-blurb { margin-bottom: 20px; }
 
 .pain-radar.thesis .rv-trigger { display: flex; flex-wrap: wrap; gap: 12px; margin: 8px 0 30px; }

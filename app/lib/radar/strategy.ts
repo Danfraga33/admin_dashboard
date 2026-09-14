@@ -246,6 +246,21 @@ export const SKILLS: ThesisNode[] = [
   { label: "Capital allocation", icon: "card", sub: "knowing where to deploy the next dollar" },
 ];
 
+/* The agency — the three service lines that fund the build. Website work runs
+   under Pavelane; automations are the way into a vertical's workflow. */
+export const AGENCY_INTRO = {
+  eyebrow: "Method · The agency",
+  headline: "Three Service Lines",
+  subline:
+    "The income side of the machine — paid work that funds the build and puts you inside the workflow you need to learn.",
+};
+
+export const AGENCY: ThesisNode[] = [
+  { label: "Website making", icon: "globe", sub: "Pavelane" },
+  { label: "Automations for vertical", icon: "repeat", sub: "paid to sit inside their workflow" },
+  { label: "SaaS building", icon: "code", sub: "the product the vertical keeps paying for" },
+];
+
 /* The founder loop — the five skills chained into one powerful cycle. */
 export const FOUNDER_LOOP = [
   "identify a painful workflow",

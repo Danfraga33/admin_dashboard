@@ -7,6 +7,8 @@ import {
   STRATEGY_TABS,
   SKILLS_INTRO,
   SKILLS,
+  AGENCY_INTRO,
+  AGENCY,
   FOUNDER_LOOP,
   MACHINE_LOOP,
   type StrategyStep,
@@ -84,6 +86,7 @@ export default function MarketStrategy() {
   const [activeTab, setActiveTab] = useState(STRATEGY_TABS[0].id);
   const [methodOpen, setMethodOpen] = useState(false);
   const [frameworkOpen, setFrameworkOpen] = useState(false);
+  const [agencyOpen, setAgencyOpen] = useState(false);
   const tab = STRATEGY_TABS.find((t) => t.id === activeTab) ?? STRATEGY_TABS[0];
 
   return (
@@ -111,6 +114,14 @@ export default function MarketStrategy() {
         >
           <Icon name="layers" size={16} />
           Vertical framework
+        </button>
+        <button
+          type="button"
+          className="ed-btn solid"
+          onClick={() => setAgencyOpen(true)}
+        >
+          <Icon name="building" size={16} />
+          Agency
         </button>
       </div>
 
@@ -204,6 +215,36 @@ export default function MarketStrategy() {
             <Step data={s} />
           </div>
         ))}
+      </RevealModal>
+
+      <RevealModal
+        open={agencyOpen}
+        onClose={() => setAgencyOpen(false)}
+        title={AGENCY_INTRO.headline}
+      >
+        <p className="ed-subline">{AGENCY_INTRO.subline}</p>
+
+        <section className="t-step">
+          <div className="t-card blk-cream">
+            <div className="t-grid">
+              {AGENCY.map((nd, i) => (
+                <div
+                  className="t-ncard rise"
+                  key={nd.label}
+                  style={{ animationDelay: `${i * 80}ms` }}
+                >
+                  <span className="t-ncard-ic">
+                    <Icon name={nd.icon} size={18} />
+                  </span>
+                  <b>
+                    {i + 1} · {nd.label}
+                  </b>
+                  {nd.sub && <small>{nd.sub}</small>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       </RevealModal>
     </div>
   );
